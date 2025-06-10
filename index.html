@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <!-- Viewport adaptado para móviles, previene el zoom y se ajusta a las áreas seguras de la pantalla -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Chat-On</title>
+    <!-- Google Fonts - Roboto -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome para Iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        /* Estilos generales y variables */
+        :root {
+            --whatsapp-green: #075E54;
+            --whatsapp-light-green: #128C7E;
+            --whatsapp-sent-bubble: #DCF8C6;
+            --whatsapp-received-bubble: #FFFFFF;
+            --whatsapp-chat-bg: #ECE5DD;
+            --whatsapp-tick-blue: #34B7F1;
+            
+            /* Variables para alturas dinámicas y áreas seguras, controladas por JS */
+            --app-height: 100vh;
+            --safe-area-top: env(safe-area-inset-top, 0px);
+            --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+            --safe-area-left: env(safe-area-inset-left, 0px);
+            --safe-area-right: env(safe-area-inset-right, 0px);
+
+            --header-height: 60px;
+            --input-area-height: 64px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f5f5f5;
+            height: var(--app-height); /* Usamos la variable para evitar problemas con la barra de navegación móvil */
+            display: flex;
+            flex-direction: column;
+            touch-action: manipulation;
+            font-size: 16px;
+            overflow: hidden;
+            color: #333;
+        }
+        
+        /* Estilos del Modal de Alias (sin cambios significativos, ya era responsive) */
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.7); display: flex;
+            justify-content: center; align-items: center; z-index: 1000;
+        }
+        .modal-content {
+            background: white; padding: 30px; border-radius: 15px;
+            width: 90%; max-width: 380px; text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            animation: fadeInScale 0.3s ease-out forwards;
+        }
+        @keyframes fadeInScale { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        .modal-content h3 { color: var(--whatsapp-green); margin-bottom: 20px; font-size: 22px; }
+        .modal-input {
+            width: calc(100% - 20px); padding: 14px; margin: 15px 0;
+            border: 1px solid #ddd; border-radius: 8px; font-size: 17px;
+            text-align: center; outline: none; transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .modal-input:focus { border-color: var(--whatsapp-light-green); box-shadow: 0 0 0 3px rgba(18, 140, 126, 0.25); }
+        .modal button {
+            background: var(--whatsapp-light-green); color: white; border: none;
+            padding: 12px 25px; border-radius: 30px; font-size: 17px;
+            cursor: pointer; transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); font-weight: 500;
+        }
+        .modal button:hover { background: #075E54; transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3); }
+        .profile-pic-upload { margin-top: 15px; display: flex; flex-direction: column; align-items: center; }
+        .profile-pic-upload .avatar-preview {
+            width: 80px; height: 80px; border-radius: 50%; background: #eee;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 40px; color: #ccc; overflow: hidden;
+            border: 2px solid var(--whatsapp-light-green); margin-bottom: 10px;
+        }
+        .profile-pic-upload .avatar-preview img { width: 100%; height: 100%; object-fit: cover; }
+        .profile-pic-upload label {
+            background: #f0f0f0; color: var(--whatsapp-light-green); border: 1px solid #ccc;
+            padding: 8px 15px; border-radius: 20px; cursor: pointer;
+            font-size: 14px; transition: background 0.2s ease;
+        }
+        .profile-pic-upload label:hover { background: #e0e0e0; }
+        
+        /* Contenedor Principal de la App */
+        .main-container {
+            display: flex; flex-direction: column; flex: 1;
+            /* El padding superior e inferior ahora se calculan con las áreas seguras */
+            padding-top: calc(var(--header-height) + var(--safe-area-top));
+            padding-bottom: calc(var(--input-area-height) + var(--safe-area-bottom));
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Cabecera del Chat - Adaptada a áreas seguras */
+        .chat-header {
+            background: var(--whatsapp-green); color: white;
+            padding: 10px 15px;
+            padding-top: calc(10px + var(--safe-area-top));
+            padding-left: calc(15px + var(--safe-area-left));
+            padding-right: calc(15px + var(--safe-area-right));
+            position: fixed; width: 100%; top: 0; z-index: 100;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); display: flex;
+            align-items: center; justify-content: flex-start;
+            height: calc(var(--header-height) + var(--safe-area-top));
+        }
+        .chat-header .back-button { background: none; border: none; color: white; font-size: 24px; margin-right: 15px; padding: 5px; cursor: pointer; outline: none; }
+        .chat-header .profile-pic { width: 40px; height: 40px; border-radius: 50%; background: rgba(255, 255, 255, 0.2); margin-right: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; color: white; overflow: hidden; flex-shrink: 0; }
+        .chat-header .profile-pic img { width: 100%; height: 100%; object-fit: cover; }
+        .chat-header .profile-info { flex-grow: 1; display: flex; flex-direction: column; align-items: flex-start; }
+        .chat-header h1 { font-size: 18px; margin: 0; line-height: 1.2; font-weight: 500; }
+        .online-status { font-size: 12px; color: rgba(255, 255, 255, 0.8); opacity: 0; height: 14px; transition: opacity 0.3s ease-in-out; margin-top: 2px; }
+        .online-status.active { opacity: 1; color: #A3EEA3; }
+        .chat-header .header-icons { display: flex; gap: 20px; margin-left: auto; }
+        .chat-header .header-icons i { font-size: 22px; cursor: pointer; color: white; }
+
+        /* Lista de Pares Conectados (Panel Izquierdo) */
+        .connected-peers-list {
+            background: #F0F0F0; padding: 0; width: 100%;
+            position: fixed;
+            top: calc(var(--header-height) + var(--safe-area-top)); 
+            /* La altura se calcula restando la cabecera, el área de entrada y las áreas seguras */
+            height: calc(var(--app-height) - var(--header-height) - var(--input-area-height) - var(--safe-area-top) - var(--safe-area-bottom));
+            overflow-y: auto; -webkit-overflow-scrolling: touch; z-index: 99;
+            transition: transform 0.3s ease-in-out; transform: translateX(0%);
+        }
+        .connected-peers-list.hidden-left { transform: translateX(-100%); pointer-events: none; }
+        .connected-peers-list h4 { font-size: 14px; margin: 15px 15px 10px 15px; color: #666; text-transform: uppercase; font-weight: 500; border-bottom: 1px solid #EAEAEA; padding-bottom: 10px; }
+        .connected-peers-list ul { list-style: none; padding: 0; margin: 0; }
+        .connected-peers-list li { display: flex; align-items: center; padding: 12px 15px; padding-left: calc(15px + var(--safe-area-left)); padding-right: calc(15px + var(--safe-area-right)); border-bottom: 1px solid #EAEAEA; cursor: pointer; font-size: 16px; color: #333; transition: background 0.2s ease; position: relative; }
+        .connected-peers-list li:hover { background: #fdfdfd; }
+        .connected-peers-list li.active { background: var(--whatsapp-sent-bubble); font-weight: bold; }
+        .connected-peers-list li.unread .peer-name { font-weight: bold; color: var(--whatsapp-green); }
+        .connected-peers-list li .avatar { width: 50px; height: 50px; border-radius: 50%; background: #DDD; margin-right: 15px; display: flex; align-items: center; justify-content: center; font-size: 24px; color: #555; flex-shrink: 0; overflow: hidden; }
+        .connected-peers-list li .avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .connected-peers-list .peer-info { flex-grow: 1; display: flex; flex-direction: column; }
+        .connected-peers-list .peer-name { font-weight: 500; }
+        .connected-peers-list .peer-status-text { font-size: 13px; color: #777; margin-top: 2px; }
+        .connected-peers-list .peer-status-text.online { color: var(--whatsapp-light-green); }
+        .connected-peers-list .peer-status-text.tracker-indicator { color: #b08d00; font-weight: bold; }
+        .connected-peers-list .unread-badge { background: #e62222; color: white; border-radius: 50%; padding: 3px 8px; font-size: 11px; margin-left: auto; min-width: 24px; text-align: center; display: flex; justify-content: center; align-items: center; height: 24px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        
+        /* Área del Chat (Panel Derecho) */
+        #chat {
+            flex: 1; padding: 10px; 
+            padding-left: calc(10px + var(--safe-area-left));
+            padding-right: calc(10px + var(--safe-area-right));
+            overflow-y: auto; -webkit-overflow-scrolling: touch;
+            display: flex; flex-direction: column;
+            background-color: var(--whatsapp-chat-bg);
+            background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/WhatsApp_Background.svg/1024px-WhatsApp_Background.svg.png');
+            background-size: auto; background-repeat: repeat;
+        }
+
+        /* Burbujas de Mensajes (sin cambios) */
+        .message { margin: 6px 0; padding: 8px 12px 6px 12px; border-radius: 8px; max-width: 85%; word-wrap: break-word; position: relative; font-size: 15px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); animation: slideIn 0.2s ease-out forwards; display: flex; flex-direction: column; line-height: 1.4; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .message.self { background: var(--whatsapp-sent-bubble); align-self: flex-end; }
+        .message.remote { background: var(--whatsapp-received-bubble); align-self: flex-start; }
+        .message.system { background: #e1f2fb; color: #5a666d; text-align: center; max-width: 90%; margin: 10px auto; font-size: 13px; align-self: center; padding: 8px; border-radius: 12px; box-shadow: none; }
+        .message .sender-name { font-weight: 500; color: #075E54; font-size: 14px; margin-bottom: 3px; }
+        .message.self .sender-name { display: none; }
+        .message img { max-width: 100%; border-radius: 8px; margin-top: 5px; cursor: pointer; }
+        .message .file-download-link { display: flex; align-items: center; gap: 8px; margin-top: 5px; color: var(--whatsapp-green); text-decoration: none; font-size: 14px; font-weight: 500; background: rgba(0,0,0,0.05); padding: 8px 10px; border-radius: 8px; transition: background 0.2s ease; }
+        .message .file-download-link:hover{ background: rgba(0,0,0,0.1); }
+        .message .file-download-link i { font-size: 20px; }
+        .message-footer { align-self: flex-end; margin-top: 4px; font-size: 11px; color: rgba(0, 0, 0, 0.45); }
+
+        /* ÁREA DE ENTRADA DE MENSAJES - Adaptada a áreas seguras */
+        .input-area {
+            position: fixed; bottom: 0; width: 100%; background: var(--whatsapp-chat-bg);
+            padding: 8px 10px;
+            padding-bottom: calc(8px + var(--safe-area-bottom));
+            padding-left: calc(10px + var(--safe-area-left));
+            padding-right: calc(10px + var(--safe-area-right));
+            height: calc(var(--input-area-height) + var(--safe-area-bottom));
+            box-shadow: 0 -1px 5px rgba(0,0,0,0.08); z-index: 100;
+            display: flex; gap: 8px; align-items: center; /* Centrado vertical */
+            transition: opacity 0.2s ease;
+        }
+        .message-input-group {
+            flex: 1; display: flex; align-items: flex-end; background: white;
+            border-radius: 25px; padding: 5px 12px;
+        }
+        .input-area textarea {
+            flex: 1; min-height: 20px; max-height: 80px; padding: 8px 5px;
+            border: none; resize: none; font-size: 16px; outline: none; background: transparent;
+        }
+        .input-area button, .input-area label {
+            background: transparent; color: #777; border: none; border-radius: 50%;
+            width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;
+            font-size: 22px; cursor: pointer; flex-shrink: 0;
+        }
+        #sendButton, #recordVoice {
+            background: var(--whatsapp-light-green); color: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            align-self: center; /* Alinea los botones al centro del input-area */
+            margin-bottom: calc(var(--safe-area-bottom) / 2); /* Ajuste por si el padding del padre no es suficiente */
+        }
+        #recordVoice.recording { background: #DC3545; animation: pulse 1s infinite alternate; }
+        @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.05); } }
+
+        /* Menú de Adjuntos - Adaptado a áreas seguras */
+        .attachment-menu {
+            position: absolute; 
+            bottom: calc(var(--input-area-height) + var(--safe-area-bottom) + 5px); 
+            left: calc(10px + var(--safe-area-left));
+            background: white; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); 
+            padding: 10px; display: grid; grid-template-columns: repeat(3, 1fr); 
+            gap: 10px; z-index: 90; opacity: 0; pointer-events: none; 
+            transition: all 0.2s ease-out; transform: translateY(10px);
+        }
+        .attachment-menu.active { opacity: 1; pointer-events: all; transform: translateY(0); }
+        .attachment-menu button { background: none; color: #333; border-radius: 10px; width: 70px; height: 70px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; border: none; }
+        .attachment-menu button .icon-wrapper { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 5px; color: white; font-size: 20px; }
+        #attachImageButton .icon-wrapper { background: #ef5350; }
+        #attachFileButton .icon-wrapper { background: #42a5f5; }
+
+        .backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.2); z-index: 89; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+        .backdrop.active { opacity: 1; pointer-events: all; }
+    </style>
+</head>
+<body>
+    <!-- Modal para que el usuario ingrese su alias y foto de perfil -->
+    <div class="modal" id="aliasModal">
+        <div class="modal-content">
+            <h3>Bienvenido a Chat-On</h3>
+            <p>Elige tu alias y una foto de perfil (opcional)</p>
+            <div class="profile-pic-upload">
+                <div class="avatar-preview" id="modalAvatarPreview"><i class="fa fa-user"></i></div>
+                <label for="profilePicInput"><i class="fa fa-camera"></i> Elegir foto</label>
+                <input type="file" id="profilePicInput" accept="image/jpeg, image/png" style="display: none;">
+            </div>
+            <input type="text" id="aliasInput" class="modal-input" placeholder="Ej: Juanito123" maxlength="15">
+            <button onclick="setAlias()">Entrar al Chat</button>
+        </div>
+    </div>
+
+    <!-- Cabecera de la aplicación de chat -->
+    <div id="chatHeader" class="chat-header">
+        <button class="back-button" id="backToPeersList"><i class="fa fa-arrow-left"></i></button>
+        <div class="profile-pic" id="activePeerProfilePic"><i class="fa fa-user"></i></div>
+        <div class="profile-info">
+            <h1 id="activePeerName">Usuarios en Línea</h1>
+            <div id="statusIndicator" class="online-status"></div>
+        </div>
+        <div class="header-icons"><i class="fa fa-users"></i></div>
+    </div>
+
+    <!-- Contenedor principal de la interfaz de chat -->
+    <div class="main-container">
+        <!-- Lista de usuarios conectados / peers -->
+        <div id="connectedPeersList" class="connected-peers-list">
+            <h4>Usuarios en Línea</h4>
+            <ul id="peerList"></ul>
+        </div>
+        <!-- Área donde se muestran los mensajes del chat -->
+        <div id="chat"></div>
+    </div>
+
+    <!-- Área de entrada de mensajes (siempre visible, pero interactuable según el chat activo) -->
+    <div class="input-area" id="inputArea">
+        <div class="message-input-group">
+            <button id="emojiButton"><i class="far fa-laugh"></i></button>
+            <textarea id="message" placeholder="Mensaje"></textarea>
+            <button id="attachButton"><i class="fa fa-paperclip"></i></button>
+        </div>
+        <button id="sendButton"><i class="fa fa-paper-plane"></i></button>
+        <button id="recordVoice" style="display: none;"><i class="fa fa-microphone"></i></button>
+    </div>
+
+    <!-- Menú de adjuntos (imágenes, archivos) -->
+    <div id="attachmentMenu" class="attachment-menu">
+        <button id="attachImageButton">
+            <span class="icon-wrapper"><i class="fa fa-image"></i></span>
+            <span>Imagen</span>
+        </button>
+        <input type="file" id="imageInput" accept="image/jpeg, image/png" style="display:none;">
+        <button id="attachFileButton">
+            <span class="icon-wrapper"><i class="fa fa-file-alt"></i></span>
+            <span>Documento</span>
+        </button>
+        <input type="file" id="fileInput" style="display:none;">
+    </div>
+    <!-- Fondo oscuro que aparece cuando el menú de adjuntos está activo -->
+    <div id="backdrop" class="backdrop"></div>
+
+    <!-- PeerJS Library para conexiones P2P -->
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <script>
+        // --- FUNCIÓN PARA AJUSTAR LA ALTURA DE LA APP EN MÓVILES ---
+        const setAppHeight = () => {
+            const doc = document.documentElement;
+            doc.style.setProperty('--app-height', `${window.innerHeight}px`);
+        };
+        window.addEventListener('resize', setAppHeight);
+        window.addEventListener('orientationchange', setAppHeight);
+        setAppHeight(); // Llamada inicial
+
+        // --- GLOBAL VARIABLES ---
+        const TRACKER_ID = 'mi-app-chat-super-secreta-xyz-p2p-v3'; // Unique ID for the network's main "tracker"
+        let peer; // PeerJS instance for the current user
+        let trackerPeer; // PeerJS instance if the current user is the tracker
+        let myAlias = localStorage.getItem('chatAlias') || ''; // User's alias
+        let myProfilePic = localStorage.getItem('userProfilePic') || ''; // User's profile picture in Base64
+        let isTracker = false; // Flag to indicate if current user is the tracker
+        let trackerConnection; // DataConnection to the tracker (if not the tracker)
+
+        let onlineUsers = {}; 
+        let peerConnections = {}; 
+        let activeChatPeerId = null; 
+
+        // DOM element references
+        const aliasModal = document.getElementById('aliasModal');
+        const aliasInput = document.getElementById('aliasInput');
+        const modalAvatarPreview = document.getElementById('modalAvatarPreview');
+        const profilePicInput = document.getElementById('profilePicInput');
+        const peerListContainer = document.getElementById('connectedPeersList');
+        const peerListUl = document.getElementById('peerList');
+        const chatDiv = document.getElementById('chat');
+        const messageInput = document.getElementById('message');
+        const sendButton = document.getElementById('sendButton');
+        const recordVoiceButton = document.getElementById('recordVoice');
+        const backToPeersListButton = document.getElementById('backToPeersList');
+        const activePeerNameDisplay = document.getElementById('activePeerName');
+        const activePeerProfilePic = document.getElementById('activePeerProfilePic');
+        const statusIndicator = document.getElementById('statusIndicator');
+        const attachButton = document.getElementById('attachButton');
+        const attachmentMenu = document.getElementById('attachmentMenu');
+        const backdrop = document.getElementById('backdrop');
+        const attachImageButton = document.getElementById('attachImageButton');
+        const imageInput = document.getElementById('imageInput');
+        const attachFileButton = document.getElementById('attachFileButton');
+        const fileInput = document.getElementById('fileInput');
+        const inputArea = document.getElementById('inputArea');
+
+        // --- INITIALIZATION & ALIAS MODAL ---
+        if (!myAlias) {
+            aliasModal.style.display = 'flex';
+        } else {
+            initApp();
+        }
+
+        profilePicInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return; 
+            const reader = new FileReader(); 
+            reader.onload = (event) => {
+                myProfilePic = event.target.result; 
+                modalAvatarPreview.innerHTML = `<img src="${myProfilePic}" alt="Profile Pic">`; 
+            };
+            reader.readAsDataURL(file); 
+        });
+
+        function setAlias() {
+            const alias = aliasInput.value.trim().replace(/\s+/g, '_'); 
+            if (alias.length >= 3 && alias.length <= 15) {
+                myAlias = alias;
+                localStorage.setItem('chatAlias', alias); 
+                localStorage.setItem('userProfilePic', myProfilePic); 
+                aliasModal.style.display = 'none'; 
+                initApp(); 
+            } else {
+                showToast('El alias debe tener entre 3 y 15 caracteres.', 'error'); 
+            }
+        }
+
+        // --- MAIN APP LOGIC ---
+        function initApp() {
+            onlineUsers[myAlias] = { 
+                profilePic: myProfilePic,
+                isTracker: false, 
+                chatHistory: {},
+                unreadCounts: {}
+            };
+            initMyPeer(); 
+            setupUIEventListeners(); 
+            updateLayout(); 
+        }
+
+        function initMyPeer() {
+            if (peer && !peer.destroyed) peer.destroy(); 
+            peer = new Peer(myAlias, { 
+                debug: 2, 
+                config: { 'iceServers': [{ 'urls': 'stun:stun.l.google.com:19302' }] } 
+            });
+
+            peer.on('open', (id) => {
+                console.log(`[PeerJS] Mi Peer personal está listo con alias: ${id}`);
+                addMessageToChat({ type: 'system', text: `¡Bienvenido, ${myAlias}! Buscando a otros usuarios...` });
+                connectToTracker();
+            });
+
+            peer.on('connection', (conn) => {
+                console.log(`[PeerJS] Recibí una conexión de chat directa de ${conn.peer}`);
+                setupChatConnection(conn);
+            });
+            
+            peer.on('error', (err) => {
+                console.error("[PeerJS] Error en PeerJS:", err);
+                if (err.type === 'unavailable-id') {
+                    showToast(`El alias '${myAlias}' ya está en uso. Por favor, recarga y elige otro.`, 'error');
+                    localStorage.clear(); 
+                    aliasModal.style.display = 'flex'; 
+                } else if (err.type === 'peer-unavailable' && err.message.includes(TRACKER_ID)) {
+                    console.log('[PeerJS] El Tracker no está disponible. Me convertiré en el Tracker.');
+                    becomeTracker();
+                } else {
+                     showToast(`Error de conexión: ${err.type}`, 'error');
+                }
+            });
+        }
+        
+        function connectToTracker() {
+            if (isTracker) return;
+            console.log('[Tracker] Intentando conectar con el Tracker en el ID:', TRACKER_ID);
+            trackerConnection = peer.connect(TRACKER_ID, { metadata: { alias: myAlias, profilePic: myProfilePic }, serialization: 'json' });
+
+            trackerConnection.on('open', () => {
+                console.log('[Tracker] Conectado al Tracker exitosamente.');
+                isTracker = false;
+            });
+            trackerConnection.on('data', handleTrackerData);
+            trackerConnection.on('close', () => {
+                showToast('El anfitrión se desconectó. Buscando uno nuevo...', 'info');
+                for (const alias in onlineUsers) {
+                    if (alias !== myAlias) {
+                        delete onlineUsers[alias];
+                    }
+                }
+                renderOnlineUsers(); 
+                setTimeout(connectToTracker, 2000 + Math.random() * 2000);
+            });
+            trackerConnection.on('error', (err) => {
+                console.error("[Tracker] Error al conectar con el Tracker:", err);
+                if (err.type === 'peer-unavailable') {
+                    console.log('[Tracker] Tracker no encontrado, este peer intentará convertirse en el Tracker.');
+                    becomeTracker();
+                } else {
+                    showToast(`Error con el Tracker: ${err.type}`, 'error');
+                }
+            });
+        }
+        
+        function becomeTracker() {
+            if (isTracker) return; 
+            isTracker = true;
+            
+            trackerPeer = new Peer(TRACKER_ID, { debug: 2 });
+            trackerPeer.on('open', () => {
+                console.log(`[Tracker] ¡SOY EL TRACKER! Escuchando en: ${TRACKER_ID}`);
+                showToast('Te has convertido en el anfitrión de la red.', 'success');
+                onlineUsers[myAlias].isTracker = true;
+                renderOnlineUsers(); 
+            });
+
+            trackerPeer.on('connection', (conn) => {
+                const newUserAlias = conn.metadata.alias;
+                console.log(`[Tracker] Nuevo usuario conectado: ${newUserAlias}`);
+                
+                conn.on('open', () => {
+                    conn.send({ type: 'user-list', users: getPublicOnlineUsers() });
+                    onlineUsers[newUserAlias] = { 
+                        profilePic: conn.metadata.profilePic, 
+                        isTracker: false,
+                        chatHistory: {},
+                        unreadCounts: {}
+                    };
+                    broadcastToAll({ type: 'user-joined', user: { alias: newUserAlias, data: { profilePic: onlineUsers[newUserAlias].profilePic, isTracker: false } } });
+                    renderOnlineUsers(); 
+                });
+
+                conn.on('close', () => {
+                    console.log(`[Tracker] Usuario desconectado: ${newUserAlias}`);
+                    delete onlineUsers[newUserAlias];
+                    broadcastToAll({ type: 'user-left', alias: newUserAlias });
+                    renderOnlineUsers(); 
+                });
+
+                conn.on('error', (err) => {
+                    console.error(`[Tracker] Error en conexión con ${newUserAlias}:`, err);
+                });
+            });
+
+            trackerPeer.on('error', (err) => {
+                console.error("[Tracker] Error en el Peer del Tracker:", err);
+                if (err.type === 'unavailable-id') {
+                    showToast('Otro Tracker ya está activo. Por favor, reinicia la aplicación.', 'error');
+                    isTracker = false; 
+                } else {
+                     showToast(`Error en el Tracker: ${err.type}`, 'error');
+                }
+            });
+        }
+
+        function getPublicOnlineUsers() {
+            const publicUsers = {};
+            for (const alias in onlineUsers) {
+                publicUsers[alias] = {
+                    profilePic: onlineUsers[alias].profilePic,
+                    isTracker: onlineUsers[alias].isTracker
+                };
+            }
+            return publicUsers;
+        }
+        
+        function broadcastToAll(data) {
+             Object.values(trackerPeer.connections).flat().forEach(conn => {
+                if (conn.open) { 
+                    conn.send(data);
+                }
+            });
+        }
+        
+        function handleTrackerData(data) {
+            console.log('[Tracker Data] Recibido:', data);
+            switch(data.type) {
+                case 'user-list':
+                    for (const alias in data.users) {
+                        if (alias === myAlias) {
+                            onlineUsers[alias] = { ...onlineUsers[alias], ...data.users[alias] };
+                            onlineUsers[alias].isTracker = data.users[alias].isTracker;
+                        } else {
+                            onlineUsers[alias] = { 
+                                ...onlineUsers[alias], 
+                                ...data.users[alias],
+                                chatHistory: (onlineUsers[alias] && onlineUsers[alias].chatHistory) || {},
+                                unreadCounts: (onlineUsers[alias] && onlineUsers[alias].unreadCounts) || {}
+                            };
+                        }
+                    }
+                    for (const alias in onlineUsers) {
+                        if (!(alias in data.users) && alias !== myAlias) {
+                            delete onlineUsers[alias];
+                            showToast(`${alias} se ha ido.`);
+                        }
+                    }
+                    break;
+                case 'user-joined':
+                    if (!(data.user.alias in onlineUsers)) {
+                        onlineUsers[data.user.alias] = { 
+                            ...data.user.data, 
+                            chatHistory: {},
+                            unreadCounts: {}
+                        };
+                        showToast(`${data.user.alias} se ha unido.`);
+                    } else {
+                        onlineUsers[data.user.alias].profilePic = data.user.data.profilePic;
+                        onlineUsers[data.user.alias].isTracker = data.user.data.isTracker;
+                    }
+                    break;
+                case 'user-left':
+                    if (data.alias in onlineUsers && data.alias !== myAlias) {
+                        delete onlineUsers[data.alias];
+                        showToast(`${data.alias} se ha ido.`);
+                    }
+                    break;
+            }
+            renderOnlineUsers(); 
+        }
+
+        // --- UI RENDERING AND CHAT MANAGEMENT ---
+        function renderOnlineUsers() {
+            peerListUl.innerHTML = ''; 
+
+            const peersToShow = Object.entries(onlineUsers)
+                .filter(([alias, data]) => alias !== myAlias) 
+                .sort(([aliasA], [aliasB]) => aliasA.localeCompare(aliasB));
+
+            const myLi = document.createElement('li');
+            myLi.style.background = '#f1f1f1';
+            myLi.style.cursor = 'default';
+            const myAvatarImg = myProfilePic ? `<img src="${myProfilePic}" alt="${myAlias}">` : `<i class="fa fa-user"></i>`;
+            let myStatusText = 'En línea';
+            if (onlineUsers[myAlias] && onlineUsers[myAlias].isTracker) {
+                myStatusText = 'Anfitrión (Tú)';
+            }
+            myLi.innerHTML = `
+                <div class="avatar">${myAvatarImg}</div>
+                <div class="peer-info">
+                    <span class="peer-name">${myAlias} (Tú)</span>
+                    <span class="peer-status-text online">${myStatusText}</span>
+                </div>
+            `;
+            peerListUl.appendChild(myLi);
+
+            if (peersToShow.length === 0) {
+                peerListUl.innerHTML += '<li style="padding: 15px; text-align: center; color: #888;">No hay otros usuarios en línea.</li>';
+                updateLayout();
+                return;
+            }
+
+            peersToShow.forEach(([alias, data]) => {
+                const li = document.createElement('li');
+                li.dataset.peerId = alias;
+
+                if (alias === activeChatPeerId) li.classList.add('active');
+
+                const avatarImg = data.profilePic ? `<img src="${data.profilePic}" alt="${alias}">` : `<i class="fa fa-user"></i>`;
+                let statusText = 'En línea';
+                let statusClass = 'online';
+                if (data.isTracker) {
+                    statusText = 'Anfitrión';
+                    statusClass = 'tracker-indicator';
+                }
+
+                const unreadCount = (onlineUsers[myAlias].unreadCounts && onlineUsers[myAlias].unreadCounts[alias]) || 0;
+                const unreadBadge = unreadCount > 0 ? `<span class="unread-badge">${unreadCount}</span>` : '';
+
+                li.innerHTML = `
+                    <div class="avatar">${avatarImg}</div>
+                    <div class="peer-info">
+                        <span class="peer-name">${alias}</span>
+                        <span class="peer-status-text ${statusClass}">${statusText}</span>
+                    </div>
+                    ${unreadBadge}
+                `;
+                
+                li.onclick = () => startChatWith(alias);
+                peerListUl.appendChild(li);
+            });
+            updateLayout(); 
+        }
+        
+        function startChatWith(peerAlias) {
+            if (peerAlias === myAlias) return;
+
+            activeChatPeerId = peerAlias;
+            chatDiv.innerHTML = ''; 
+
+            if (onlineUsers[myAlias].chatHistory[peerAlias]) {
+                onlineUsers[myAlias].chatHistory[peerAlias].forEach(msg => addMessageToChat(msg, msg.sender === myAlias ? 'self' : 'remote'));
+                onlineUsers[myAlias].unreadCounts[peerAlias] = 0;
+            } else {
+                onlineUsers[myAlias].chatHistory[peerAlias] = [];
+                onlineUsers[myAlias].unreadCounts[peerAlias] = 0;
+            }
+
+            if (!peerConnections[peerAlias] || !peerConnections[peerAlias].open) {
+                console.log(`[Chat] Iniciando conexión de chat con ${peerAlias}...`);
+                const conn = peer.connect(peerAlias, { metadata: { alias: myAlias, profilePic: myProfilePic }, serialization: 'json' });
+                setupChatConnection(conn); 
+            } else {
+                console.log(`[Chat] Conexión activa con ${peerAlias}, no es necesario reconectar.`);
+            }
+
+            addMessageToChat({ type: 'system', text: `Has iniciado un chat con ${peerAlias}.` });
+            updateLayout(); 
+            renderOnlineUsers();
+        }
+        
+        function setupChatConnection(conn) {
+            peerConnections[conn.peer] = conn;
+
+            conn.on('data', (data) => {
+                if (data.type === 'network-peers-update') {
+                    console.warn(`[DataConnection] Received network-peers-update via direct chat from ${data.sender}. Ignoring.`);
+                } else {
+                    handleChatMessage(data);
+                }
+            });
+
+            conn.on('close', () => {
+                showToast(`${conn.peer} se ha desconectado del chat.`, 'info');
+                delete peerConnections[conn.peer]; 
+                if (activeChatPeerId === conn.peer) activeChatPeerId = null; 
+                updateLayout(); 
+                renderOnlineUsers(); 
+            });
+
+            conn.on('error', (err) => {
+                console.error(`[DataConnection] Error en conexión con ${conn.peer}:`, err);
+                showToast(`Error en el chat con ${conn.peer}: ${err.type}`, 'error');
+                if (peerConnections[conn.peer]) {
+                    peerConnections[conn.peer].close();
+                }
+            });
+        }
+        
+        function sendMessage() {
+            const text = messageInput.value.trim();
+            if (!text || !activeChatPeerId) {
+                if (!activeChatPeerId) showToast('Selecciona un usuario para chatear primero.', 'info');
+                return;
+            }
+            const messageData = { type: 'text', sender: myAlias, text };
+            sendDataToPeer(messageData);
+
+            if (!onlineUsers[myAlias].chatHistory[activeChatPeerId]) {
+                onlineUsers[myAlias].chatHistory[activeChatPeerId] = [];
+            }
+            onlineUsers[myAlias].chatHistory[activeChatPeerId].push(messageData);
+
+            addMessageToChat(messageData, 'self');
+            messageInput.value = '';
+            checkSendRecordButtonVisibility();
+            messageInput.style.height = 'auto'; // Reset height after sending
+        }
+
+        function sendDataToPeer(data) {
+             const conn = peerConnections[activeChatPeerId];
+             if (conn && conn.open) {
+                 conn.send(data);
+             } else {
+                 showToast(`No se pudo enviar. Conexión con ${activeChatPeerId} no activa o cerrada. Intentando reconectar...`, 'error');
+                 const newConn = peer.connect(activeChatPeerId, { metadata: { alias: myAlias, profilePic: myProfilePic }, serialization: 'json' });
+                 setupChatConnection(newConn);
+             }
+        }
+        
+        function addMessageToChat(data, direction = 'system') {
+            const div = document.createElement('div');
+            div.className = `message ${direction}`;
+
+            if(direction !== 'system'){
+                if (direction === 'remote') {
+                    const senderSpan = document.createElement('span');
+                    senderSpan.className = 'sender-name';
+                    senderSpan.textContent = data.sender;
+                    div.appendChild(senderSpan);
+                }
+                if(data.type === 'text'){
+                    const textSpan = document.createElement('span');
+                    textSpan.textContent = data.text;
+                    div.appendChild(textSpan);
+                } else if(data.type === 'image'){
+                     const img = document.createElement('img');
+                     img.src = data.file;
+                     img.alt = "Imagen enviada";
+                     div.appendChild(img);
+                } else if(data.type === 'file'){
+                     const link = document.createElement('a');
+                     link.href = data.file;
+                     link.download = data.name;
+                     link.className = 'file-download-link';
+                     link.innerHTML = `<i class="fa fa-file-alt"></i><span>${data.name}</span>`;
+                     div.appendChild(link);
+                }
+                const footer = document.createElement('div');
+                footer.className = 'message-footer';
+                footer.textContent = new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+                div.appendChild(footer);
+            } else {
+                 div.textContent = data.text;
+            }
+            chatDiv.appendChild(div);
+            setTimeout(() => chatDiv.scrollTop = chatDiv.scrollHeight, 50);
+        }
+
+        function handleChatMessage(data) {
+            if (activeChatPeerId === data.sender) {
+                addMessageToChat(data, 'remote');
+            } else {
+                if (!onlineUsers[data.sender]) {
+                    onlineUsers[data.sender] = { profilePic: data.profilePic || '', isTracker: false, chatHistory: {}, unreadCounts: {} };
+                }
+                
+                if (!onlineUsers[myAlias].chatHistory[data.sender]) {
+                    onlineUsers[myAlias].chatHistory[data.sender] = [];
+                }
+                onlineUsers[myAlias].chatHistory[data.sender].push(data); 
+                
+                onlineUsers[myAlias].unreadCounts[data.sender] = (onlineUsers[myAlias].unreadCounts[data.sender] || 0) + 1;
+                
+                showToast(`${data.sender} te envió un mensaje.`);
+                renderOnlineUsers();
+            }
+        }
+
+
+        // --- UI LOGIC (EVENTS AND LAYOUT) ---
+        function setupUIEventListeners() {
+            sendButton.onclick = sendMessage; 
+            messageInput.onkeypress = (e) => { 
+                if (e.key === 'Enter' && !e.shiftKey) { 
+                    e.preventDefault(); 
+                    sendMessage(); 
+                }
+            };
+            messageInput.addEventListener('input', () => { // Auto-resize textarea
+                messageInput.style.height = 'auto';
+                messageInput.style.height = `${messageInput.scrollHeight}px`;
+            });
+            backToPeersListButton.onclick = () => { 
+                activeChatPeerId = null; 
+                updateLayout(); 
+                renderOnlineUsers(); 
+            };
+            
+            attachButton.onclick = (e) => { 
+                e.stopPropagation(); 
+                attachmentMenu.classList.toggle('active'); 
+                backdrop.classList.toggle('active'); 
+            };
+            backdrop.onclick = () => { 
+                attachmentMenu.classList.remove('active'); 
+                backdrop.classList.remove('active'); 
+            };
+            
+            attachImageButton.onclick = () => imageInput.click();
+            attachFileButton.onclick = () => fileInput.click();
+
+            imageInput.onchange = (e) => handleFile(e.target.files[0], 'image');
+            fileInput.onchange = (e) => handleFile(e.target.files[0], 'file');
+
+            messageInput.oninput = () => checkSendRecordButtonVisibility();
+            checkSendRecordButtonVisibility(); 
+        }
+        
+        function handleFile(file, type){
+             if(!file) return;
+             if(!activeChatPeerId) {
+                showToast('Selecciona un chat para enviar un archivo.', 'error');
+                return;
+             }
+             const reader = new FileReader();
+             reader.onload = (e) => {
+                 const messageData = { type, sender: myAlias, file: e.target.result, name: file.name };
+                 sendDataToPeer(messageData);
+                 addMessageToChat(messageData, 'self');
+                if (!onlineUsers[myAlias].chatHistory[activeChatPeerId]) {
+                    onlineUsers[myAlias].chatHistory[activeChatPeerId] = [];
+                }
+                onlineUsers[myAlias].chatHistory[activeChatPeerId].push(messageData);
+             };
+             reader.readAsDataURL(file); 
+             attachmentMenu.classList.remove('active'); 
+             backdrop.classList.remove('active'); 
+        }
+
+        function checkSendRecordButtonVisibility() {
+            const hasText = messageInput.value.trim().length > 0;
+            sendButton.style.display = hasText ? 'flex' : 'none';
+            recordVoiceButton.style.display = hasText ? 'none' : 'flex'; 
+        }
+
+        function updateLayout() {
+            const isChatView = !!activeChatPeerId; 
+            
+            const isInputDisabled = !isChatView;
+            inputArea.style.opacity = isInputDisabled ? '0.6' : '1';
+            inputArea.style.pointerEvents = isInputDisabled ? 'none' : 'auto';
+            messageInput.placeholder = isInputDisabled ? 'Selecciona un chat para escribir' : 'Mensaje';
+
+            peerListContainer.classList.toggle('hidden-left', isChatView);
+            backToPeersListButton.style.display = isChatView ? 'block' : 'none';
+            
+            if (isChatView) {
+                const peerData = onlineUsers[activeChatPeerId] || {};
+                activePeerNameDisplay.textContent = activeChatPeerId;
+                activePeerProfilePic.innerHTML = peerData.profilePic ? `<img src="${peerData.profilePic}" alt="${activeChatPeerId}">` : `<i class="fa fa-user"></i>`;
+                statusIndicator.textContent = 'En línea'; 
+                statusIndicator.classList.add('active');
+            } else {
+                activePeerNameDisplay.textContent = 'Usuarios en Línea';
+                activePeerProfilePic.innerHTML = `<i class="fa fa-users"></i>`; 
+                const userCount = Object.keys(onlineUsers).filter(alias => alias !== myAlias).length;
+                statusIndicator.textContent = `${userCount} usuario(s) conectado(s)`; 
+                statusIndicator.classList.add('active');
+            }
+        }
+        
+        function showToast(text, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = 'message system'; 
+            toast.textContent = text;
+            
+            // Se calcula la posición del toast dinámicamente sobre el área de entrada
+            const inputAreaRect = inputArea.getBoundingClientRect();
+            const bottomPosition = window.innerHeight - inputAreaRect.top + 10;
+
+            toast.style.cssText = `
+                position: fixed; 
+                bottom: ${bottomPosition}px; 
+                left: 50%;
+                transform: translateX(-50%); 
+                z-index: 2000;
+                opacity: 0; 
+                transition: opacity 0.3s ease, bottom 0.3s ease; 
+                max-width: 90%;
+                background-color: ${type === 'success' ? '#d4edda' : (type === 'error' ? '#f8d7da' : '#e1f2fb')};
+                color: ${type === 'success' ? '#155724' : (type === 'error' ? '#721c24' : '#0c5460')};
+                padding: 10px 15px; 
+                border-radius: 8px; 
+                box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            `;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.style.opacity = '1', 10); 
+            setTimeout(() => {
+                toast.style.opacity = '0'; 
+                toast.addEventListener('transitionend', () => toast.remove()); 
+            }, 3500); 
+        }
+        
+        window.addEventListener('load', updateLayout);
+    </script>
+</body>
+</html>
+
