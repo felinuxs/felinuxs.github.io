@@ -3,11 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PUNTO</title> <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='10' fill='%233B82F6'/%3E%3C/svg%3E" type="image/svg+xml">
+    <title>PUNTO</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='10' fill='%233B82F6'/%3E%3C/svg%3E" type="image/svg+xml">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+    <meta name="theme-color" content="#3B82F6"/>
+
     <style>
         /* Basic styles and theme variables */
         body {
@@ -96,7 +102,8 @@
                 <span id="alias-initial"></span>
             </div>
             <div>
-                 <h1 class="font-bold text-lg">PUNTO</h1> <p id="currentAlias" class="text-xs text-gray-500 dark:text-gray-400"></p>
+                 <h1 class="font-bold text-lg">PUNTO</h1>
+                 <p id="currentAlias" class="text-xs text-gray-500 dark:text-gray-400"></p>
             </div>
         </div>
         <button onclick="toggleDarkMode()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition">
@@ -179,6 +186,19 @@
         if (isDarkMode) {
             document.documentElement.classList.add('dark');
         }
+
+        // PWA: Register Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(registration => {
+                        console.log('Service Worker registered with scope:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.error('Service Worker registration failed:', error);
+                    });
+            });
+        }
         
         // --- Core Functions ---
 
@@ -231,7 +251,7 @@
                 }
                 addStatusMessage(`Conectado con ${conn.peer}`);
                 
-                // *** CHANGE: Fade out welcome message on first connection ***
+                // Fade out welcome message on first connection
                 if (welcomeMessage && welcomeMessage.style.display !== 'none') {
                     welcomeMessage.classList.add('opacity-0');
                     setTimeout(() => {
@@ -260,7 +280,7 @@
             const messageWrapper = document.createElement('div');
             messageWrapper.className = `flex items-end w-full mt-2 space-x-3 max-w-lg ${isSelf ? 'ml-auto justify-end' : ''}`;
             
-            // *** CHANGE: Updated bubble colors and styles for Google Messages look ***
+            // Updated bubble colors and styles for Google Messages look
             const bubbleStyle = isSelf 
                 ? 'bg-blue-600 dark:bg-[#a8c7fa] text-white dark:text-[#202124] rounded-t-2xl rounded-l-2xl' 
                 : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-t-2xl rounded-r-2xl';
@@ -277,6 +297,11 @@
             messageWrapper.innerHTML = messageContent;
             chat.appendChild(messageWrapper);
             chat.scrollTop = chat.scrollHeight;
+
+            // PWA: Show notification for incoming messages (if not self and app not in foreground)
+            if (!isSelf && document.visibilityState === 'hidden') {
+                showSystemNotification(data.sender, data.type === 'text' ? data.content : `[${data.type}]`);
+            }
         }
 
         function renderMessageContent(data, isSelf) {
@@ -407,6 +432,16 @@
             }
         });
 
+        // PWA: Intercept back button for history management (simple example)
+        window.addEventListener('popstate', (event) => {
+            // This is a basic example. For a full-fledged SPA with history
+            // management, you'd use a routing library or manage states more explicitly.
+            // For a chat app, preventing a full page unload on back might be enough.
+            // If you had different "views" within the single page, you'd navigate those here.
+            console.log('Popstate event triggered. App should remain open.');
+            // You might want to navigate to a "previous" chat or clear a temporary state here.
+        });
+
         // --- Helper & UI Functions ---
         
         function addStatusMessage(text) {
@@ -456,6 +491,30 @@
                 notification.classList.remove('toast-in');
                 notification.classList.add('toast-out');
             }, 3000);
+        }
+
+        // PWA: System-level notifications
+        function showSystemNotification(title, body) {
+            if (Notification.permission === 'granted') {
+                navigator.serviceWorker.ready.then(registration => {
+                    registration.showNotification(title, {
+                        body: body,
+                        icon: '/icons/icon-192x192.png', // Icon for the notification
+                        badge: '/icons/badge.png', // Small badge icon for Android
+                        vibrate: [200, 100, 200], // Vibration pattern
+                        tag: 'new-message', // Groups similar notifications
+                        renotify: true // Re-notify if a new message comes from the same tag
+                    });
+                });
+            } else if (Notification.permission !== 'denied') {
+                Notification.requestPermission().then(permission => {
+                    if (permission === 'granted') {
+                        showSystemNotification(title, body);
+                    } else {
+                        console.warn('Notification permission denied.');
+                    }
+                });
+            }
         }
 
         function toggleAudio(audioId, button) {
