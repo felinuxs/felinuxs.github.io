@@ -1,17 +1,26 @@
 const CACHE_NAME = 'punto-chat-cache-v1';
 const urlsToCache = [
-    './',
-    './index.html', // assuming index.html is the main file for PWA (or punto.html in this case)
+    '/',
+    '/index.html',
+    '/styles.css', // If you extract CSS to a separate file
+    '/manifest.json',
     'https://cdn.tailwindcss.com',
     'https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js',
     'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
-    'https://fonts.gstatic.com', // Font assets might be fetched from here
-    // Placeholder icons
-    'https://placehold.co/192x192/3B82F6/FFFFFF?text=PUNTO',
-    'https://placehold.co/512x512/3B82F6/FFFFFF?text=PUNTO'
+    'https://fonts.gstatic.com/s/inter/v13/UcC73FpYwAHfFG3pY-4DLAlbhw.woff2', // Example for Inter font
+    // Add all your icon paths
+    '/icons/icon-72x72.png',
+    '/icons/icon-96x96.png',
+    '/icons/icon-128x128.png',
+    '/icons/icon-144x144.png',
+    '/icons/icon-152x152.png',
+    '/icons/icon-192x192.png',
+    '/icons/icon-384x384.png',
+    '/icons/icon-512x512.png',
+    '/icons/apple-touch-icon.png',
+    '/icons/badge.png' // If you have a separate badge icon
 ];
 
-// Install event: cache app shell
 self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME)
@@ -22,23 +31,6 @@ self.addEventListener('install', (event) => {
     );
 });
 
-// Activate event: clean up old caches
-self.addEventListener('activate', (event) => {
-    event.waitUntil(
-        caches.keys().then((cacheNames) => {
-            return Promise.all(
-                cacheNames.map((cacheName) => {
-                    if (cacheName !== CACHE_NAME) {
-                        console.log('Deleting old cache:', cacheName);
-                        return caches.delete(cacheName);
-                    }
-                })
-            );
-        })
-    );
-});
-
-// Fetch event: serve from cache, then network (Cache First strategy)
 self.addEventListener('fetch', (event) => {
     event.respondWith(
         caches.match(event.request)
@@ -47,31 +39,57 @@ self.addEventListener('fetch', (event) => {
                 if (response) {
                     return response;
                 }
-                // No cache hit - fetch from network
-                return fetch(event.request).then((networkResponse) => {
-                    // Check if we received a valid response
-                    if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
-                        return networkResponse;
-                    }
-
-                    // IMPORTANT: Clone the response. A response is a stream
-                    // and can only be consumed once. We must clone it so that
-                    // we can consume one in the cache and one in the browser.
-                    const responseToCache = networkResponse.clone();
-
-                    caches.open(CACHE_NAME).then((cache) => {
-                        cache.put(event.request, responseToCache);
-                    });
-
-                    return networkResponse;
-                });
-            })
-            .catch(() => {
-                // This catch is for when the network request also fails
-                // You could return an offline page here
-                console.log('Fetch failed, serving offline content.');
-                // Example: return caches.match('/offline.html');
+                // If not in cache, fetch from network
+                return fetch(event.request);
             })
     );
 });
 
+self.addEventListener('activate', (event) => {
+    const cacheWhitelist = [CACHE_NAME];
+    event.waitUntil(
+        caches.keys().then((cacheNames) => {
+            return Promise.all(
+                cacheNames.map((cacheName) => {
+                    if (cacheWhitelist.indexOf(cacheName) === -1) {
+                        return caches.delete(cacheName);
+                    }
+                })
+            );
+        })
+    );
+});
+
+// PWA: Handle push notifications (requires a backend for actual push)
+// For local notifications (like a message coming in while app is backgrounded),
+// we use `registration.showNotification` from the main thread.
+// Real push notifications from a server would use 'push' event.
+self.addEventListener('push', (event) => {
+    const data = event.data.json();
+    console.log('Push received:', data);
+    const title = data.title || 'PUNTO Chat';
+    const options = {
+        body: data.body || 'Nuevo mensaje',
+        icon: '/icons/icon-192x192.png',
+        badge: '/icons/badge.png',
+        tag: data.tag || 'message',
+        vibrate: [200, 100, 200]
+    };
+    event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener('notificationclick', (event) => {
+    event.notification.close();
+    event.waitUntil(
+        clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+            for (const client of clientList) {
+                if (client.url.includes(self.location.origin) && 'focus' in client) {
+                    return client.focus();
+                }
+            }
+            if (clients.openWindow) {
+                return clients.openWindow('/');
+            }
+        })
+    );
+});
