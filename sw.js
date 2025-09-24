@@ -4,7 +4,7 @@ const CACHE_NAME = 'gestor-empresarial-v1.2';
 // Lista de archivos que se deben cachear para que la app funcione offline
 const urlsToCache = [
   '/',
-  'aaaaa.html'
+  'index.html'
   // Nota: Los scripts y librerías externas (jspdf, etc.) se cargarán desde la red.
   // Si quisieras que funcionen 100% offline, también deberían ser cacheados.
 ];
