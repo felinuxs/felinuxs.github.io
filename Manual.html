@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual - Gestor Empresarial Móvil</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+        
+        body {
+            background: #f8f9fa;
+            color: #343a40;
+            line-height: 1.6;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            color: #3498db;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        
+        h2 {
+            color: #2980b9;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            margin: 25px 0 15px;
+        }
+        
+        h3 {
+            color: #3498db;
+            margin: 20px 0 10px;
+        }
+        
+        h4 {
+            color: #2c3e50;
+            margin: 15px 0 8px;
+        }
+        
+        p {
+            margin-bottom: 15px;
+        }
+        
+        ul, ol {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+        
+        li {
+            margin-bottom: 8px;
+        }
+        
+        .problem-solution {
+            background: #f8f9fa;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 0 5px 5px 0;
+        }
+        
+        .problem {
+            font-weight: bold;
+            color: #e74c3c;
+        }
+        
+        .solution {
+            color: #27ae60;
+        }
+        
+        .tip {
+            background: #e8f4fd;
+            border-left: 4px solid #3498db;
+            padding: 12px;
+            margin: 12px 0;
+            border-radius: 0 5px 5px 0;
+        }
+        
+        .warning {
+            background: #fde8e8;
+            border-left: 4px solid #e74c3c;
+            padding: 12px;
+            margin: 12px 0;
+            border-radius: 0 5px 5px 0;
+        }
+        
+        .step {
+            background: #f0f8f0;
+            border-left: 4px solid #27ae60;
+            padding: 10px 15px;
+            margin: 10px 0;
+            border-radius: 0 5px 5px 0;
+        }
+        
+        .icon {
+            font-size: 1.2em;
+            margin-right: 5px;
+        }
+        
+        .nav-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .nav-tab {
+            padding: 10px 20px;
+            background: #f1f1f1;
+            border: 1px solid #ddd;
+            border-bottom: none;
+            cursor: pointer;
+            margin-right: 5px;
+            border-radius: 5px 5px 0 0;
+        }
+        
+        .nav-tab.active {
+            background: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+        }
+        
+        .back-to-top {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 1.5em;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            display: none;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .nav-tab {
+                padding: 8px 15px;
+                font-size: 0.9em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>📖 Manual de Usuario - Gestor Empresarial Móvil</h1>
+    
+    <div class="nav-tabs">
+        <div class="nav-tab active" onclick="showTab('manual')">Manual de Usuario</div>
+        <div class="nav-tab" onclick="showTab('problemas')">Solución de Problemas</div>
+        <div class="nav-tab" onclick="showTab('soporte')">Soporte Técnico</div>
+    </div>
+    
+    <button class="back-to-top" onclick="scrollToTop()">↑</button>
+    
+    <div class="container">
+        <!-- MANUAL DE USUARIO -->
+        <div id="manual" class="tab-content active">
+            <div class="section">
+                <h2>🚀 Instalación de la Aplicación</h2>
+                
+                <h3>Instalación como PWA (Aplicación Web Progresiva)</h3>
+                <div class="step">
+                    <span class="icon">1.</span> Abre la aplicación en tu navegador (Chrome, Safari, Edge, etc.)
+                </div>
+                <div class="step">
+                    <span class="icon">2.</span> Busca el ícono de instalación en la barra de direcciones o en el menú
+                </div>
+                <div class="step">
+                    <span class="icon">3.</span> Haz clic en "Instalar" o "Agregar a pantalla de inicio"
+                </div>
+                <div class="step">
+                    <span class="icon">4.</span> Confirma la instalación cuando te lo solicite
+                </div>
+                <div class="step">
+                    <span class="icon">5.</span> La app aparecerá en tu pantalla de inicio como una aplicación nativa
+                </div>
+                
+                <h3>Instalación Manual</h3>
+                <ul>
+                    <li><strong>Android</strong>: Menú → "Agregar a pantalla de inicio"</li>
+                    <li><strong>iOS</strong>: Compartir → "Agregar a pantalla de inicio"</li>
+                    <li><strong>Desktop</strong>: Click en el ícono de instalación en la barra de direcciones</li>
+                </ul>
+            </div>
+            
+            <div class="section">
+                <h2>📋 Primeros Pasos</h2>
+                
+                <h3>Configuración Inicial</h3>
+                <div class="step">
+                    <span class="icon">1.</span> Abre la aplicación por primera vez
+                </div>
+                <div class="step">
+                    <span class="icon">2.</span> Ve a <strong>Configuración</strong> ⚙️
+                </div>
+                <div class="step">
+                    <span class="icon">3.</span> Configura los datos de tu empresa:
+                    <ul>
+                        <li>Nombre de la empresa</li>
+                        <li>RIF</li>
+                        <li>Teléfono y dirección</li>
+                    </ul>
+                </div>
+                <div class="step">
+                    <span class="icon">4.</span> Establece el tipo de cambio actual
+                </div>
+                <div class="step">
+                    <span class="icon">5.</span> Guarda la configuración
+                </div>
+                
+                <h3>Agregar Productos al Inventario</h3>
+                <div class="step">
+                    <span class="icon">1.</span> Ve a <strong>Inventario</strong> 📦
+                </div>
+                <div class="step">
+                    <span class="icon">2.</span> Haz clic en "+ Agregar Producto"
+                </div>
+                <div class="step">
+                    <span class="icon">3.</span> Completa la información:
+                    <ul>
+                        <li>Nombre del producto</li>
+                        <li>Precio en USD</li>
+                        <li>Stock inicial</li>
+                    </ul>
+                </div>
+                <div class="step">
+                    <span class="icon">4.</span> El precio en Bs se calculará automáticamente
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>⚙️ Funcionalidades Principales</h2>
+                
+                <h3>Realizar una Venta 🛒</h3>
+                <div class="step">
+                    <span class="icon">1.</span> Ve a la sección <strong>Ventas</strong>
+                </div>
+                <div class="step">
+                    <span class="icon">2.</span> Busca y selecciona un cliente
+                </div>
+                <div class="step">
+                    <span class="icon">3.</span> Agrega productos escaneando o buscando
+                </div>
+                <div class="step">
+                    <span class="icon">4.</span> Ajusta cantidades si es necesario
+                </div>
+                <div class="step">
+                    <span class="icon">5.</span> Selecciona método de pago
+                </div>
+                <div class="step">
+                    <span class="icon">6.</span> Finaliza la venta
+                </div>
+                <div class="step">
+                    <span class="icon">7.</span> Genera e imprime la factura
+                </div>
+                
+                <h3>Gestión de Clientes 👥</h3>
+                <ul>
+                    <li><strong>Agregar nuevo cliente</strong>: Click en "+ Agregar Cliente"</li>
+                    <li><strong>Buscar cliente</strong>: Usa la barra de búsqueda</li>
+                    <li><strong>Editar cliente</strong>: Click en "Editar" junto al cliente</li>
+                </ul>
+                
+                <h3>Control de Gastos 💸</h3>
+                <div class="step">
+                    <span class="icon">1.</span> Ve a <strong>Gastos</strong>
+                </div>
+                <div class="step">
+                    <span class="icon">2.</span> Registra cada gasto con:
+                    <ul>
+                        <li>Descripción</li>
+                        <li>Categoría</li>
+                        <li>Monto</li>
+                        <li>Fecha</li>
+                    </ul>
+                </div>
+                <div class="step">
+                    <span class="icon">3.</span> Filtra por mes para ver resúmenes
+                </div>
+                
+                <h3>Tipo de Cambio 💵</h3>
+                <ul>
+                    <li>Actualiza diariamente el tipo de cambio</li>
+                    <li>Ve el historial de cambios</li>
+                    <li>Los precios se actualizan automáticamente</li>
+                </ul>
+            </div>
+            
+            <div class="section">
+                <h2>🚀 Funciones Avanzadas</h2>
+                
+                <h3>Reportes y Análisis 📊</h3>
+                <ul>
+                    <li><strong>Ventas diarias</strong>: Usa el calendario para ver ventas por día</li>
+                    <li><strong>Reportes generales</strong>: Genera reportes por fechas específicas</li>
+                    <li><strong>Exportación</strong>: Exporta datos en Excel o PDF</li>
+                </ul>
+                
+                <h3>Facturación Térmica</h3>
+                <ul>
+                    <li>Configura para impresoras de 80mm</li>
+                    <li>Múltiples formatos de exportación</li>
+                    <li>Envío por email o SMS</li>
+                </ul>
+                
+                <h3>Prevención de Cierre</h3>
+                <ul>
+                    <li>Activa en Configuración para evitar cierres accidentales</li>
+                    <li>Ideal para sesiones largas de trabajo</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- SOLUCIÓN DE PROBLEMAS -->
+        <div id="problemas" class="tab-content">
+            <div class="section">
+                <h2>🔧 Problemas de Instalación</h2>
+                
+                <div class="problem-solution">
+                    <div class="problem">"No aparece la opción de instalar"</div>
+                    <div class="solution">
+                        <strong>Solución:</strong>
+                        <ol>
+                            <li>Verifica que estés usando un navegador compatible (Chrome, Edge, Safari)</li>
+                            <li>Asegúrate de visitar la aplicación usando HTTPS</li>
+                            <li>Limpia la caché del navegador</li>
+                            <li>Reinicia el navegador</li>
+                        </ol>
+                    </div>
+                </div>
+                
+                <div class="problem-solution">
+                    <div class="problem">"La instalación falla"</div>
+                    <div class="solution">
+                        <strong>Solución:</strong>
+                        <ol>
+                            <li>Verifica el espacio disponible en tu dispositivo</li>
+                            <li>Comprueba tu conexión a internet</li>
+                            <li>Intenta instalar desde una red WiFi estable</li>
+                            <li>Reinicia el dispositivo e intenta nuevamente</li>
+                        </ol>
+                    </div>
+                </div>
+                
+                <div class="problem-solution">
+                    <div class="problem">"No se crea el acceso directo"</div>
+                    <div class="solution">
+                        <strong>Solución Android:</strong>
+                        <ol>
+                            <li>Abre Chrome → Menú → "Agregar a pantalla de inicio"</li>
+                            <li>Si no aparece, ve a Configuración → Aplicaciones → Chrome → Almacenamiento → "Limpiar caché"</li>
+                        </ol>
+                        
+                        <strong>Solución iOS:</strong>
+                        <ol>
+                            <li>Abre en Safari → Compartir → "Agregar a pantalla de inicio"</li>
+                            <li>Si no aparece, reinicia Safari en Ajustes → Safari → "Limpiar historial y datos de sitios web"</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>⚠️ Problemas de Funcionamiento</h2>
+                
+                <div class="problem-solution">
+                    <div class="problem">"La aplicación no carga"</div>
+                    <div class="solution">
+                        <strong>Solución:</strong>
+                        <ol>
+                            <li>Verifica tu conexión a internet</li>
+                            <li>Limpia la caché del navegador</li>
+                            <li>Intenta abrir en una ventana de incógnito</li>
+                            <li>Actualiza tu navegador a la última versión</li>
+                        </ol>
+                    </div>
+                </div>
+                
+                <div class="problem-solution">
+                    <div class="problem">"Los datos no se guardan"</div>
+                    <div class="solution">
+                        <strong>Solución:</strong>
+                        <ol>
+                            <li>Verifica que el almacenamiento local esté habilitado</li>
+                            <li>Comprueba que no estés en modo incógnito</li>
+                            <li>Limpia algo de espacio en tu dispositivo</li>
+                            <li>Reinicia la aplicación</li>
+                        </ol>
+                    </div>
+                </div>
+                
+                <div class="problem-solution">
+                    <div class="problem">"La búsqueda no funciona"</div>
+                    <div class="solution">
+                        <strong>Solución:</strong>
+                        <ol>
+                            <li>Escribe al menos 2 caracteres para buscar</li>
+                            <li>Verifica que los datos existan en el módulo correspondiente</li>
+                            <li>Limpia el campo de búsqueda e intenta nuevamente</li>
+                        </ol>
+                    </div>
+                </div>
+                
+                <div class="problem-solution">
+                    <div class="problem">"Los precios no se calculan correctamente"</div>
+                    <div class="solution">
+                        <strong>Solución:</strong>
+                        <ol>
+                            <li>Verifica que el tipo de cambio esté actualizado</li>
+                            <li>Revisa que los precios en USD estén correctos</li>
+                            <li>Actualiza la página para refrescar los cálculos</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>🔍 Problemas Específicos por Módulo</h2>
+                
+                <h3>Ventas</h3>
+                <div class="problem-solution">
+                    <div class="problem">"No puedo agregar productos a la venta"</div>
+                    <div class="solution">
+                        <strong>Solución:</strong>
+                        <ul>
+                            <li>Verifica que el producto exista en inventario</li>
+                            <li>Comprueba que haya stock disponible</li>
+                            <li>Reinicia la venta actual</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="problem-solution">
+                    <div class="problem">"La factura no se genera"</div>
+                    <div class="solution">
+                        <strong>Solución:</strong>
+                        <ul>
+                            <li>Asegúrate de tener productos en la venta</li>
+                            <li>Verifica los datos del cliente</li>
+                            <li>Comprueba la configuración de la empresa</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <h3>Inventario</h3>
+                <div class="problem-solution">
+                    <div class="problem">"Los productos no aparecen"</div>
+                    <div class="solution">
+                        <strong>Solución:</strong>
+                        <ul>
+                            <li>Verifica que hayas guardado correctamente</li>
+                            <li>Usa la búsqueda con diferentes términos</li>
+                            <li>Reinicia el módulo de inventario</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <h3>Reportes</h3>
+                <div class="problem-solution">
+                    <div class="problem">"Los reportes están vacíos"</div>
+                    <div class="solution">
+                        <strong>Solución:</strong>
+                        <ul>
+                            <li>Verifica las fechas seleccionadas</li>
+                            <li>Asegúrate de que hay ventas en ese período</li>
+                            <li>Comprueba que los datos existan</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>⚡ Problemas de Rendimiento</h2>
+                
+                <div class="problem-solution">
+                    <div class="problem">"La aplicación va lenta"</div>
+                    <div class="solution">
+                        <strong>Solución:</strong>
+                        <ol>
+                            <li>Cierra otras pestañas y aplicaciones</li>
+                            <li>Limpia la caché del navegador</li>
+                            <li>Reinicia tu dispositivo</li>
+                            <li>Verifica que tengas la última versión</li>
+                        </ol>
+                    </div>
+                </div>
+                
+                <div class="problem-solution">
+                    <div class="problem">"Se cierra sola"</div>
+                    <div class="solution">
+                        <strong>Solución:</strong>
+                        <ol>
+                            <li>Activa la "Prevención de cierre" en Configuración</li>
+                            <li>Verifica la memoria disponible</li>
+                            <li>Actualiza tu sistema operativo</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>🔄 Respaldo y Recuperación</h2>
+                
+                <h3>Respaldar Datos</h3>
+                <div class="step">
+                    <span class="icon">1.</span> Ve a <strong>Configuración</strong> → <strong>Datos</strong>
+                </div>
+                <div class="step">
+                    <span class="icon">2.</span> Haz clic en "Respaldar (JSON)" o "Respaldar (Excel)"
+                </div>
+                <div class="step">
+                    <span class="icon">3.</span> Guarda el archivo en un lugar seguro
+                </div>
+                
+                <h3>Restaurar Datos</h3>
+                <div class="step">
+                    <span class="icon">1.</span> Ve a <strong>Configuración</strong> → <strong>Datos</strong>
+                </div>
+                <div class="step">
+                    <span class="icon">2.</span> Selecciona "Restaurar"
+                </div>
+                <div class="step">
+                    <span class="icon">3.</span> Elige el archivo de respaldo
+                </div>
+                <div class="step">
+                    <span class="icon">4.</span> Confirma la restauración
+                </div>
+                
+                <div class="problem-solution">
+                    <div class="problem">"Perdí mis datos"</div>
+                    <div class="solution">
+                        <strong>Recuperación:</strong>
+                        <ul>
+                            <li>Si hiciste respaldo: Restaura desde el archivo guardado</li>
+                            <li>Si no tienes respaldo: Los datos no se pueden recuperar</li>
+                        </ul>
+                        <div class="tip">
+                            <strong>Consejo:</strong> Haz respaldos regularmente para evitar pérdida de datos
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- SOPORTE TÉCNICO -->
+        <div id="soporte" class="tab-content">
+            <div class="section">
+                <h2>📞 Soporte Técnico</h2>
+                
+                <h3>Contacto para Soporte</h3>
+                <ul>
+                    <li><strong>Email</strong>: soporte@tuempresa.com</li>
+                    <li><strong>WhatsApp</strong>: +58-XXX-XXXXXXX</li>
+                    <li><strong>Horario</strong>: Lunes a Viernes 8:00 AM - 6:00 PM</li>
+                </ul>
+                
+                <h3>Información para Reportar Problemas</h3>
+                <p>Cuando reportes un problema, incluye:</p>
+                <ol>
+                    <li>Dispositivo y modelo</li>
+                    <li>Sistema operativo y versión</li>
+                    <li>Navegador y versión</li>
+                    <li>Pasos exactos para reproducir el problema</li>
+                    <li>Capturas de pantalla si es posible</li>
+                </ol>
+                
+                <h3>Actualizaciones</h3>
+                <ul>
+                    <li>La aplicación se actualiza automáticamente</li>
+                    <li>No es necesario reinstalar</li>
+                    <li>Las nuevas funciones estarán disponibles inmediatamente</li>
+                </ul>
+            </div>
+            
+            <div class="section">
+                <h2>✅ Consejos de Mantenimiento</h2>
+                
+                <div class="tip">
+                    <strong>Respaldos semanales</strong>: Protege tu información contra pérdidas
+                </div>
+                
+                <div class="tip">
+                    <strong>Actualiza regularmente</strong>: Mantén tu navegador actualizado para mejor rendimiento
+                </div>
+                
+                <div class="tip">
+                    <strong>Limpia caché mensual</strong>: Mejora el rendimiento de la aplicación
+                </div>
+                
+                <div class="tip">
+                    <strong>Verifica tipo de cambio diario</strong>: Mantén precios actualizados
+                </div>
+                
+                <div class="tip">
+                    <strong>Revisa stock frecuentemente</strong>: Evita vender productos sin inventario
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>📋 Checklist de Verificación</h2>
+                
+                <h3>Antes de Usar la Aplicación</h3>
+                <ul>
+                    <li>☐ Verificar conexión a internet estable</li>
+                    <li>☐ Completar configuración inicial de la empresa</li>
+                    <li>☐ Establecer tipo de cambio actual</li>
+                    <li>☐ Agregar productos al inventario</li>
+                    <li>☐ Registrar clientes frecuentes</li>
+                </ul>
+                
+                <h3>Mantenimiento Diario</h3>
+                <ul>
+                    <li>☐ Actualizar tipo de cambio si es necesario</li>
+                    <li>☐ Revisar stock disponible</li>
+                    <li>☐ Registrar gastos del día</li>
+                    <li>☐ Verificar ventas realizadas</li>
+                </ul>
+                
+                <h3>Mantenimiento Semanal</h3>
+                <ul>
+                    <li>☐ Realizar respaldo de datos</li>
+                    <li>☐ Revisar reportes de ventas</li>
+                    <li>☐ Actualizar inventario si es necesario</li>
+                    <li>☐ Limpiar caché del navegador</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mostrar/ocultar pestañas
+        function showTab(tabId) {
+            // Ocultar todas las pestañas
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Mostrar la pestaña seleccionada
+            document.getElementById(tabId).classList.add('active');
+            
+            // Actualizar navegación
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+            
+            // Scroll hacia arriba
+            window.scrollTo(0, 0);
+        }
+        
+        // Botón para volver arriba
+        window.onscroll = function() {
+            const backToTopButton = document.querySelector('.back-to-top');
+            if (document.body.scrollTop > 100 || document.documentElement.scrollTop > 100) {
+                backToTopButton.style.display = 'block';
+            } else {
+                backToTopButton.style.display = 'none';
+            }
+        };
+        
+        function scrollToTop() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+        
+        // Resaltar secciones al hacer clic en enlaces internos
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
