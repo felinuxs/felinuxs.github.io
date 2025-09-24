@@ -1,16 +1,75 @@
-PUNTO - Aplicación de Chat P2P (PWA)PUNTO es una aplicación de chat de demostración que permite la comunicación directa entre pares (P2P) en un entorno web. Esta versión ha sido diseñada como una Aplicación Web Progresiva (PWA), lo que le permite ser "instalada" en dispositivos móviles (como Android) y funcionar de manera similar a una aplicación nativa, con capacidades sin conexión.🚀 CaracterísticasChat P2P: Comunicación directa entre usuarios sin necesidad de un servidor central para los mensajes (PeerJS).Gestión de Alias Persistente: Tu alias se guarda localmente, por lo que no necesitas introducirlo cada vez.Aplicación Web Progresiva (PWA):Instalable: Añade un icono a la pantalla de inicio de tu dispositivo.Offline-first: Funciona incluso sin conexión a internet (una vez instalada y con los recursos cacheados).Experiencia inmersiva: Se abre en pantalla completa, sin la interfaz del navegador.Diseño Responsivo: Adaptable a diferentes tamaños de pantalla (móvil, tablet, escritorio).Adjuntos: Envío de imágenes y archivos (Base64, limitado por tamaño).Notificaciones: Mensajes de estado y error para una mejor experiencia de usuario.📦 Estructura del ProyectoPUNTO_PWA/
-├── index.html           # Página principal de la aplicación
-├── css/
-│   └── main.css         # Estilos CSS de la aplicación
-├── js/
-│   └── app.js           # Lógica JavaScript principal de la aplicación
-├── icons/               # Iconos para la PWA (necesitan ser creados)
-│   ├── icon-192x192.png
-│   └── icon-512x512.png
-├── manifest.json        # Manifiesto de la Aplicación Web (para PWA)
-└── service-worker.js    # Service Worker (para caching y funcionalidades offline de PWA)
-└── README.md            # Este archivo
-└── MANUAL.md            # Manual de usuario y despliegue
-⚙️ Tecnologías UtilizadasHTML5: Estructura de la aplicación.CSS3: Estilado y diseño responsivo.JavaScript (ES6+): Lógica del lado del cliente.PeerJS: Framework para establecer conexiones P2P en el navegador.Progressive Web App (PWA): Para la experiencia de aplicación instalable y offline.LocalStorage: Para la persistencia del alias y la foto de perfil (simulado para autenticación).🚀 Despliegue y EjecuciónPara ejecutar esta aplicación, simplemente necesitas un servidor web. Puedes hacerlo localmente o subirla a un servicio de hosting.Ejecución LocalClona este repositorio:git clone https://github.com/tu-usuario/PUNTO_PWA.git
-cd PUNTO_PWA
-Abre index.html: Puedes abrir directamente el archivo index.html en tu navegador moderno. Sin embargo, para que el Service Worker funcione correctamente (y así la PWA sea instalable y tenga capacidades offline), es recomendable usar un servidor local (por ejemplo, con Live Server para VS Code o http-server de Node.js):Instala http-server globalmente: npm install -g http-serverEjecuta el servidor en la carpeta del proyecto: http-serverAccede a la aplicación en http://localhost:8080 (o el puerto que te indique).Despliegue en GitHub Pages (Recomendado para PWA)Asegúrate de que tus archivos index.html, css/, js/, icons/, manifest.json y service-worker.js estén en la rama main de tu repositorio.Ve a la configuración de tu repositorio en GitHub (Settings > Pages).Selecciona la rama main (o gh-pages si la usas) como fuente de despliegue.Tu PWA estará disponible en https://tu-usuario.github.io/PUNTO_PWA/.¡IMPORTANTE! Las PWAs requieren HTTPS para funcionar. GitHub Pages proporciona HTTPS por defecto, por lo que es ideal para probar la instalabilidad y las capacidades offline.📱 Instalación como App en Android (PWA)Una vez que la aplicación esté desplegada en un servidor HTTPS (como GitHub Pages):Abre el enlace de tu aplicación en el navegador Chrome en tu dispositivo Android.Después de unos segundos, Chrome debería mostrar un "banner" en la parte inferior de la pantalla o puedes ir al menú (los tres puntos verticales) y buscar la opción "Añadir a pantalla de inicio" o "Instalar aplicación".Toca esta opción y sigue las instrucciones.Un icono de PUNTO aparecerá en la pantalla de inicio de tu dispositivo, y al tocarlo, la aplicación se abrirá en modo de pantalla completa, como una aplicación nativa.⚠️ Consideraciones Importantes (Datos, Verificación y Seguridad)Esta aplicación PWA es una demostración de la interfaz y la comunicación P2P en el frontend.Base de Datos y Datos de Usuario:Actualmente, el alias y la foto de perfil se guardan en el localStorage del navegador. Esto significa que solo son persistentes en ese dispositivo y navegador específico, y no son datos seguros ni centralizados.Para una base de datos de usuarios real, escalable y segura, se requiere un backend. Recomendaciones:Firebase Firestore (Google Cloud Firestore): Base de datos NoSQL en la nube.Firebase Authentication: Servicio de autenticación completo (registro, inicio de sesión, verificación de email/teléfono).Firebase Storage: Para almacenar archivos como fotos de perfil de forma segura.Verificación de Correo Electrónico / Teléfono:La verificación en este código es simulada (el "código" se muestra en la consola del navegador para fines de demostración).Para una verificación real, necesitarías un backend que:Genere y almacene códigos de verificación de forma segura.Utilice un servicio de terceros para enviar correos electrónicos (ej: SendGrid, Mailgun) o SMS (ej: Twilio) a los usuarios.Valide el código que el usuario introduce contra el código real almacenado en el backend.Envío de Datos a tu Correo:No es posible enviar datos directamente a tu correo electrónico desde el frontend (navegador) por razones de seguridad.Deberías implementar una función de backend (ej. Firebase Cloud Functions si usas Firebase, o un API endpoint en tu propio servidor) que se encargue de:Recibir los datos de registro de los usuarios.Almacenarlos en tu base de datos (ej. Firestore).Disparar el envío de un correo electrónico a tu dirección con los nuevos registros, utilizando un servicio como SendGrid.Seguridad P2P:PeerJS facilita la conexión, pero la encriptación de extremo a extremo y la privacidad de los mensajes deben ser consideradas si se maneja información sensible. En este ejemplo, el enfoque principal es la conectividad básica.Claves API / Credenciales:Nunca subas claves API, contraseñas o credenciales sensibles directamente a tu repositorio de GitHub. Si implementas un backend, utiliza variables de entorno para gestionar esta información.🤝 ContribucionesLas contribuciones son bienvenidas. Si encuentras un bug o tienes una sugerencia de mejora, por favor abre un 'issue' o envía un 'pull request'.📄 LicenciaEste proyecto está bajo la licencia ISC.
+🚀 Gestor Empresarial Móvil – La App Todo en Uno para Tu Negocio
+¿Estás buscando una solución completa, rápida y sin complicaciones para gestionar tu negocio desde tu teléfono? ¡La tienes frente a ti!
+
+Gestor Empresarial Móvil es una aplicación diseñada para emprendedores, pequeñas y medianas empresas que necesitan controlar sus operaciones diarias de forma eficiente, segura y sin conexión.
+
+✅ ¿Por qué elegir esta app?
+📱 Totalmente adaptable: Funciona en cualquier dispositivo móvil o escritorio.
+
+⚡ Rápida y liviana: No consume memoria ni datos innecesarios.
+
+🧾 Gestión de ventas e inventario: Registra ventas, controla stock y genera facturas al instante.
+
+💵 Tipo de cambio automático: Convierte precios de dólares a bolívares en tiempo real.
+
+👥 Clientes y proveedores: Mantén un registro organizado de tus contactos.
+
+💸 Control de gastos y nómina: Clasifica gastos y gestiona empleados fácilmente.
+
+📊 Reportes y calendario de ventas: Visualiza tus ingresos por día, mes o año.
+
+🧾 Facturación térmica: Ideal para impresoras de 80mm (tickets).
+
+📤 Exporta e imprime: Envía facturas por PDF, Excel, correo o SMS.
+
+🌙 Modo oscuro: Cuida tu vista y ahorra batería.
+
+🔒 Prevención de cierre accidental: No perderás datos por salidas involuntarias.
+
+📂 Respaldos automáticos: Guarda y restaura tu información en JSON o Excel.
+
+🎯 Ideal para:
+Pequeños comercios (bodegas, abastos, kioscos, ferreterías, ropa, etc.)
+
+Vendedores ambulantes o por catálogo.
+
+Emprendedores que inician su negocio.
+
+Empresas que necesitan movilidad y control en tiempo real.
+
+📲 ¡Instálala como una app nativa!
+No necesitas descargar desde tiendas de aplicaciones.
+
+Compatible con Android y iOS.
+
+Funciona sin internet después de la primera carga.
+
+💬 Testimonial:
+“Desde que uso el Gestor Empresarial Móvil, ahorro horas en administración. Puedo facturar, controlar inventario y ver reportes desde mi teléfono. ¡Es como tener un asistente en el bolsillo!”
+— Usuario satisfecho
+
+🛠 Tecnología de vanguardia:
+Desarrollada instalables en computadoras con windows, android o ios.
+
+Compatible con PWA para experiencia de app nativa.
+
+Almacenamiento local seguro (no se suben datos a la nube sin tu permiso).
+
+📢 Oferta limitada:
+Si eres de los primeros en probarla, recibirás soporte gratuito por 30 días y acceso a futuras actualizaciones sin costo.
+
+🔗 ¿Cómo empezar?
+Visita la página desde tu celular, agrega la app a tu pantalla de inicio y ¡listo! Tu negocio estará mejor organizado en minutos.
+
+✅ Resumen de beneficios:
+✅ Todo en un solo lugar
+
+✅ Sin mensualidades
+
+✅ Fácil de usar
+
+✅ Sin publicidad
+
+✅ Actualizaciones constantes
+
+✅ Soporte técnico incluido
