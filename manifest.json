@@ -2,7 +2,7 @@
   "name": "Gestor Empresarial Móvil",
   "short_name": "Gestor",
   "description": "Una aplicación completa para la gestión de ventas, inventario, clientes y más.",
-  "start_url": "aaaaa.html",
+  "start_url": "index.html",
   "display": "standalone",
   "background_color": "#f8f9fa",
   "theme_color": "#3498db",
