@@ -1,1 +1,340 @@
-Manual de Usuario y Despliegue de PUNTO PWAEste manual te guiará sobre cómo usar y desplegar la aplicación de chat P2P PUNTO, diseñada como una Aplicación Web Progresiva (PWA).📖 ContenidoIntroducción a PUNTOPrimer Acceso y Registro (Alias)Interfaz de Usuario del ChatLista de Usuarios en LíneaVista de Chat IndividualEnvío de MensajesAdjuntar ArchivosMenú LateralFuncionalidades PWAInstalación en AndroidFuncionamiento OfflineConsideraciones de DespliegueRequisitos del ServidorDespliegue LocalDespliegue en GitHub PagesNotas de Seguridad y PrivacidadExpansión y Futuras Mejoras1. Introducción a PUNTOPUNTO es una aplicación de chat que utiliza la tecnología Peer-to-Peer (P2P) para permitir la comunicación directa entre los navegadores de los usuarios. Esto significa que, a diferencia de los chats tradicionales, los mensajes pueden fluir directamente de un usuario a otro una vez que se establece una conexión, sin pasar por un servidor central para cada mensaje. Un "tracker" (que puede ser cualquier usuario en la red) ayuda a los usuarios a encontrarse inicialmente.Esta versión es una Aplicación Web Progresiva (PWA), lo que la hace instalable en tu dispositivo Android y capaz de funcionar sin conexión.2. Primer Acceso y Registro (Alias)La primera vez que accedas a PUNTO, se te pedirá que elijas un alias.Paso 1: Elige tu Alias:Verás un popup de "Bienvenido a PUNTO".Introduce un alias único (entre 3 y 15 caracteres).Opcional: Sube una foto de perfil haciendo clic en "Elegir foto".Haz clic en "Entrar al Chat".Persistencia: Una vez que hayas establecido tu alias, PUNTO lo recordará. Las próximas veces que abras la aplicación (incluso si la "instalas" como PWA), se iniciará directamente en la pantalla principal sin pedirte el alias de nuevo. Si deseas cambiar tu alias, deberás borrar los datos del sitio en tu navegador o desinstalar y reinstalar la PWA.3. Interfaz de Usuario del ChatUna vez dentro, la interfaz principal de PUNTO consta de una lista de usuarios en línea y un área de chat.Lista de Usuarios en LíneaEn la parte izquierda (o pantalla principal en móviles), verás una lista de todos los usuarios actualmente conectados a la red PUNTO.Tu propio alias se mostrará con un " (Tú)" al lado y un fondo ligeramente diferente.Si eres el "Anfitrión" (tracker), tu alias también lo indicará.Toca el alias de cualquier usuario en línea (que no seas tú) para iniciar un chat individual con él.Vista de Chat IndividualAl seleccionar un usuario, la vista cambiará al chat individual con esa persona.La cabecera de la aplicación mostrará el alias y la foto de perfil del compañero de chat.El botón de la flecha hacia la izquierda (<) en la cabecera te permite volver a la lista de usuarios en línea.Envío de MensajesEn la parte inferior de la pantalla, verás un área de entrada de texto.Escribe tu mensaje en el campo de texto.Si el campo de texto tiene contenido, el botón de micrófono cambiará a un botón de enviar (icono de avión de papel).Presiona el botón de enviar o la tecla Enter para enviar tu mensaje.Adjuntar ArchivosJunto al campo de texto, encontrarás un icono de clip (adjuntar).Al tocarlo, se desplegará un menú con opciones para adjuntar:Imagen: Te permitirá seleccionar una imagen de tu dispositivo.Documento: Te permitirá seleccionar cualquier tipo de archivo de tu dispositivo.Los archivos se enviarán como datos Base64 a través de la conexión P2P.Menú LateralEl icono de tres barras (☰) en la cabecera abre el menú lateral.Aquí verás tu propio alias y foto de perfil.Las opciones del menú (Nuevo grupo, Nueva difusión, etc.) son marcadores de posición y no tienen funcionalidad implementada en esta versión de demostración.4. Funcionalidades PWAInstalación en AndroidPara "instalar" PUNTO como una aplicación en tu dispositivo Android:Abre el navegador Chrome (u otro navegador compatible con PWA) y navega a la URL donde está alojada tu aplicación PUNTO (por ejemplo, tu página de GitHub Pages).Interactúa un poco con la aplicación.Chrome debería mostrar una notificación en la parte inferior de la pantalla preguntándote si deseas "Añadir PUNTO a la pantalla de inicio" o "Instalar aplicación".Si no ves el banner, toca los tres puntos verticales en la esquina superior derecha de Chrome y busca la opción "Añadir a pantalla de inicio" o "Instalar aplicación".Confirma la instalación.Un icono de PUNTO aparecerá en la pantalla de inicio y en el cajón de aplicaciones de tu Android. Al tocarlo, la aplicación se abrirá en modo de pantalla completa.Funcionamiento OfflineUna vez que la PWA de PUNTO se ha instalado y sus recursos esenciales se han cacheado (esto ocurre automáticamente después de la primera visita), la aplicación debería poder abrirse y mostrar su interfaz incluso si no tienes conexión a internet. Sin embargo, dado que es una aplicación de chat P2P, la comunicación con otros usuarios, naturalmente, solo funcionará cuando haya una conexión de red activa.5. Consideraciones de DespliegueRequisitos del ServidorPara que PUNTO funcione como una PWA y PeerJS se conecte correctamente, los archivos deben servirse a través de HTTPS.Despliegue LocalAsegúrate de tener Node.js y npm instalados.Navega a la carpeta raíz de tu proyecto PUNTO_PWA en la terminal.Instala un servidor HTTP simple: npm install -g http-serverInicia el servidor (con soporte HTTPS para PWA): http-server -SAbre tu navegador y ve a la dirección que te proporcione el servidor (ej. https://localhost:8080).Despliegue en GitHub PagesGitHub Pages es un excelente servicio gratuito para alojar este tipo de PWA, ya que proporciona HTTPS automáticamente.Sube todos los archivos y carpetas (index.html, css/, js/, icons/, manifest.json, service-worker.js) a la rama main (o gh-pages) de tu repositorio de GitHub.En la configuración de tu repositorio de GitHub, ve a Settings > Pages.En la sección "Build and deployment", asegúrate de que la "Source" esté configurada para desplegar desde la rama main (o la que hayas usado para tus archivos).Tu PWA estará disponible en https://<tu-nombre-de-usuario>.github.io/<nombre-del-repositorio>/.6. Notas de Seguridad y PrivacidadPUNTO es una demostración: Esta aplicación está diseñada para ilustrar el concepto de PWA y chat P2P. No ha sido diseñada para entornos de producción con requisitos de alta seguridad.Persistencia de Datos: El alias y la foto de perfil se guardan en el localStorage del navegador. Esto es adecuado para la persistencia local de la PWA, pero no es un método seguro para almacenar datos de usuario sensibles o una base de datos centralizada. Para eso, se necesita un backend con una base de datos real (ej. Firebase Firestore).Verificación de Identidad: La funcionalidad de "verificación" de correo electrónico/teléfono que a menudo se ve en los formularios de registro NO está implementada en este frontend. Un sistema real requeriría un backend para generar y enviar códigos de forma segura (ej. usando Firebase Authentication + servicios como SendGrid/Twilio).Envío de Datos a tu Correo: El envío de datos de registro de usuarios a tu correo electrónico personal NO se puede hacer directamente desde el frontend (JavaScript en el navegador) por razones de seguridad. Esto debe ser manejado por un backend seguro que acceda a los datos de la base de datos y utilice un servicio de envío de correo (ej. Firebase Cloud Functions con SendGrid).Privacidad del Chat: Aunque la comunicación es P2P, la encriptación de extremo a extremo no está implementada por defecto en PeerJS. Para conversaciones confidenciales, se necesitarían capas adicionales de encriptación.7. Expansión y Futuras MejorasEsta aplicación puede ser la base para muchas mejoras:Implementación de Backend: Integración con Firebase (Authentication, Firestore, Storage, Cloud Functions) para una gestión de usuarios real, persistencia de mensajes e historial de chat.Notificaciones Push: Implementar notificaciones push a través de Service Workers para alertar a los usuarios de nuevos mensajes incluso cuando la aplicación está cerrada.Video y Voz: Añadir funcionalidades de videollamadas y llamadas de voz directas (PeerJS lo soporta).Grupos de Chat: Extender la funcionalidad para permitir chats grupales.Mejoras de UI/UX: Animaciones, temas personalizables, etc.Pruebas de Seguridad: Realizar auditorías de seguridad si la aplicación fuera para producción.Esperamos que disfrutes usando y experimentando con PUNTO.
+Manual de Usuario y Solución de Problemas - Gestor Empresarial Móvil
+📖 MANUAL DE USUARIO COMPLETO
+1. Instalación de la Aplicación
+Instalación como PWA (Aplicación Web Progresiva)
+Abre la aplicación en tu navegador (Chrome, Safari, Edge, etc.)
+
+Busca el ícono de instalación en la barra de direcciones o en el menú
+
+Haz clic en "Instalar" o "Agregar a pantalla de inicio"
+
+Confirma la instalación cuando te lo solicite
+
+La app aparecerá en tu pantalla de inicio como una aplicación nativa
+
+Instalación Manual
+Android: Menú → "Agregar a pantalla de inicio"
+
+iOS: Compartir → "Agregar a pantalla de inicio"
+
+Desktop: Click en el ícono de instalación en la barra de direcciones
+
+2. Primeros Pasos
+Configuración Inicial
+Abre la aplicación por primera vez
+
+Ve a Configuración ⚙️
+
+Configura los datos de tu empresa:
+
+Nombre de la empresa
+
+RIF
+
+Teléfono y dirección
+
+Establece el tipo de cambio actual
+
+Guarda la configuración
+
+Agregar Productos al Inventario
+Ve a Inventario 📦
+
+Haz clic en "+ Agregar Producto"
+
+Completa la información:
+
+Nombre del producto
+
+Precio en USD
+
+Stock inicial
+
+El precio en Bs se calculará automáticamente
+
+3. Funcionalidades Principales
+Realizar una Venta 🛒
+Ve a la sección Ventas
+
+Busca y selecciona un cliente
+
+Agrega productos escaneando o buscando
+
+Ajusta cantidades si es necesario
+
+Selecciona método de pago
+
+Finaliza la venta
+
+Genera e imprime la factura
+
+Gestión de Clientes 👥
+Agregar nuevo cliente: Click en "+ Agregar Cliente"
+
+Buscar cliente: Usa la barra de búsqueda
+
+Editar cliente: Click en "Editar" junto al cliente
+
+Control de Gastos 💸
+Ve a Gastos
+
+Registra cada gasto con:
+
+Descripción
+
+Categoría
+
+Monto
+
+Fecha
+
+Filtra por mes para ver resúmenes
+
+Tipo de Cambio 💵
+Actualiza diariamente el tipo de cambio
+
+Ve el historial de cambios
+
+Los precios se actualizan automáticamente
+
+4. Funciones Avanzadas
+Reportes y Análisis 📊
+Ventas diarias: Usa el calendario para ver ventas por día
+
+Reportes generales: Genera reportes por fechas específicas
+
+Exportación: Exporta datos en Excel o PDF
+
+Facturación Térmica
+Configura para impresoras de 80mm
+
+Múltiples formatos de exportación
+
+Envío por email o SMS
+
+Prevención de Cierre
+Activa en Configuración para evitar cierres accidentales
+
+Ideal para sesiones largas de trabajo
+
+🔧 SOLUCIÓN DE PROBLEMAS FRECUENTES
+Problemas de Instalación
+"No aparece la opción de instalar"
+Solución:
+
+Verifica que estés usando un navegador compatible (Chrome, Edge, Safari)
+
+Asegúrate de visitar la aplicación usando HTTPS
+
+Limpia la caché del navegador
+
+Reinicia el navegador
+
+"La instalación falla"
+Solución:
+
+Verifica el espacio disponible en tu dispositivo
+
+Comprueba tu conexión a internet
+
+Intenta instalar desde una red WiFi estable
+
+Reinicia el dispositivo e intenta nuevamente
+
+"No se crea el acceso directo"
+Solución Android:
+
+Abre Chrome → Menú → "Agregar a pantalla de inicio"
+
+Si no aparece, ve a Configuración → Aplicaciones → Chrome → Almacenamiento → "Limpiar caché"
+
+Solución iOS:
+
+Abre en Safari → Compartir → "Agregar a pantalla de inicio"
+
+Si no aparece, reinicia Safari en Ajustes → Safari → "Limpiar historial y datos de sitios web"
+
+Problemas de Funcionamiento
+"La aplicación no carga"
+Solución:
+
+Verifica tu conexión a internet
+
+Limpia la caché del navegador
+
+Intenta abrir en una ventana de incógnito
+
+Actualiza tu navegador a la última versión
+
+"Los datos no se guardan"
+Solución:
+
+Verifica que el almacenamiento local esté habilitado
+
+Comprueba que no estés en modo incógnito
+
+Limpia algo de espacio en tu dispositivo
+
+Reinicia la aplicación
+
+"La búsqueda no funciona"
+Solución:
+
+Escribe al menos 2 caracteres para buscar
+
+Verifica que los datos existan en el módulo correspondiente
+
+Limpia el campo de búsqueda e intenta nuevamente
+
+"Los precios no se calculan correctamente"
+Solución:
+
+Verifica que el tipo de cambio esté actualizado
+
+Revisa que los precios en USD estén correctos
+
+Actualiza la página para refrescar los cálculos
+
+Problemas Específicos por Módulo
+Ventas
+Problema: "No puedo agregar productos a la venta"
+
+Verifica que el producto exista en inventario
+
+Comprueba que haya stock disponible
+
+Reinicia la venta actual
+
+Problema: "La factura no se genera"
+
+Asegúrate de tener productos en la venta
+
+Verifica los datos del cliente
+
+Comprueba la configuración de la empresa
+
+Inventario
+Problema: "Los productos no aparecen"
+
+Verifica que hayas guardado correctamente
+
+Usa la búsqueda con diferentes términos
+
+Reinicia el módulo de inventario
+
+Reportes
+Problema: "Los reportes están vacíos"
+
+Verifica las fechas seleccionadas
+
+Asegúrate de que hay ventas en ese período
+
+Comprueba que los datos existan
+
+Problemas de Rendimiento
+"La aplicación va lenta"
+Solución:
+
+Cierra otras pestañas y aplicaciones
+
+Limpia la caché del navegador
+
+Reinicia tu dispositivo
+
+Verifica que tengas la última versión
+
+"Se cierra sola"
+Solución:
+
+Activa la "Prevención de cierre" en Configuración
+
+Verifica la memoria disponible
+
+Actualiza tu sistema operativo
+
+Problemas de Sincronización
+"Datos diferentes en dispositivos"
+Solución:
+
+Exporta los datos del dispositivo principal
+
+Importa en el segundo dispositivo
+
+Usa siempre el mismo dispositivo para evitar conflictos
+
+Respaldo y Recuperación
+Respaldar Datos
+Ve a Configuración → Datos
+
+Haz clic en "Respaldar (JSON)" o "Respaldar (Excel)"
+
+Guarda el archivo en un lugar seguro
+
+Restaurar Datos
+Ve a Configuración → Datos
+
+Selecciona "Restaurar"
+
+Elige el archivo de respaldo
+
+Confirma la restauración
+
+"Perdí mis datos"
+Recuperación:
+
+Si hiciste respaldo: Restaura desde el archivo guardado
+
+Si no tienes respaldo: Los datos no se pueden recuperar
+
+Consejo: Haz respaldos regularmente
+
+Problemas de Impresión
+"La factura no imprime correctamente"
+Solución:
+
+Verifica la conexión de la impresora
+
+Asegúrate de usar el formato térmico (80mm)
+
+Prueba con diferentes opciones de exportación
+
+Verifica los controladores de la impresora
+
+📞 SOPORTE TÉCNICO
+Contacto para Soporte
+Email: soporte@tuempresa.com
+
+WhatsApp: +58-XXX-XXXXXXX
+
+Horario: Lunes a Viernes 8:00 AM - 6:00 PM
+
+Información para Reportar Problemas
+Cuando reportes un problema, incluye:
+
+Dispositivo y modelo
+
+Sistema operativo y versión
+
+Navegador y versión
+
+Pasos exactos para reproducir el problema
+
+Capturas de pantalla si es posible
+
+Actualizaciones
+La aplicación se actualiza automáticamente
+
+No es necesario reinstalar
+
+Las nuevas funciones estarán disponibles inmediatamente
+
+✅ CONSEJOS DE MANTENIMIENTO
+Respaldos semanales: Protege tu información
+
+Actualiza regularmente: Mantén tu navegador actualizado
+
+Limpia caché mensual: Mejora el rendimiento
+
+Verifica tipo de cambio diario: Mantén precios actualizados
+
+Revisa stock frecuentemente: Evita ventas sin inventario
