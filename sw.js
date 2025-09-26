@@ -1,54 +1,72 @@
-Service Worker// Define un nombre y versión para la caché
-const CACHE_NAME = 'gestor-empresarial-v1.2';
-
-// Lista de archivos que se deben cachear para que la app funcione offline
-const urlsToCache = [
-  '/',
-  'index.html'
-  // Nota: Los scripts y librerías externas (jspdf, etc.) se cargarán desde la red.
-  // Si quisieras que funcionen 100% offline, también deberían ser cacheados.
+const CACHE_NAME = 'gestor-empresarial-v1.3'; // Cambia la versión si haces futuras actualizaciones
+const URLS_TO_CACHE = [
+  './',
+  './index.html',
+  './manifest.json',
+  'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
+  'https://html2canvas.hertzen.com/dist/html2canvas.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
+  'https://placehold.co/192x192/3498db/ffffff?text=GE'
 ];
 
-// Evento 'install': se dispara cuando el Service Worker se instala.
-// Aquí abrimos la caché y guardamos nuestros archivos.
+// Instala el Service Worker y guarda el 'app shell' en la caché
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
-        console.log('Cache abierta');
-        return cache.addAll(urlsToCache);
+        console.log('Cache abierto y listo para guardar archivos.');
+        return cache.addAll(URLS_TO_CACHE);
       })
   );
 });
 
-// Evento 'fetch': se dispara cada vez que la app hace una petición de red (p. ej., cargar una página, una imagen).
-// Interceptamos la petición y respondemos con el archivo desde la caché si está disponible.
-self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        // Si encontramos una coincidencia en la caché, la devolvemos
-        if (response) {
-          return response;
-        }
-        // Si no, hacemos la petición a la red
-        return fetch(event.request);
-      })
-  );
-});
-
-// Evento 'activate': se dispara para limpiar cachés antiguas.
+// Activa el Service Worker y elimina cachés antiguas
 self.addEventListener('activate', event => {
-  const cacheWhitelist = [CACHE_NAME];
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.map(cacheName => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
+          if (cacheName !== CACHE_NAME) {
+            console.log('Borrando caché antiguo:', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
     })
+  );
+  return self.clients.claim();
+});
+
+// Intercepta las peticiones (fetch) para servir desde la caché
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    // Estrategia: Cache primero, y si falla, ir a la red (Cache First)
+    caches.match(event.request)
+      .then(response => {
+        // Si la respuesta está en la caché, la retornamos
+        if (response) {
+          return response;
+        }
+
+        // Si no, la buscamos en la red
+        return fetch(event.request).then(
+          networkResponse => {
+            // Verificamos que la respuesta de red sea válida
+            if (!networkResponse || networkResponse.status !== 200) {
+              return networkResponse;
+            }
+
+            // Clonamos la respuesta para poder guardarla en caché y enviarla al navegador
+            let responseToCache = networkResponse.clone();
+
+            caches.open(CACHE_NAME)
+              .then(cache => {
+                cache.put(event.request, responseToCache);
+              });
+
+            return networkResponse;
+          }
+        );
+      })
   );
 });
