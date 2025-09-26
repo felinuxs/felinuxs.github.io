@@ -1,24 +1,22 @@
 {
   "name": "Gestor Empresarial Móvil",
   "short_name": "Gestor",
-  "description": "Una aplicación completa para la gestión de ventas, inventario, clientes y más.",
-  "start_url": "index.html",
+  "description": "Una aplicación para gestionar ventas, inventario, clientes y más.",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#f8f9fa",
   "theme_color": "#3498db",
-  "orientation": "portrait-primary",
+  "orientation": "portrait",
   "icons": [
     {
       "src": "https://placehold.co/192x192/3498db/ffffff?text=GE",
-      "type": "image/png",
       "sizes": "192x192",
-      "purpose": "any maskable"
+      "type": "image/png"
     },
     {
       "src": "https://placehold.co/512x512/3498db/ffffff?text=GE",
-      "type": "image/png",
       "sizes": "512x512",
-      "purpose": "any maskable"
+      "type": "image/png"
     }
   ]
 }
