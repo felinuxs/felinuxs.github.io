@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
-    <!-- Metas para PWA -->
     <title>Gestor Empresarial Móvil</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#3498db">
@@ -698,7 +697,7 @@
             <button class="btn-movil" onclick="abrirPagina('empleados')">👨‍💼 Empleados</button>
             <button class="btn-movil tipo-cambio-btn" onclick="abrirPagina('tipo-cambio')">
                 <div>💵</div>
-                <div class="tasa" id="tipo-cambio-btn">1$ = 168 Bs</div>
+                <div class="tasa" id="tipo-cambio-btn">1$ = 180 Bs</div>
                 <div class="label">Dólar</div>
             </button>
             <button class="btn-movil" onclick="abrirPagina('mensajes')">📨 Mensajes</button>
@@ -713,7 +712,7 @@
         <h2>🛒 Ventas</h2>
         
         <div class="tipo-cambio-info">
-            Tipo de cambio: <span id="tipo-cambio-venta">1$ = 168 Bs</span>
+            Tipo de cambio: <span id="tipo-cambio-venta">1$ = 180 Bs</span>
         </div>
         
         <div class="form-group">
@@ -955,7 +954,6 @@
             <button class="btn btn-tema" id="btn-cambiar-tema" onclick="cambiarTema()">Cambiar a Modo Oscuro</button>
         </div>
         
-        <!-- Nueva sección para PWA y pantalla completa -->
         <div class="config-option">
             <h3>Instalación y Pantalla Completa</h3>
             <p style="font-size: 0.9em; margin-bottom: 10px;">Instala la aplicación en tu dispositivo para una experiencia nativa y sin distracciones.</p>
@@ -965,7 +963,7 @@
             </div>
         </div>
 
-        <div class="config-option">
+        <div class="config-option" id="seccion-prevencion-cierre">
             <h3>Prevención de Cierre Accidental</h3>
             <button class="btn btn-primary" onclick="activarPrevencionCierre()">Activar Prevención</button>
             <button class="btn btn-danger" onclick="desactivarPrevencionCierre()">Desactivar Prevención</button>
@@ -1011,7 +1009,6 @@
         </div>
     </div>
     
-    <!-- Modales (sin cambios) -->
     <div class="modal" id="modal-nuevo-cliente">
         <div class="modal-content">
             <div class="modal-header">
@@ -1317,7 +1314,7 @@
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js')
                     .then(registration => {
-                        console.log('ServiceWorker registrado con éxito:', registration);
+                        console.log('ServiceWorker registrado con éxito:', registration.scope);
                     })
                     .catch(registrationError => {
                         console.log('Fallo en el registro del ServiceWorker:', registrationError);
@@ -1372,10 +1369,10 @@
         let inventario = JSON.parse(localStorage.getItem('inventario')) || [
             {
                 id: 1,
-                nombre: "Maxicaucho",
-                precioUSD: 9.00,
-                precioBs: 80.64,
-                stock: 10
+                nombre: "Cuñete Blanco Maxi Caucho C",
+                precioUSD: 33.00,
+                precioBs: 5940.00,
+                stock: 5
             }
         ];
 
@@ -1505,6 +1502,18 @@
                 generarCalendario(fechaCalendario.getFullYear(), fechaCalendario.getMonth());
             });
 
+            // ===== MEJORA: Lógica de Prevención de Cierre Automática =====
+            const seccionPrevencion = document.getElementById('seccion-prevencion-cierre');
+            // Activar prevención de cierre por defecto si es una PWA instalada
+            if (window.matchMedia('(display-mode: standalone)').matches) {
+                activarPrevencionCierre(false); // Activar sin mostrar alerta
+                if (seccionPrevencion) {
+                    seccionPrevencion.innerHTML = `
+                        <h3>Prevención de Cierre Accidental</h3>
+                        <p style="font-size: 0.9em; margin-top: 10px;">Para una mejor experiencia, la prevención contra el botón "Atrás" del dispositivo se activa automáticamente en la aplicación instalada.</p>
+                    `;
+                }
+            }
         });
 
         // ===== FUNCIONES DE EXPORTACIÓN =====
@@ -1676,18 +1685,21 @@
         function onPopState(event) {
             if (prevencionCierreActiva) {
                 window.history.pushState(null, null, window.location.href);
-                // Opcional: mostrar un mensaje personalizado
-                alert('La prevención de cierre está activada. Use el botón de cerrar en la aplicación.');
+                // Mensaje mejorado para el usuario
+                alert('Para cerrar una sección, utiliza el botón "×" dentro de la aplicación.');
             }
         }
         
-        function activarPrevencionCierre() {
+        function activarPrevencionCierre(showAlert = true) { // Parámetro para controlar la alerta
             if (!prevencionCierreActiva) {
                 window.history.pushState(null, null, window.location.href);
                 window.addEventListener('popstate', onPopState);
                 prevencionCierreActiva = true;
-                document.getElementById('estado-prevencion').textContent = 'Estado: Activo';
-                alert('Prevención de cierre activada. El botón "Atrás" del navegador no cerrará la aplicación.');
+                const estadoPrevencion = document.getElementById('estado-prevencion');
+                if (estadoPrevencion) estadoPrevencion.textContent = 'Estado: Activo';
+                if (showAlert) {
+                    alert('Prevención de cierre activada. El botón "Atrás" del navegador no cerrará la aplicación.');
+                }
             }
         }
 
@@ -1695,7 +1707,8 @@
             if (prevencionCierreActiva) {
                 window.removeEventListener('popstate', onPopState);
                 prevencionCierreActiva = false;
-                document.getElementById('estado-prevencion').textContent = 'Estado: Inactivo';
+                const estadoPrevencion = document.getElementById('estado-prevencion');
+                if (estadoPrevencion) estadoPrevencion.textContent = 'Estado: Inactivo';
                 alert('Prevención de cierre desactivada.');
             }
         }
