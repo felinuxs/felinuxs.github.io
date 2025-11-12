@@ -1,9 +1,9 @@
-const CACHE_NAME = 'felinos-cache-v1';
+const CACHE_NAME = 'felinuxs-cache-v1';
 const API_URL = 'https://api.exchangerate-api.com/v4/latest/USD';
 
 // Archivos que componen la aplicación (App Shell)
 const urlsToCache = [
-    './felinos.html', // El nombre de tu archivo HTML principal
+    './index.html', // El nombre de tu archivo HTML principal
     './manifest.json',
     // URLs de las librerías externas
     'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
