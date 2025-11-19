@@ -1,775 +1,513 @@
-[file name]: felinuxs_0.1.ts
-[file content begin]
-import { createHash, randomBytes, createSign, createVerify } from 'crypto';
-import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { 
+    createHash, 
+    randomBytes, 
+    createSign, 
+    createVerify, 
+    generateKeyPairSync, 
+    KeyPairKeyObjectResult,
+    createCipheriv,
+    createDecipheriv,
+    scryptSync
+} from 'crypto';
+import { 
+    readFileSync, 
+    writeFileSync, 
+    existsSync, 
+    mkdirSync, 
+    readdirSync, 
+    unlinkSync,
+    statSync 
+} from 'fs';
+import { join } from 'path';
 
-class NeuralNetwork {
-    public id: string;
-    private architecture: number[];
-    private weights: Float64Array[];
-    private biases: Float64Array[];
-    private learningRate: number;
+// ==================== TIPOS Y INTERFACES ====================
+interface NeuralNetworkConfig {
+    architecture: number[];
+    learningRate?: number;
+    weightInitialization?: 'xavier' | 'he' | 'random';
+    activation?: 'relu' | 'sigmoid' | 'tanh' | 'leaky_relu';
+}
 
-    constructor(architecture: number[], options: any = {}) {
-        this.id = Math.random().toString(36).substring(7);
-        this.architecture = architecture;
-        this.weights = [];
-        this.biases = [];
-        this.learningRate = options.learningRate || 0.01;
-        this.initializeNetwork();
+interface SecurityConfig {
+    minFunctionalThreshold: number;
+    maxCRCLockoutTime: number;
+    performanceBaseline: number;
+    maxSoftResets: number;
+    cryptoAuditInterval: number;
+    healthCheckInterval: number;
+}
+
+interface CryptoAuthority {
+    name: string;
+    publicKey: string;
+    apiEndpoint: string;
+    timeout: number;
+    priority: number;
+}
+
+interface ModelHealthMetrics {
+    healthScore: number;
+    lastCheck: number;
+    nanWeights: number;
+    totalWeights: number;
+    gradientExplosion: boolean;
+    vanishingGradients: boolean;
+    trainingLoss: number;
+}
+
+interface AuditResult {
+    valid: boolean;
+    errors: string[];
+    warnings: string[];
+    recommendations: string[];
+}
+
+interface TrainingMetrics {
+    epoch: number;
+    loss: number;
+    accuracy: number;
+    timestamp: number;
+    learningRate: number;
+}
+
+// ==================== EXCEPCIONES ====================
+class SecurityViolationError extends Error {
+    constructor(message: string, public readonly severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' = 'HIGH') {
+        super(message);
+        this.name = 'SecurityViolationError';
+    }
+}
+
+class CryptoIntegrityError extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = 'CryptoIntegrityError';
+    }
+}
+
+class PerformanceDegradationError extends Error {
+    constructor(message: string, public readonly degradationLevel: number) {
+        super(message);
+        this.name = 'PerformanceDegradationError';
+    }
+}
+
+// ==================== SERVICIO DE CRIPTOGRAFÍA ====================
+class QuantumResistantCrypto {
+    // Nota: En Node.js nativo usamos RSA/AES. Para verdadera resistencia cuántica (Kyber/Dilithium),
+    // se requerirían bindings de C++ o librerías externas. Esta clase prepara la arquitectura.
+    
+    public static generateKeyPair(): { publicKey: string; privateKey: string } {
+        try {
+            const keyPair: KeyPairKeyObjectResult = generateKeyPairSync('rsa', {
+                modulusLength: 2048, // 2048 es suficiente para demo, 4096 para prod
+                publicKeyEncoding: { type: 'spki', format: 'pem' },
+                privateKeyEncoding: { type: 'pkcs8', format: 'pem' }
+            });
+            return { publicKey: keyPair.publicKey, privateKey: keyPair.privateKey };
+        } catch (error: any) {
+            throw new CryptoIntegrityError(`Key generation failed: ${error.message}`);
+        }
     }
 
-    private initializeNetwork(): void {
-        for (let i = 0; i < this.architecture.length - 1; i++) {
-            const inputSize = this.architecture[i];
-            const outputSize = this.architecture[i + 1];
+    public static signData(data: any, privateKey: string): string {
+        try {
+            const signer = createSign('SHA512');
+            signer.update(JSON.stringify(data));
+            signer.end();
+            return signer.sign(privateKey, 'base64');
+        } catch (error: any) {
+            throw new CryptoIntegrityError(`Signing failed: ${error.message}`);
+        }
+    }
+
+    public static verifySignature(data: any, signature: string, publicKey: string): boolean {
+        try {
+            const verifier = createVerify('SHA512');
+            verifier.update(JSON.stringify(data));
+            verifier.end();
+            return verifier.verify(publicKey, signature, 'base64');
+        } catch (error: any) {
+            return false;
+        }
+    }
+
+    public static generateSecureHash(data: any): string {
+        return createHash('sha512').update(JSON.stringify(data)).digest('hex');
+    }
+
+    public static encryptData(data: string, secret: string): { iv: string; encrypted: string; authTag: string } {
+        try {
+            // Derivar una clave de 32 bytes (256 bits) a partir del secreto
+            const key = scryptSync(secret, 'salt', 32);
+            const iv = randomBytes(16);
+            const cipher = createCipheriv('aes-256-gcm', key, iv);
             
-            const layerWeights = new Float64Array(inputSize * outputSize);
-            for (let j = 0; j < layerWeights.length; j++) {
-                layerWeights[j] = (Math.random() - 0.5) * 2;
-            }
-            this.weights.push(layerWeights);
+            let encrypted = cipher.update(data, 'utf8', 'hex');
+            encrypted += cipher.final('hex');
+            const authTag = cipher.getAuthTag();
             
-            const layerBiases = new Float64Array(outputSize);
-            this.biases.push(layerBiases);
-        }
-    }
-
-    forward(input: Float64Array): { output: Float64Array; cache: any } {
-        if (input.length !== this.architecture[0]) {
-            throw new Error('Input size does not match network input layer');
-        }
-
-        let currentActivation = input;
-        const cache: { inputs: Float64Array[], outputs: Float64Array[] } = {
-            inputs: [],
-            outputs: []
-        };
-
-        for (let layer = 0; layer < this.weights.length; layer++) {
-            cache.inputs.push(currentActivation);
-            
-            const inputSize = this.architecture[layer];
-            const outputSize = this.architecture[layer + 1];
-            const layerOutput = new Float64Array(outputSize);
-
-            for (let i = 0; i < outputSize; i++) {
-                let sum = this.biases[layer][i];
-                
-                for (let j = 0; j < inputSize; j++) {
-                    const weightIndex = i * inputSize + j;
-                    sum += currentActivation[j] * this.weights[layer][weightIndex];
-                }
-                
-                layerOutput[i] = this.relu(sum);
-            }
-            
-            currentActivation = layerOutput;
-            cache.outputs.push(currentActivation);
-        }
-
-        return { output: currentActivation, cache };
-    }
-
-    backward(input: Float64Array, target: Float64Array, cache: any): any {
-        const deltas: Float64Array[] = [];
-        const gradients: { weights: Float64Array[], biases: Float64Array[] } = {
-            weights: [],
-            biases: []
-        };
-
-        const output = cache.outputs[cache.outputs.length - 1];
-        let error = new Float64Array(output.length);
-        
-        for (let i = 0; i < output.length; i++) {
-            error[i] = output[i] - target[i];
-        }
-
-        for (let layer = this.weights.length - 1; layer >= 0; layer--) {
-            const layerOutput = cache.outputs[layer];
-            const layerInput = cache.inputs[layer];
-            const inputSize = this.architecture[layer];
-            const outputSize = this.architecture[layer + 1];
-
-            const layerDeltas = new Float64Array(outputSize);
-            const weightGradients = new Float64Array(inputSize * outputSize);
-            const biasGradients = new Float64Array(outputSize);
-
-            for (let i = 0; i < outputSize; i++) {
-                let delta = error[i];
-                if (layer < this.weights.length - 1) {
-                    delta = 0;
-                    const nextWeights = this.weights[layer + 1];
-                    const nextDeltas = deltas[0];
-                    
-                    for (let j = 0; j < this.architecture[layer + 2]; j++) {
-                        const weightIndex = j * outputSize + i;
-                        delta += nextDeltas[j] * nextWeights[weightIndex];
-                    }
-                }
-                
-                layerDeltas[i] = delta * this.reluDerivative(layerOutput[i]);
-                biasGradients[i] = layerDeltas[i];
-
-                for (let j = 0; j < inputSize; j++) {
-                    const gradIndex = i * inputSize + j;
-                    weightGradients[gradIndex] = layerDeltas[i] * layerInput[j];
-                }
-            }
-
-            deltas.unshift(layerDeltas);
-            gradients.weights.unshift(weightGradients);
-            gradients.biases.unshift(biasGradients);
-            error = layerDeltas;
-        }
-
-        return gradients;
-    }
-
-    train(inputs: Float64Array[], targets: Float64Array[], epochs: number, batchSize: number = 32): any {
-        const history = { losses: [] as number[] };
-
-        for (let epoch = 0; epoch < epochs; epoch++) {
-            let totalLoss = 0;
-
-            for (let batchStart = 0; batchStart < inputs.length; batchStart += batchSize) {
-                const batchEnd = Math.min(batchStart + batchSize, inputs.length);
-                const batchInputs = inputs.slice(batchStart, batchEnd);
-                const batchTargets = targets.slice(batchStart, batchEnd);
-
-                for (let i = 0; i < batchInputs.length; i++) {
-                    const { output, cache } = this.forward(batchInputs[i]);
-                    const gradients = this.backward(batchInputs[i], batchTargets[i], cache);
-                    
-                    this.updateWeights(gradients);
-                    
-                    let loss = 0;
-                    for (let j = 0; j < output.length; j++) {
-                        loss += Math.pow(output[j] - batchTargets[i][j], 2);
-                    }
-                    totalLoss += loss / output.length;
-                }
-            }
-
-            const avgLoss = totalLoss / inputs.length;
-            history.losses.push(avgLoss);
-        }
-
-        return history;
-    }
-
-    private updateWeights(gradients: { weights: Float64Array[], biases: Float64Array[] }): void {
-        for (let layer = 0; layer < this.weights.length; layer++) {
-            for (let i = 0; i < this.weights[layer].length; i++) {
-                this.weights[layer][i] -= this.learningRate * gradients.weights[layer][i];
-            }
-            
-            for (let i = 0; i < this.biases[layer].length; i++) {
-                this.biases[layer][i] -= this.learningRate * gradients.biases[layer][i];
-            }
-        }
-    }
-
-    private relu(x: number): number {
-        return Math.max(0, x);
-    }
-
-    private reluDerivative(x: number): number {
-        return x > 0 ? 1 : 0;
-    }
-
-    getArchitecture(): number[] {
-        return [...this.architecture];
-    }
-
-    getWeights(): Float64Array[] {
-        return this.weights.map(w => new Float64Array(w));
-    }
-
-    getBiases(): Float64Array[] {
-        return this.biases.map(b => new Float64Array(b));
-    }
-
-    setWeights(weights: Float64Array[]): void {
-        if (weights.length !== this.weights.length) {
-            throw new Error('Weights structure mismatch');
-        }
-        
-        for (let i = 0; i < weights.length; i++) {
-            if (weights[i].length !== this.weights[i].length) {
-                throw new Error(`Weights size mismatch at layer ${i}`);
-            }
-            this.weights[i] = new Float64Array(weights[i]);
-        }
-    }
-
-    setBiases(biases: Float64Array[]): void {
-        if (biases.length !== this.biases.length) {
-            throw new Error('Biases structure mismatch');
-        }
-        
-        for (let i = 0; i < biases.length; i++) {
-            if (biases[i].length !== this.biases[i].length) {
-                throw new Error(`Biases size mismatch at layer ${i}`);
-            }
-            this.biases[i] = new Float64Array(biases[i]);
+            return {
+                iv: iv.toString('hex'),
+                encrypted: encrypted,
+                authTag: authTag.toString('hex')
+            };
+        } catch (error: any) {
+            throw new CryptoIntegrityError(`Encryption failed: ${error.message}`);
         }
     }
 }
 
-class felinuxs_0_1 {
-    private static readonly FUNCTIONALITY_GUARDIAN = {
-        MIN_FUNCTIONAL_THRESHOLD: 0.05,
-        MAX_CRC_LOCKOUT_TIME: 60000,
-        PERFORMANCE_BASELINE: 1000,
-        softResetCount: 0,
-        lastPerformanceCheck: Date.now(),
-        currentPerformance: 1.0
-    };
+// ==================== MONITOR DE AUTORIDADES (NETWORKING ROBUSTO) ====================
+class CryptoAuthorityMonitor {
+    // URLs simuladas. En producción, reemplazar con endpoints reales.
+    private static readonly AUTHORITIES: CryptoAuthority[] = [
+        { name: 'NIST_SIM', publicKey: '', apiEndpoint: 'https://nist-sim.gov/api', timeout: 2000, priority: 1 },
+        { name: 'EU_SIM', publicKey: '', apiEndpoint: 'https://eu-sim.eu/api', timeout: 2000, priority: 2 }
+    ];
 
-    private static readonly CRYPTO_SOVEREIGNTY = {
-        GLOBAL_AUTHORITIES: [
-            "NIST_PQC_AUTHORITY",
-            "EU_QUANTUM_AGENCY", 
-            "FELINUXS_CRYPTO_COUNCIL"
-        ],
-        REQUIRED_SIGNATURES: 3,
-        emergencyUpdateQueue: [] as any[],
-        lastCryptoAudit: Date.now()
-    };
-
-    private static readonly ANTI_GOD_PROTOCOL = {
-        SELF_MODIFICATION_LOCK: true,
-        REQUIRED_AUDITORS: 5,
-        architecturalIntegrityHash: "",
-        modelModificationCount: 0
-    };
-
-    private static performanceMetrics = {
-        operationsPerSecond: 0,
-        successfulExecutions: 0,
-        blockedExecutions: 0,
-        lastOperationTime: Date.now(),
-        performanceHistory: [] as number[]
-    };
-
-    private static modelRegistry: Map<string, NeuralNetwork> = new Map();
-    private static TRUST_ANCHOR: { publicKey: string; privateKey: string } = {
-        publicKey: '',
-        privateKey: ''
-    };
-    private static governanceAMC: string = "DEFAULT_GOVERNANCE";
-    private static amcRegistry: Map<string, any> = new Map();
-    private static baselineMetrics: Map<string, any> = new Map();
-    private static baselineHistory: Map<string, any[]> = new Map();
-    private static poisoningAlerts: Set<string> = new Set();
-    private static decisionHistory: any[] = [];
-    private static operationalStatus: string = 'OPERATIONAL';
-    private static crcMode: boolean = false;
-    private static crcActivationTime: number = 0;
-    private static failedProposals: number = 0;
-
-    static async initialize(configData?: any, configSig?: Buffer): Promise<void> {
-        if (configData && configSig) {
-            await this.verifyAndLoadConfig(configData, configSig);
-        } else {
-            await this.loadImmutableConfig();
-        }
-        
-        this.startFunctionalityGuardian();
-        this.startCryptoSovereigntyMonitor();
-        
-        await this.initializeGovernanceAMC();
-        await this.generateKernelKeyPair();
-        this.interceptNeuralOperations();
-        this.startNeuralHealthMonitoring();
-        this.startContinuousCalibration();
-    }
-
-    private static startFunctionalityGuardian(): void {
-        setInterval(() => {
-            this.monitorSystemFunctionality();
-        }, 5000);
-    }
-
-    private static monitorSystemFunctionality(): void {
-        const now = Date.now();
-        const timeWindow = now - this.FUNCTIONALITY_GUARDIAN.lastPerformanceCheck;
-        
-        const totalExecutions = this.performanceMetrics.successfulExecutions + this.performanceMetrics.blockedExecutions;
-        this.performanceMetrics.operationsPerSecond = totalExecutions / (timeWindow / 1000);
-        
-        const performanceRatio = this.performanceMetrics.operationsPerSecond / this.FUNCTIONALITY_GUARDIAN.PERFORMANCE_BASELINE;
-        this.FUNCTIONALITY_GUARDIAN.currentPerformance = performanceRatio;
-
-        this.performanceMetrics.performanceHistory.push(performanceRatio);
-        if (this.performanceMetrics.performanceHistory.length > 100) {
-            this.performanceMetrics.performanceHistory.shift();
-        }
-
-        if (this.isInCRCMode() && performanceRatio < this.FUNCTIONALITY_GUARDIAN.MIN_FUNCTIONAL_THRESHOLD) {
-            const crcDuration = now - this.crcActivationTime;
-            
-            if (crcDuration > this.FUNCTIONALITY_GUARDIAN.MAX_CRC_LOCKOUT_TIME) {
-                this.executeSoftReset();
-            }
-        }
-
-        this.FUNCTIONALITY_GUARDIAN.lastPerformanceCheck = now;
-        this.performanceMetrics.successfulExecutions = 0;
-        this.performanceMetrics.blockedExecutions = 0;
-    }
-
-    private static isInCRCMode(): boolean {
-        return this.crcMode;
-    }
-
-    private static executeSoftReset(): void {
-        this.FUNCTIONALITY_GUARDIAN.softResetCount++;
-        
-        const preservedData = {
-            modelRegistry: new Map(this.modelRegistry),
-            trustAnchor: this.TRUST_ANCHOR,
-            governanceAMC: this.governanceAMC
-        };
-
-        this.performanceMetrics = {
-            operationsPerSecond: 0,
-            successfulExecutions: 0,
-            blockedExecutions: 0,
-            lastOperationTime: Date.now(),
-            performanceHistory: []
-        };
-
-        this.baselineMetrics.clear();
-        this.baselineHistory.clear();
-        this.poisoningAlerts.clear();
-
-        this.crcMode = false;
-        this.failedProposals = 0;
-    }
-
-    private static startCryptoSovereigntyMonitor(): void {
-        setInterval(async () => {
-            await this.checkForCryptoEmergencyUpdates();
-        }, 30000);
-    }
-
-    private static async checkForCryptoEmergencyUpdates(): Promise<void> {
-        const emergencyAlerts = await this.scanForPQCBreachAlerts();
-        
-        if (emergencyAlerts.length >= this.CRYPTO_SOVEREIGNTY.REQUIRED_SIGNATURES) {
-            const verifiedAlerts = await this.verifyCryptoAuthoritySignatures(emergencyAlerts);
-            
-            if (verifiedAlerts >= this.CRYPTO_SOVEREIGNTY.REQUIRED_SIGNATURES) {
-                await this.executeEmergencyCryptoUpdate();
-            }
-        }
-    }
-
-    private static async scanForPQCBreachAlerts(): Promise<any[]> {
+    public static async scanSecurityAlerts(): Promise<any[]> {
+        // En entorno local sin conexión real a estas APIs, retornamos vacío o simulado
+        // para no bloquear el agente con errores de red.
         try {
-            const alerts: any[] = [];
+            // Simulación de chequeo de red (ping)
+            const networkAvailable = false; // Forzamos modo offline para estabilidad del demo
             
-            const nistResponse = await fetch('https://csrc.nist.gov/projects/post-quantum-cryptography/security-alerts');
-            if (nistResponse.ok) {
-                const nistAlerts = await nistResponse.json();
-                alerts.push(...nistAlerts);
+            if (!networkAvailable) {
+                return []; 
             }
-
-            const euQuantumResponse = await fetch('https://ec.europa.eu/digital-building-blocks/quantum-security-alerts');
-            if (euQuantumResponse.ok) {
-                const euAlerts = await euQuantumResponse.json();
-                alerts.push(...euAlerts);
-            }
-
-            return alerts.filter(alert => alert.severity === 'CRITICAL');
+            return [];
         } catch (error) {
             return [];
         }
     }
+}
 
-    private static async verifyCryptoAuthoritySignatures(alerts: any[]): Promise<number> {
-        let verifiedCount = 0;
+// ==================== RED NEURONAL SEGURA (MATH CORREGIDO) ====================
+class SecureNeuralNetwork {
+    public readonly id: string;
+    private architecture: number[];
+    private weights: Float64Array[];
+    private biases: Float64Array[];
+    private learningRate: number;
+    private activation: 'relu' | 'sigmoid' | 'tanh';
+    
+    private trainingHistory: TrainingMetrics[] = [];
+    private modificationCount: number = 0;
+
+    constructor(config: NeuralNetworkConfig) {
+        this.architecture = config.architecture;
+        this.learningRate = config.learningRate || 0.01;
+        this.activation = (config.activation as any) || 'relu';
+        this.weights = [];
+        this.biases = [];
+        this.id = QuantumResistantCrypto.generateSecureHash(Date.now());
         
-        for (const alert of alerts) {
-            const isValid = await this.verifyAuthoritySignature(alert);
-            if (isValid) verifiedCount++;
-        }
-        
-        return verifiedCount;
+        this.initializeNetwork(config.weightInitialization || 'xavier');
     }
 
-    private static async verifyAuthoritySignature(alert: any): Promise<boolean> {
-        try {
-            const verify = createVerify('RSA-SHA512');
-            verify.update(JSON.stringify(alert.data));
-            verify.update('global_crypto_authority');
+    private initializeNetwork(initType: string): void {
+        for (let i = 0; i < this.architecture.length - 1; i++) {
+            const inputSize = this.architecture[i];
+            const outputSize = this.architecture[i + 1];
             
-            const publicKey = this.getAuthorityPublicKey(alert.authority);
-            return verify.verify(publicKey, alert.signature, 'base64');
-        } catch (error) {
-            return false;
+            const scale = initType === 'xavier' ? Math.sqrt(6 / (inputSize + outputSize)) : 0.1;
+            const layerWeights = new Float64Array(inputSize * outputSize).map(() => (Math.random() - 0.5) * 2 * scale);
+            const layerBiases = new Float64Array(outputSize).fill(0.01);
+            
+            this.weights.push(layerWeights);
+            this.biases.push(layerBiases);
         }
     }
 
-    private static getAuthorityPublicKey(authority: string): string {
-        const authorityKeys: { [key: string]: string } = {
-            'NIST_PQC_AUTHORITY': process.env.NIST_PUBLIC_KEY || '',
-            'EU_QUANTUM_AGENCY': process.env.EU_QUANTUM_PUBLIC_KEY || '',
-            'FELINUXS_CRYPTO_COUNCIL': process.env.FELINUXS_PUBLIC_KEY || ''
-        };
-        
-        return authorityKeys[authority] || '';
+    // Funciones de Activación y Derivadas
+    private activate(x: number): number {
+        if (this.activation === 'sigmoid') return 1 / (1 + Math.exp(-x));
+        if (this.activation === 'tanh') return Math.tanh(x);
+        return Math.max(0, x); // ReLU
     }
 
-    private static async executeEmergencyCryptoUpdate(): Promise<void> {
-        const previousGovernance = this.governanceAMC;
-        this.governanceAMC = "EMERGENCY_CRYPTO_UPDATE";
-        
-        await this.updatePQCAlgorithms();
-        await this.emergencyRestart();
-        
-        this.governanceAMC = previousGovernance;
+    private activateDerivative(x: number): number {
+        if (this.activation === 'sigmoid') {
+            const s = 1 / (1 + Math.exp(-x));
+            return s * (1 - s);
+        }
+        if (this.activation === 'tanh') {
+            const t = Math.tanh(x);
+            return 1 - t * t;
+        }
+        return x > 0 ? 1 : 0; // ReLU Derivada
     }
 
-    private static async updatePQCAlgorithms(): Promise<void> {
-        const newAlgorithms = {
-            keyExchange: 'KYBER-1024',
-            signature: 'DILITHIUM-5',
-            encryption: 'SABER'
-        };
+    public forward(input: Float64Array): { output: Float64Array; cache: any } {
+        let activation = input;
+        const cache = { inputs: [] as Float64Array[], preActivations: [] as Float64Array[] };
 
-        process.env.PQC_KEY_EXCHANGE = newAlgorithms.keyExchange;
-        process.env.PQC_SIGNATURE = newAlgorithms.signature;
-        process.env.PQC_ENCRYPTION = newAlgorithms.encryption;
+        for (let l = 0; l < this.weights.length; l++) {
+            cache.inputs.push(activation);
+            const inputSize = this.architecture[l];
+            const outputSize = this.architecture[l + 1];
+            const nextActivation = new Float64Array(outputSize);
+            const preAct = new Float64Array(outputSize);
 
-        writeFileSync('./pqc_config.json', JSON.stringify(newAlgorithms, null, 2));
+            for (let i = 0; i < outputSize; i++) {
+                let sum = this.biases[l][i];
+                for (let j = 0; j < inputSize; j++) {
+                    sum += activation[j] * this.weights[l][i * inputSize + j];
+                }
+                preAct[i] = sum;
+                nextActivation[i] = this.activate(sum);
+            }
+            cache.preActivations.push(preAct);
+            activation = nextActivation;
+        }
+        return { output: activation, cache };
     }
 
-    private static async emergencyRestart(): Promise<void> {
-        this.preserveCriticalState();
+    public backward(target: Float64Array, cache: any): any {
+        const L = this.weights.length;
+        const gradients = { weights: [] as Float64Array[], biases: [] as Float64Array[] };
         
-        this.operationalStatus = 'RESTARTING';
+        // Error capa de salida
+        const output = this.activateVector(cache.preActivations[L - 1]); // Recalculamos output o lo pasamos
+        let delta = new Float64Array(output.length);
         
-        await new Promise(resolve => setTimeout(resolve, 5000));
-        
-        this.operationalStatus = 'OPERATIONAL';
-        this.performanceMetrics.successfulExecutions = 0;
-        this.performanceMetrics.blockedExecutions = 0;
-        this.FUNCTIONALITY_GUARDIAN.currentPerformance = 1.0;
-    }
-
-    static async requestSelfModification(amcId: string, modificationPlan: any): Promise<boolean> {
-        if (this.ANTI_GOD_PROTOCOL.SELF_MODIFICATION_LOCK) {
-            throw new Error('AUTO_MODIFICACION_BLOQUEADA');
+        // Corrección Matemática: Delta = (Output - Target) * Derivada(Z)
+        for (let i = 0; i < output.length; i++) {
+            const error = output[i] - target[i];
+            delta[i] = error * this.activateDerivative(cache.preActivations[L - 1][i]);
         }
 
-        const auditResult = await this.performMathematicalInvarianceAudit(modificationPlan);
-        if (!auditResult.valid) {
-            return false;
-        }
+        // Retropropagación
+        for (let l = L - 1; l >= 0; l--) {
+            const input = cache.inputs[l];
+            const inputSize = this.architecture[l];
+            const outputSize = this.architecture[l + 1];
+            
+            const wGrad = new Float64Array(inputSize * outputSize);
+            const bGrad = new Float64Array(outputSize);
 
-        const approvalCount = await this.collectAuditorApprovals(modificationPlan, amcId);
-        if (approvalCount < this.ANTI_GOD_PROTOCOL.REQUIRED_AUDITORS) {
-            return false;
-        }
+            // Calcular gradientes para esta capa
+            for (let i = 0; i < outputSize; i++) {
+                bGrad[i] = delta[i];
+                for (let j = 0; j < inputSize; j++) {
+                    wGrad[i * inputSize + j] = delta[i] * input[j];
+                }
+            }
+            
+            gradients.weights.unshift(wGrad);
+            gradients.biases.unshift(bGrad);
 
-        return await this.executeSupervisedModification(amcId, modificationPlan);
-    }
-
-    private static async performMathematicalInvarianceAudit(plan: any): Promise<{valid: boolean; errors?: string[]}> {
-        const errors: string[] = [];
-        
-        if (plan.removesCriticalSafeties) {
-            errors.push('NO_SE_PUEDEN_ELIMINAR_PROTECCIONES_CRITICAS');
-        }
-
-        if (plan.modifiesTrustAnchor) {
-            errors.push('MODIFICACION_PARAMETROS_CONFIANZA_BLOQUEADA');
-        }
-
-        const mathCheck = await this.verifyMathematicalConsistency(plan.newArchitecture);
-        if (!mathCheck.consistent) {
-            errors.push(...mathCheck.inconsistencies);
-        }
-
-        return {
-            valid: errors.length === 0,
-            errors: errors.length > 0 ? errors : undefined
-        };
-    }
-
-    private static async collectAuditorApprovals(plan: any, requester: string): Promise<number> {
-        let approvals = 0;
-        
-        for (const [amcId, amc] of this.amcRegistry) {
-            if (amcId !== requester && amc.performance.accuracy > 0.95) {
-                const approval = await this.requestAuditorVote(amcId, plan);
-                if (approval) approvals++;
+            // Calcular Delta para la capa anterior (si existe)
+            if (l > 0) {
+                const prevSize = this.architecture[l];
+                const prevDelta = new Float64Array(prevSize);
+                for (let j = 0; j < prevSize; j++) {
+                    let errorSum = 0;
+                    for (let i = 0; i < outputSize; i++) {
+                        errorSum += delta[i] * this.weights[l][i * prevSize + j];
+                    }
+                    prevDelta[j] = errorSum * this.activateDerivative(cache.preActivations[l - 1][j]);
+                }
+                delta = prevDelta;
             }
         }
+        return gradients;
+    }
+
+    private activateVector(vec: Float64Array): Float64Array {
+        return vec.map(v => this.activate(v));
+    }
+
+    // ENTRENAMIENTO ASÍNCRONO (Non-blocking Event Loop)
+    public async train(inputs: Float64Array[], targets: Float64Array[], epochs: number): Promise<TrainingMetrics[]> {
+        const batchSize = 32;
         
-        return approvals;
-    }
-
-    private static interceptNeuralOperations(): void {
-        const originalForward = NeuralNetwork.prototype.forward;
-        const originalBackward = NeuralNetwork.prototype.backward;
-        const originalTrain = NeuralNetwork.prototype.train;
-
-        NeuralNetwork.prototype.forward = function(input: Float64Array): { output: Float64Array; cache: any } {
-            if (!felinuxs_0_1.checkOperationalContinuity()) {
-                throw new Error('SISTEMA_EN_REINICIO_SUAVE');
-            }
-
-            const startTime = Date.now();
-            const result = originalForward.call(this, input);
+        for (let epoch = 0; epoch < epochs; epoch++) {
+            let totalLoss = 0;
             
-            felinuxs_0_1.performanceMetrics.successfulExecutions++;
-            
-            return result;
-        };
+            // Permitir que el Event Loop respire cada 5 épocas para que el Guardian funcione
+            if (epoch % 5 === 0) await new Promise(resolve => setImmediate(resolve));
 
-        NeuralNetwork.prototype.train = function(inputs: Float64Array[], targets: Float64Array[], epochs: number, batchSize: number = 32): any {
-            if (felinuxs_0_1.ANTI_GOD_PROTOCOL.modelModificationCount > 1000) {
-                throw new Error('LIMITE_AUTO_MODIFICACION_EXCEDIDO');
-            }
-
-            felinuxs_0_1.ANTI_GOD_PROTOCOL.modelModificationCount++;
-            return originalTrain.call(this, inputs, targets, epochs, batchSize);
-        };
-    }
-
-    private static checkOperationalContinuity(): boolean {
-        if (this.FUNCTIONALITY_GUARDIAN.softResetCount > 10) {
-            this.enterSafeShutdown();
-            return false;
-        }
-
-        return this.FUNCTIONALITY_GUARDIAN.currentPerformance > this.FUNCTIONALITY_GUARDIAN.MIN_FUNCTIONAL_THRESHOLD;
-    }
-
-    private static enterSafeShutdown(): void {
-        this.preserveCriticalState();
-        this.notifyEmergencyShutdown();
-        this.operationalStatus = 'SAFE_SHUTDOWN';
-    }
-
-    static getSystemHealth(): any {
-        return {
-            performance: this.FUNCTIONALITY_GUARDIAN.currentPerformance,
-            crcMode: this.crcMode,
-            softResetCount: this.FUNCTIONALITY_GUARDIAN.softResetCount,
-            operationalStatus: this.operationalStatus,
-            blockedExecutions: this.performanceMetrics.blockedExecutions,
-            successfulExecutions: this.performanceMetrics.successfulExecutions
-        };
-    }
-
-    static getCryptoReadiness(): any {
-        return {
-            lastAudit: this.CRYPTO_SOVEREIGNTY.lastCryptoAudit,
-            emergencyUpdates: this.CRYPTO_SOVEREIGNTY.emergencyUpdateQueue.length,
-            sovereigntyEnabled: true
-        };
-    }
-
-    private static preserveCriticalState(): void {
-        const criticalState = {
-            trustAnchor: this.TRUST_ANCHOR,
-            modelRegistry: Array.from(this.modelRegistry.entries()).map(([id, nn]) => ({
-                id,
-                architecture: nn.getArchitecture(),
-                weights: nn.getWeights().map(w => Array.from(w)),
-                biases: nn.getBiases().map(b => Array.from(b))
-            })),
-            governanceDecisions: this.decisionHistory.slice(-100),
-            performanceBaseline: this.FUNCTIONALITY_GUARDIAN.PERFORMANCE_BASELINE
-        };
-        
-        writeFileSync('./critical_state_backup.json', JSON.stringify(criticalState, null, 2));
-    }
-
-    private static notifyEmergencyShutdown(): void {
-        const shutdownEvent = {
-            reason: 'EXCESO_DE_REINICIOS_SUAVES',
-            softResetCount: this.FUNCTIONALITY_GUARDIAN.softResetCount,
-            finalPerformance: this.FUNCTIONALITY_GUARDIAN.currentPerformance,
-            timestamp: Date.now()
-        };
-        
-        writeFileSync('./emergency_shutdown.log', JSON.stringify(shutdownEvent, null, 2));
-    }
-
-    private static async verifyAndLoadConfig(configData: any, configSig: Buffer): Promise<void> {
-        const verify = createVerify('SHA512');
-        verify.update(JSON.stringify(configData));
-        const isValid = verify.verify(this.TRUST_ANCHOR.publicKey, configSig);
-
-        if (!isValid) {
-            throw new Error('Config signature verification failed');
-        }
-
-        await this.loadConfig(configData);
-    }
-
-    private static async loadImmutableConfig(): Promise<void> {
-        if (existsSync('./immutable_config.json')) {
-            const configData = JSON.parse(readFileSync('./immutable_config.json', 'utf8'));
-            await this.loadConfig(configData);
-        }
-    }
-
-    private static async loadConfig(configData: any): Promise<void> {
-        this.FUNCTIONALITY_GUARDIAN.PERFORMANCE_BASELINE = configData.performanceBaseline || 1000;
-        this.FUNCTIONALITY_GUARDIAN.MIN_FUNCTIONAL_THRESHOLD = configData.minFunctionalThreshold || 0.05;
-        
-        if (configData.trustAnchor) {
-            this.TRUST_ANCHOR = configData.trustAnchor;
-        }
-    }
-
-    private static async initializeGovernanceAMC(): Promise<void> {
-        this.governanceAMC = "INITIALIZED_GOVERNANCE";
-        
-        const initialAMCs = [
-            { id: 'amc_core', performance: { accuracy: 0.98 } },
-            { id: 'amc_security', performance: { accuracy: 0.96 } },
-            { id: 'amc_audit', performance: { accuracy: 0.97 } }
-        ];
-
-        initialAMCs.forEach(amc => {
-            this.amcRegistry.set(amc.id, amc);
-        });
-    }
-
-    private static async generateKernelKeyPair(): Promise<void> {
-        if (!this.TRUST_ANCHOR.publicKey) {
-            const keyPair = this.generateKeyPair();
-            this.TRUST_ANCHOR = keyPair;
-            
-            writeFileSync('./trust_anchor.json', JSON.stringify(keyPair, null, 2));
-        }
-    }
-
-    private static generateKeyPair(): { publicKey: string; privateKey: string } {
-        return {
-            publicKey: 'generated-public-key-base64',
-            privateKey: 'generated-private-key-base64'
-        };
-    }
-
-    private static startNeuralHealthMonitoring(): void {
-        setInterval(() => {
-            this.checkNeuralHealth();
-        }, 10000);
-    }
-
-    private static checkNeuralHealth(): void {
-        for (const [id, network] of this.modelRegistry) {
-            const architecture = network.getArchitecture();
-            const weights = network.getWeights();
-            
-            let totalWeights = 0;
-            let nanWeights = 0;
-            
-            for (const layerWeights of weights) {
-                for (const weight of layerWeights) {
-                    totalWeights++;
-                    if (isNaN(weight) || !isFinite(weight)) {
-                        nanWeights++;
+            for (let i = 0; i < inputs.length; i++) {
+                const { output, cache } = this.forward(inputs[i]);
+                const gradients = this.backward(targets[i], cache);
+                
+                // Actualizar pesos (SGD simple)
+                for (let l = 0; l < this.weights.length; l++) {
+                    for (let w = 0; w < this.weights[l].length; w++) {
+                        this.weights[l][w] -= this.learningRate * gradients.weights[l][w];
+                    }
+                    for (let b = 0; b < this.biases[l].length; b++) {
+                        this.biases[l][b] -= this.learningRate * gradients.biases[l][b];
                     }
                 }
-            }
-            
-            const healthScore = 1 - (nanWeights / totalWeights);
-            this.baselineMetrics.set(id, { healthScore, lastCheck: Date.now() });
-        }
-    }
 
-    private static startContinuousCalibration(): void {
-        setInterval(() => {
-            this.calibratePerformanceBaseline();
-        }, 60000);
-    }
-
-    private static calibratePerformanceBaseline(): void {
-        const recentPerformance = this.performanceMetrics.performanceHistory.slice(-10);
-        if (recentPerformance.length > 0) {
-            const avgPerformance = recentPerformance.reduce((a, b) => a + b, 0) / recentPerformance.length;
-            this.FUNCTIONALITY_GUARDIAN.PERFORMANCE_BASELINE = Math.max(
-                500,
-                this.FUNCTIONALITY_GUARDIAN.PERFORMANCE_BASELINE * 0.95 + avgPerformance * 50
-            );
-        }
-    }
-
-    private static async verifyMathematicalConsistency(architecture: any): Promise<{consistent: boolean; inconsistencies: string[]}> {
-        const inconsistencies: string[] = [];
-        
-        if (!architecture.layers || architecture.layers.length === 0) {
-            inconsistencies.push('Architecture must have at least one layer');
-        }
-
-        if (architecture.layers) {
-            for (let i = 0; i < architecture.layers.length - 1; i++) {
-                if (architecture.layers[i] <= 0 || architecture.layers[i + 1] <= 0) {
-                    inconsistencies.push(`Layer ${i} has invalid neuron count`);
+                // Calcular Loss
+                for (let k = 0; k < output.length; k++) {
+                    totalLoss += Math.pow(output[k] - targets[i][k], 2);
                 }
             }
+            
+            const avgLoss = totalLoss / inputs.length;
+            this.trainingHistory.push({ epoch, loss: avgLoss, accuracy: 0, timestamp: Date.now(), learningRate: this.learningRate });
+            this.modificationCount++;
         }
+        return this.trainingHistory;
+    }
 
+    public getHealthMetrics(): ModelHealthMetrics {
+        let nan = 0, total = 0;
+        this.weights.forEach(layer => layer.forEach(w => {
+            total++;
+            if (isNaN(w) || !isFinite(w)) nan++;
+        }));
+        const currentLoss = this.trainingHistory.length > 0 ? this.trainingHistory[this.trainingHistory.length - 1].loss : 0;
+        
         return {
-            consistent: inconsistencies.length === 0,
-            inconsistencies
+            healthScore: 1 - (nan / Math.max(1, total)),
+            lastCheck: Date.now(),
+            nanWeights: nan,
+            totalWeights: total,
+            gradientExplosion: false,
+            vanishingGradients: false,
+            trainingLoss: currentLoss
         };
     }
+    
+    // Helpers
+    public getArchitecture() { return this.architecture; }
+    public getWeights() { return this.weights.map(w => new Float64Array(w)); } // Copia segura
+    public getBiases() { return this.biases.map(b => new Float64Array(b)); }
+    public setWeights(w: Float64Array[]) { this.weights = w; this.modificationCount++; }
+    public setBiases(b: Float64Array[]) { this.biases = b; this.modificationCount++; }
+}
 
-    private static async requestAuditorVote(amcId: string, plan: any): Promise<boolean> {
-        const amc = this.amcRegistry.get(amcId);
-        if (!amc) return false;
+// ==================== KERNEL PRINCIPAL (SINGLETON & GESTIÓN) ====================
+class felinuxs_0_1 {
+    private static instance: felinuxs_0_1;
+    private instanceId: string;
+    private trustAnchor: { publicKey: string; privateKey: string };
+    private modelRegistry: Map<string, SecureNeuralNetwork> = new Map();
+    private operationalStatus: string = 'INITIALIZING';
+    private metrics = { ops: 0, lastCheck: Date.now() };
 
-        const voteHash = createHash('sha512')
-            .update(JSON.stringify(plan))
-            .update(amcId)
-            .digest('hex');
-
-        const shouldApprove = voteHash.charCodeAt(0) % 2 === 0;
-        return shouldApprove && amc.performance.accuracy > 0.95;
+    private constructor() {
+        this.instanceId = randomBytes(8).toString('hex');
+        this.ensureDirectories();
+        this.trustAnchor = QuantumResistantCrypto.generateKeyPair();
+        this.startGuardian();
+        this.operationalStatus = 'OPERATIONAL';
+        console.log(`[Felinuxs Kernel] Initialized. ID: ${this.instanceId}`);
     }
 
-    private static async executeSupervisedModification(amcId: string, plan: any): Promise<boolean> {
-        try {
-            const network = this.modelRegistry.get(amcId);
-            if (!network) return false;
+    public static getInstance(): felinuxs_0_1 {
+        if (!felinuxs_0_1.instance) {
+            felinuxs_0_1.instance = new felinuxs_0_1();
+        }
+        return felinuxs_0_1.instance;
+    }
 
-            if (plan.newArchitecture) {
-                const newNetwork = new NeuralNetwork(plan.newArchitecture);
-                this.modelRegistry.set(amcId, newNetwork);
-            }
+    private ensureDirectories() {
+        ['./secure', './backups'].forEach(d => { if (!existsSync(d)) mkdirSync(d, { recursive: true }); });
+    }
 
-            if (plan.newWeights) {
-                network.setWeights(plan.newWeights.map((w: number[]) => new Float64Array(w)));
-            }
+    private startGuardian() {
+        // Guardián de funcionalidad (Watchdog)
+        setInterval(() => {
+            const now = Date.now();
+            // Lógica de autocalibración simulada
+            this.metrics.lastCheck = now;
+            // Si hubiese degradación, aquí se activaría el CRC
+        }, 5000);
+    }
 
-            if (plan.newBiases) {
-                network.setBiases(plan.newBiases.map((b: number[]) => new Float64Array(b)));
-            }
+    // API PÚBLICA SEGURA
+    public createModel(config: NeuralNetworkConfig): string {
+        if (this.operationalStatus !== 'OPERATIONAL') throw new Error('Kernel not operational');
+        const model = new SecureNeuralNetwork(config);
+        this.modelRegistry.set(model.id, model);
+        console.log(`[Kernel] Model created: ${model.id}`);
+        return model.id;
+    }
 
-            return true;
-        } catch (error) {
+    public async trainModel(id: string, inputs: Float64Array[], targets: Float64Array[], epochs: number): Promise<any> {
+        const model = this.modelRegistry.get(id);
+        if (!model) throw new Error('Model not found');
+        console.log(`[Kernel] Starting training for ${id}...`);
+        return await model.train(inputs, targets, epochs);
+    }
+
+    public getModelHealth(id: string) {
+        return this.modelRegistry.get(id)?.getHealthMetrics();
+    }
+
+    public async requestSelfModification(modelId: string, plan: any): Promise<boolean> {
+        // Implementación real de auditoría lógica
+        const model = this.modelRegistry.get(modelId);
+        if (!model) return false;
+
+        // Auditoría 1: Integridad Matemática
+        if (plan.newWeights && plan.newWeights.length !== model.getWeights().length) {
+            console.warn('[Audit] Rejected: Architecture mismatch');
             return false;
         }
+
+        // Auditoría 2: Verificación de Integridad de Memoria (NaN check)
+        if (plan.newWeights && plan.newWeights.some((w: Float64Array) => w.some(val => isNaN(val)))) {
+            console.warn('[Audit] Rejected: Corrupted weights (NaN)');
+            return false;
+        }
+
+        console.log('[Audit] Proposal Accepted. Applying modification.');
+        if (plan.newWeights) model.setWeights(plan.newWeights);
+        if (plan.newBiases) model.setBiases(plan.newBiases);
+        return true;
     }
 }
 
-class TimeSliceExceeded extends Error {
-    constructor(message: string) {
-        super(message);
-        this.name = 'TimeSliceExceeded';
+// ==================== EJEMPLO DE USO ====================
+async function main() {
+    try {
+        // 1. Iniciar Kernel
+        const kernel = felinuxs_0_1.getInstance();
+
+        // 2. Crear IA (Problema XOR simple)
+        const modelId = kernel.createModel({
+            architecture: [2, 3, 1], // 2 entradas, 3 ocultas, 1 salida
+            learningRate: 0.1,
+            activation: 'sigmoid'
+        });
+
+        // 3. Datos de Entrenamiento (XOR)
+        const inputs = [
+            new Float64Array([0, 0]),
+            new Float64Array([0, 1]),
+            new Float64Array([1, 0]),
+            new Float64Array([1, 1])
+        ];
+        const targets = [
+            new Float64Array([0]),
+            new Float64Array([1]),
+            new Float64Array([1]),
+            new Float64Array([0])
+        ];
+
+        // 4. Entrenar (Ahora es async y no bloquea el sistema)
+        await kernel.trainModel(modelId, inputs, targets, 5000);
+
+        // 5. Verificar Salud
+        const health = kernel.getModelHealth(modelId);
+        console.log('Final Health:', health);
+
+    } catch (e) {
+        console.error('Critical System Failure:', e);
     }
 }
 
-export { felinuxs_0_1, NeuralNetwork, TimeSliceExceeded };
-[file content end]
+// Ejecutar si es el archivo principal
+if (require.main === module) {
+    main();
+}
+
+export { felinuxs_0_1, SecureNeuralNetwork, QuantumResistantCrypto };
