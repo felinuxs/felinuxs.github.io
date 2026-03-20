@@ -13,6 +13,9 @@
     <meta name="apple-mobile-web-app-title" content="Gestor Móvil">
 
     <style>
+        /* ============================================
+           VARIABLES CSS - TEMAS DE COLOR
+           ============================================ */
         :root {
             --primary: #3498db;
             --secondary: #3498db;
@@ -61,6 +64,7 @@
             --secondary: #e84393;
         }
         
+        /* Estilos para temas claros */
         .tema-amarillo .btn-primary, .tema-amarillo .btn-movil, .tema-amarillo table th,
         .tema-amarillo .btn-sell, .tema-amarillo .btn-view, .tema-amarillo .btn-success,
         .tema-naranja .btn-primary, .tema-naranja .btn-movil, .tema-naranja table th,
@@ -84,19 +88,20 @@
             padding-bottom: 30px;
         }
 
-        /* Loader minimalista - solo visible en primera carga */
+        /* ============================================
+           LOADER - INDICADOR DE CARGA
+           ============================================ */
         .loader-container {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: var(--background);
+            background: rgba(0,0,0,0.5);
             display: none;
             justify-content: center;
             align-items: center;
             z-index: 9999;
-            transition: opacity 0.3s;
         }
         
         .loader-container.active {
@@ -119,10 +124,13 @@
         
         .loader-text {
             margin-left: 15px;
-            color: var(--text);
+            color: white;
             font-size: 1em;
         }
 
+        /* ============================================
+           NOTIFICACIONES TOAST
+           ============================================ */
         .toast-notification {
             position: fixed;
             top: 70px;
@@ -153,6 +161,9 @@
             to { transform: translateY(0); opacity: 1; }
         }
 
+        /* ============================================
+           BARRA DE BÚSQUEDA GLOBAL
+           ============================================ */
         .barra-buscadora {
             background: var(--primary);
             color: white;
@@ -244,6 +255,9 @@
             color: white;
         }
 
+        /* ============================================
+           CONTENEDOR PRINCIPAL Y MENÚ
+           ============================================ */
         .container {
             width: 100%;
             padding: 10px;
@@ -300,6 +314,9 @@
             margin-top: 3px;
         }
 
+        /* ============================================
+           PÁGINAS MODALES (VENTANAS SECUNDARIAS)
+           ============================================ */
         .nueva-pagina {
             display: none;
             position: fixed;
@@ -326,21 +343,33 @@
             cursor: pointer;
         }
 
+        /* ============================================
+           TABLAS RESPONSIVE - SCROLL HORIZONTAL
+           ============================================ */
+        .tabla-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin-bottom: 20px;
+        }
+
         table {
             width: 100%;
+            min-width: 500px;
             border-collapse: collapse;
-            margin-bottom: 20px;
         }
 
         table th, table td {
             padding: 10px;
             border: 1px solid var(--border);
             text-align: left;
+            white-space: nowrap;
         }
 
         table th {
             background-color: var(--primary);
             color: white;
+            position: sticky;
+            top: 0;
         }
 
         table tr:nth-child(even) {
@@ -351,6 +380,9 @@
             background-color: rgba(0,0,0,0.05);
         }
 
+        /* ============================================
+           FORMULARIOS Y ENTRADAS
+           ============================================ */
         .form-group {
             margin-bottom: 15px;
         }
@@ -372,6 +404,9 @@
             text-transform: capitalize;
         }
 
+        /* ============================================
+           BOTONES GENERALES
+           ============================================ */
         .btn {
             padding: 10px 15px;
             color: white;
@@ -380,6 +415,12 @@
             cursor: pointer;
             font-size: 1em;
             margin: 5px;
+            transition: opacity 0.2s;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
 
         .btn-primary {
@@ -398,10 +439,13 @@
             background-color: var(--warning);
         }
 
-        .btn:hover {
+        .btn:hover:not(:disabled) {
             opacity: 0.9;
         }
 
+        /* ============================================
+           MODALES Y DIALOGOS
+           ============================================ */
         .modal {
             display: none;
             position: fixed;
@@ -444,6 +488,9 @@
             color: var(--text);
         }
 
+        /* ============================================
+           PRODUCTOS EN VENTA
+           ============================================ */
         .producto-venta {
             display: flex;
             justify-content: space-between;
@@ -470,6 +517,9 @@
             font-size: 0.9em;
         }
 
+        /* ============================================
+           TARJETAS (CARDS)
+           ============================================ */
         .card {
             background: var(--card-bg);
             border-radius: 10px;
@@ -479,12 +529,9 @@
             border: 1px solid var(--border);
         }
 
-        .error {
-            color: var(--danger);
-            font-size: 0.9em;
-            margin-top: 5px;
-        }
-
+        /* ============================================
+           CONFIGURACIÓN Y OPCIONES
+           ============================================ */
         .config-option {
             margin-bottom: 15px;
             padding-bottom: 15px;
@@ -506,21 +553,9 @@
             z-index: 999;
         }
 
-        #modal-salida {
-            display: none;
-        }
-
-        #modal-salida .modal-content {
-            text-align: center;
-        }
-
-        #modal-salida .botones-confirmacion {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-top: 20px;
-        }
-
+        /* ============================================
+           FACTURA TÉRMICA
+           ============================================ */
         .factura-termica {
             width: 80mm;
             padding: 10px;
@@ -561,6 +596,9 @@
             text-transform: capitalize;
         }
 
+        /* ============================================
+           LISTAS Y REPORTES
+           ============================================ */
         .gasto-item, .empleado-item, .proveedor-item {
             display: flex;
             justify-content: space-between;
@@ -572,14 +610,6 @@
         .reporte-item {
             padding: 10px;
             border-bottom: 1px solid var(--border);
-        }
-
-        .btn-tema {
-            background-color: var(--card-bg);
-            color: var(--text);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            font-weight: bold;
-            border: 1px solid var(--border);
         }
 
         .botones-accion {
@@ -631,6 +661,9 @@
             flex: 1;
         }
         
+        /* ============================================
+           CALENDARIO
+           ============================================ */
         .calendario-header {
             display: flex;
             justify-content: space-between;
@@ -669,6 +702,9 @@
             color: white;
         }
 
+        /* ============================================
+           MODAL DE EXPORTACIÓN
+           ============================================ */
         .modal-exportacion {
             display: none;
             position: fixed;
@@ -759,6 +795,9 @@
             margin-top: 15px;
         }
         
+        /* ============================================
+           MENSAJERÍA (CHAT)
+           ============================================ */
         .chat-message {
             padding: 8px 12px;
             border-radius: 15px;
@@ -792,6 +831,55 @@
             width: 100%;
         }
 
+        /* ============================================
+           DIÁLOGO DE CONFIRMACIÓN PARA SALIR
+           ============================================ */
+        .dialog-salir {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 10000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .dialog-salir .dialog-content {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 20px;
+            width: 80%;
+            max-width: 300px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+        
+        .dialog-salir .dialog-buttons {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+        
+        .dialog-salir .dialog-buttons button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+        }
+        
+        .dialog-salir .btn-confirmar {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .dialog-salir .btn-cancelar {
+            background: var(--secondary);
+            color: white;
+        }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
@@ -800,7 +888,19 @@
 <body>
     <div class="loader-container" id="loader">
         <div class="loader"></div>
-        <div class="loader-text" id="loader-text">Cargando...</div>
+        <div class="loader-text" id="loader-text">Actualizando datos...</div>
+    </div>
+    
+    <!-- Diálogo de confirmación para salir -->
+    <div id="dialog-salir" class="dialog-salir">
+        <div class="dialog-content">
+            <h3>¿Salir de la aplicación?</h3>
+            <p>¿Estás seguro que deseas cerrar la aplicación?</p>
+            <div class="dialog-buttons">
+                <button class="btn-cancelar" onclick="cancelarSalida()">Cancelar</button>
+                <button class="btn-confirmar" onclick="confirmarSalida()">Salir</button>
+            </div>
+        </div>
     </div>
 
     <div class="barra-buscadora">
@@ -831,6 +931,9 @@
 
     <div class="watermark">@felinuxs</div>
 
+    <!-- ============================================
+         PÁGINA DE VENTAS
+         ============================================ -->
     <div id="pagina-ventas" class="nueva-pagina">
         <button class="close-btn" onclick="cerrarPagina('ventas')">&times;</button>
         <h2>🛒 Ventas</h2>
@@ -879,6 +982,9 @@
         </div>
     </div>
 
+    <!-- ============================================
+         PÁGINA DE INVENTARIO
+         ============================================ -->
     <div id="pagina-inventario" class="nueva-pagina">
         <button class="close-btn" onclick="cerrarPagina('inventario')">&times;</button>
         <h2>📦 Inventario</h2>
@@ -890,20 +996,19 @@
         
         <button class="btn btn-success" onclick="mostrarModal('modal-agregar-producto')">+ Agregar Producto</button>
         
-        <table id="tabla-inventario">
-            <thead>
-                <tr>
-                    <th>Nombre</th>
-                    <th>Precio USD</th>
-                    <th>Precio Bs</th>
-                    <th>Stock</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
+        <div class="tabla-responsive">
+            <table id="tabla-inventario">
+                <thead>
+                    <tr><th>Nombre</th><th>Precio USD</th><th>Precio Bs</th><th>Stock</th><th>Acciones</th></tr>
+                </thead>
+                <tbody></tbody>
+             </table>
+        </div>
     </div>
 
+    <!-- ============================================
+         PÁGINA DE CLIENTES
+         ============================================ -->
     <div id="pagina-clientes" class="nueva-pagina">
         <button class="close-btn" onclick="cerrarPagina('clientes')">&times;</button>
         <h2>👥 Clientes</h2>
@@ -915,19 +1020,17 @@
         
         <button class="btn btn-success" onclick="mostrarModal('modal-nuevo-cliente')">+ Agregar Cliente</button>
         
-        <table id="tabla-clientes">
-            <thead>
-                <tr>
-                    <th>Nombre</th>
-                    <th>Teléfono</th>
-                    <th>Email</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
+        <div class="tabla-responsive">
+            <table id="tabla-clientes">
+                <thead><tr><th>Nombre</th><th>Teléfono</th><th>Email</th><th>Acciones</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
     </div>
 
+    <!-- ============================================
+         PÁGINA DE PROVEEDORES
+         ============================================ -->
     <div id="pagina-proveedores" class="nueva-pagina">
         <button class="close-btn" onclick="cerrarPagina('proveedores')">&times;</button>
         <h2>🚚 Proveedores</h2>
@@ -939,19 +1042,17 @@
         
         <button class="btn btn-success" onclick="mostrarModal('modal-agregar-proveedor')">+ Agregar Proveedor</button>
         
-        <table id="tabla-proveedores">
-            <thead>
-                <tr>
-                    <th>Nombre</th>
-                    <th>Contacto</th>
-                    <th>Teléfono</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
+        <div class="tabla-responsive">
+            <table id="tabla-proveedores">
+                <thead><tr><th>Nombre</th><th>Contacto</th><th>Teléfono</th><th>Acciones</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
     </div>
 
+    <!-- ============================================
+         PÁGINA DE GASTOS
+         ============================================ -->
     <div id="pagina-gastos" class="nueva-pagina">
         <button class="close-btn" onclick="cerrarPagina('gastos')">&times;</button>
         <h2>💸 Gastos</h2>
@@ -970,10 +1071,12 @@
             <ul id="categorias-gastos"></ul>
         </div>
         
-        <div id="lista-gastos">
-            </div>
+        <div id="lista-gastos"></div>
     </div>
 
+    <!-- ============================================
+         PÁGINA DE EMPLEADOS
+         ============================================ -->
     <div id="pagina-empleados" class="nueva-pagina">
         <button class="close-btn" onclick="cerrarPagina('empleados')">&times;</button>
         <h2>👨‍💼 Empleados</h2>
@@ -985,10 +1088,12 @@
         
         <button class="btn btn-success" onclick="mostrarModal('modal-agregar-empleado')">+ Agregar Empleado</button>
         
-        <div id="lista-empleados">
-            </div>
+        <div id="lista-empleados"></div>
     </div>
 
+    <!-- ============================================
+         PÁGINA DE TIPO DE CAMBIO
+         ============================================ -->
     <div id="pagina-tipo-cambio" class="nueva-pagina">
         <button class="close-btn" onclick="cerrarPagina('tipo-cambio')">&times;</button>
         <h2>💵 Tipo de Cambio</h2>
@@ -1010,12 +1115,14 @@
         
         <div class="card" style="margin-top: 20px;">
             <h3>Historial de Cambios</h3>
-            <p><small>Solo se guarda cuando hay cambios reales en el valor</small></p>
-            <div id="historial-tipo-cambio">
-                </div>
+            <p><small>Solo se registra cuando hay cambios reales en el valor del dólar</small></p>
+            <div id="historial-tipo-cambio"></div>
         </div>
     </div>
 
+    <!-- ============================================
+         PÁGINA DE MENSAJERÍA
+         ============================================ -->
     <div id="pagina-mensajes" class="nueva-pagina">
         <button class="close-btn" onclick="cerrarPagina('mensajes')">&times;</button>
         <h2>📨 Mensajería P2P</h2>
@@ -1052,8 +1159,7 @@
                 </div>
             </div>
     
-            <div id="chat-box" class="card" style="height: 40vh; overflow-y: auto; display: flex; flex-direction: column-reverse;">
-                </div>
+            <div id="chat-box" class="card" style="height: 40vh; overflow-y: auto; display: flex; flex-direction: column-reverse;"></div>
     
             <div id="chat-input-area" class="card">
                 <div id="grabando-indicator" style="display:none; color: var(--danger); margin-bottom: 5px;">Grabando nota de voz...</div>
@@ -1068,6 +1174,9 @@
         </div>
     </div>
 
+    <!-- ============================================
+         PÁGINA DE REPORTES
+         ============================================ -->
     <div id="pagina-reportes" class="nueva-pagina">
         <button class="close-btn" onclick="cerrarPagina('reportes')">&times;</button>
         <h2>📊 Reportes</h2>
@@ -1082,8 +1191,7 @@
                 </div>
                 <div class="calendario-grid" id="calendario-grid"></div>
             </div>
-            <div id="reporte-diario-container" style="margin-top: 15px;">
-                </div>
+            <div id="reporte-diario-container" style="margin-top: 15px;"></div>
         </div>
 
         <div class="card">
@@ -1111,10 +1219,12 @@
             <button class="btn btn-primary" onclick="generarReporte()">Generar Reporte</button>
         </div>
         
-        <div id="contenedor-reporte" style="margin-top: 20px;">
-            </div>
+        <div id="contenedor-reporte" style="margin-top: 20px;"></div>
     </div>
 
+    <!-- ============================================
+         PÁGINA DE CONFIGURACIÓN
+         ============================================ -->
     <div id="pagina-config" class="nueva-pagina">
         <button class="close-btn" onclick="cerrarPagina('config')">&times;</button>
         <h2>⚙️ Configuración</h2>
@@ -1177,34 +1287,22 @@
         
         <div class="config-option">
             <h3>Acerca de</h3>
-            <p>Gestor Empresarial Móvil v2.2 - IndexedDB</p>
+            <p>Gestor Empresarial Móvil v2.4 - IndexedDB</p>
             <p>Desarrollado por @felinuxs</p>
         </div>
     </div>
 
+    <!-- ============================================
+         MODALES DE DATOS
+         ============================================ -->
     <div class="modal" id="modal-nuevo-cliente">
         <div class="modal-content">
-            <div class="modal-header">
-                <h3>Nuevo Cliente</h3>
-                <button class="modal-close" onclick="cerrarModal('modal-nuevo-cliente')">&times;</button>
-            </div>
+            <div class="modal-header"><h3>Nuevo Cliente</h3><button class="modal-close" onclick="cerrarModal('modal-nuevo-cliente')">&times;</button></div>
             <form id="form-nuevo-cliente">
-                <div class="form-group">
-                    <label for="nombre-cliente-modal">Nombre:</label>
-                    <input type="text" id="nombre-cliente-modal" class="capitalize" required>
-                </div>
-                <div class="form-group">
-                    <label for="telefono-cliente-modal">Teléfono:</label>
-                    <input type="text" id="telefono-cliente-modal">
-                </div>
-                <div class="form-group">
-                    <label for="email-cliente-modal">Email:</label>
-                    <input type="email" id="email-cliente-modal">
-                </div>
-                <div class="form-group">
-                    <label for="direccion-cliente-modal">Dirección:</label>
-                    <textarea id="direccion-cliente-modal" class="capitalize"></textarea>
-                </div>
+                <div class="form-group"><label for="nombre-cliente-modal">Nombre:</label><input type="text" id="nombre-cliente-modal" class="capitalize" required></div>
+                <div class="form-group"><label for="telefono-cliente-modal">Teléfono:</label><input type="text" id="telefono-cliente-modal"></div>
+                <div class="form-group"><label for="email-cliente-modal">Email:</label><input type="email" id="email-cliente-modal"></div>
+                <div class="form-group"><label for="direccion-cliente-modal">Dirección:</label><textarea id="direccion-cliente-modal" class="capitalize"></textarea></div>
                 <button type="submit" class="btn btn-success">Guardar Cliente</button>
             </form>
         </div>
@@ -1212,27 +1310,12 @@
 
     <div class="modal" id="modal-agregar-producto">
         <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="titulo-modal-producto">Agregar Producto</h3>
-                <button class="modal-close" onclick="cerrarModal('modal-agregar-producto')">&times;</button>
-            </div>
+            <div class="modal-header"><h3 id="titulo-modal-producto">Agregar Producto</h3><button class="modal-close" onclick="cerrarModal('modal-agregar-producto')">&times;</button></div>
             <form id="form-agregar-producto">
-                <div class="form-group">
-                    <label for="nombre-producto">Nombre:</label>
-                    <input type="text" id="nombre-producto" class="capitalize">
-                </div>
-                <div class="form-group">
-                    <label for="precio-usd-producto">Precio USD:</label>
-                    <input type="number" id="precio-usd-producto" step="0.01" min="0" oninput="calcularPrecioBs()">
-                </div>
-                <div class="form-group">
-                    <label for="precio-bs-producto">Precio Bs:</label>
-                    <input type="number" id="precio-bs-producto" step="0.01" min="0" readonly>
-                </div>
-                <div class="form-group">
-                    <label for="stock-producto">Stock:</label>
-                    <input type="number" id="stock-producto" min="0">
-                </div>
+                <div class="form-group"><label for="nombre-producto">Nombre:</label><input type="text" id="nombre-producto" class="capitalize"></div>
+                <div class="form-group"><label for="precio-usd-producto">Precio USD:</label><input type="number" id="precio-usd-producto" step="0.01" min="0" oninput="calcularPrecioBs()"></div>
+                <div class="form-group"><label for="precio-bs-producto">Precio Bs:</label><input type="number" id="precio-bs-producto" step="0.01" min="0" readonly></div>
+                <div class="form-group"><label for="stock-producto">Stock:</label><input type="number" id="stock-producto" min="0"></div>
                 <button type="submit" class="btn btn-success">Guardar Producto</button>
             </form>
         </div>
@@ -1240,31 +1323,13 @@
 
     <div class="modal" id="modal-agregar-proveedor">
         <div class="modal-content">
-            <div class="modal-header">
-                <h3>Agregar Proveedor</h3>
-                <button class="modal-close" onclick="cerrarModal('modal-agregar-proveedor')">&times;</button>
-            </div>
+            <div class="modal-header"><h3>Agregar Proveedor</h3><button class="modal-close" onclick="cerrarModal('modal-agregar-proveedor')">&times;</button></div>
             <form id="form-agregar-proveedor">
-                <div class="form-group">
-                    <label for="nombre-proveedor">Nombre:</label>
-                    <input type="text" id="nombre-proveedor" class="capitalize" required>
-                </div>
-                <div class="form-group">
-                    <label for="contacto-proveedor">Persona de Contacto:</label>
-                    <input type="text" id="contacto-proveedor" class="capitalize">
-                </div>
-                <div class="form-group">
-                    <label for="telefono-proveedor">Teléfono:</label>
-                    <input type="text" id="telefono-proveedor">
-                </div>
-                <div class="form-group">
-                    <label for="email-proveedor">Email:</label>
-                    <input type="email" id="email-proveedor">
-                </div>
-                <div class="form-group">
-                    <label for="productos-proveedor">Productos que suministra:</label>
-                    <textarea id="productos-proveedor" class="capitalize"></textarea>
-                </div>
+                <div class="form-group"><label for="nombre-proveedor">Nombre:</label><input type="text" id="nombre-proveedor" class="capitalize" required></div>
+                <div class="form-group"><label for="contacto-proveedor">Persona de Contacto:</label><input type="text" id="contacto-proveedor" class="capitalize"></div>
+                <div class="form-group"><label for="telefono-proveedor">Teléfono:</label><input type="text" id="telefono-proveedor"></div>
+                <div class="form-group"><label for="email-proveedor">Email:</label><input type="email" id="email-proveedor"></div>
+                <div class="form-group"><label for="productos-proveedor">Productos que suministra:</label><textarea id="productos-proveedor" class="capitalize"></textarea></div>
                 <button type="submit" class="btn btn-success">Guardar Proveedor</button>
             </form>
         </div>
@@ -1272,33 +1337,12 @@
 
     <div class="modal" id="modal-agregar-gasto">
         <div class="modal-content">
-            <div class="modal-header">
-                <h3>Registrar Gasto</h3>
-                <button class="modal-close" onclick="cerrarModal('modal-agregar-gasto')">&times;</button>
-            </div>
+            <div class="modal-header"><h3>Registrar Gasto</h3><button class="modal-close" onclick="cerrarModal('modal-agregar-gasto')">&times;</button></div>
             <form id="form-agregar-gasto">
-                <div class="form-group">
-                    <label for="descripcion-gasto">Descripción:</label>
-                    <input type="text" id="descripcion-gasto" class="capitalize" required>
-                </div>
-                <div class="form-group">
-                    <label for="categoria-gasto">Categoría:</label>
-                    <select id="categoria-gasto">
-                        <option value="oficina">Oficina</option>
-                        <option value="servicios">Servicios</option>
-                        <option value="impuestos">Impuestos</option>
-                        <option value="nómina">Nómina</option>
-                        <option value="otros">Otros</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="monto-gasto">Monto (Bs):</label>
-                    <input type="number" id="monto-gasto" step="0.01" min="0" required>
-                </div>
-                <div class="form-group">
-                    <label for="fecha-gasto">Fecha:</label>
-                    <input type="date" id="fecha-gasto" required>
-                </div>
+                <div class="form-group"><label for="descripcion-gasto">Descripción:</label><input type="text" id="descripcion-gasto" class="capitalize" required></div>
+                <div class="form-group"><label for="categoria-gasto">Categoría:</label><select id="categoria-gasto"><option value="oficina">Oficina</option><option value="servicios">Servicios</option><option value="impuestos">Impuestos</option><option value="nómina">Nómina</option><option value="otros">Otros</option></select></div>
+                <div class="form-group"><label for="monto-gasto">Monto (Bs):</label><input type="number" id="monto-gasto" step="0.01" min="0" required></div>
+                <div class="form-group"><label for="fecha-gasto">Fecha:</label><input type="date" id="fecha-gasto" required></div>
                 <button type="submit" class="btn btn-success">Registrar Gasto</button>
             </form>
         </div>
@@ -1306,42 +1350,24 @@
 
     <div class="modal" id="modal-agregar-empleado">
         <div class="modal-content">
-            <div class="modal-header">
-                <h3>Agregar Empleado</h3>
-                <button class="modal-close" onclick="cerrarModal('modal-agregar-empleado')">&times;</button>
-            </div>
+            <div class="modal-header"><h3>Agregar Empleado</h3><button class="modal-close" onclick="cerrarModal('modal-agregar-empleado')">&times;</button></div>
             <form id="form-agregar-empleado">
-                <div class="form-group">
-                    <label for="nombre-empleado">Nombre:</label>
-                    <input type="text" id="nombre-empleado" class="capitalize" required>
-                </div>
-                <div class="form-group">
-                    <label for="cargo-empleado">Cargo:</label>
-                    <input type="text" id="cargo-empleado" class="capitalize">
-                </div>
-                <div class="form-group">
-                    <label for="salario-empleado">Salario (Bs):</label>
-                    <input type="number" id="salario-empleado" step="0.01" min="0">
-                </div>
-                <div class="form-group">
-                    <label for="telefono-empleado">Teléfono:</label>
-                    <input type="text" id="telefono-empleado">
-                </div>
-                <div class="form-group">
-                    <label for="fecha-contracto">Fecha de Contrato:</label>
-                    <input type="date" id="fecha-contracto">
-                </div>
+                <div class="form-group"><label for="nombre-empleado">Nombre:</label><input type="text" id="nombre-empleado" class="capitalize" required></div>
+                <div class="form-group"><label for="cargo-empleado">Cargo:</label><input type="text" id="cargo-empleado" class="capitalize"></div>
+                <div class="form-group"><label for="salario-empleado">Salario (Bs):</label><input type="number" id="salario-empleado" step="0.01" min="0"></div>
+                <div class="form-group"><label for="telefono-empleado">Teléfono:</label><input type="text" id="telefono-empleado"></div>
+                <div class="form-group"><label for="fecha-contracto">Fecha de Contrato:</label><input type="date" id="fecha-contracto"></div>
                 <button type="submit" class="btn btn-success">Guardar Empleado</button>
             </form>
         </div>
     </div>
 
+    <!-- ============================================
+         MODAL DE FACTURA
+         ============================================ -->
     <div class="modal" id="modal-factura">
         <div class="modal-content">
-            <div class="modal-header">
-                <h3>Factura</h3>
-                <button class="modal-close" onclick="cerrarModal('modal-factura')">&times;</button>
-            </div>
+            <div class="modal-header"><h3>Factura</h3><button class="modal-close" onclick="cerrarModal('modal-factura')">&times;</button></div>
             <div class="factura-termica" id="area-factura">
                 <div class="factura-header">
                     <h3 id="nombre-empresa-factura">MI EMPRESA</h3>
@@ -1349,140 +1375,49 @@
                     <p>Teléfono: <span id="telefono-empresa-factura">(123) 456-7890</span></p>
                     <p>Fecha: <span id="factura-fecha"></span></p>
                 </div>
-                
-                <div class="factura-cliente">
-                    <p><strong>Cliente:</strong> <span id="factura-cliente-nombre"></span></p>
-                </div>
-                
-                <table class="factura-items">
-                    <thead>
-                        <tr>
-                            <th>Producto</th>
-                            <th>Cant</th>
-                            <th>Precio</th>
-                            <th>Total</th>
-                        </tr>
-                    </thead>
-                    <tbody id="factura-items-body">
-                    </tbody>
-                </table>
-                
-                <div class="factura-total">
-                    <p>Total: <span id="factura-total"></span></p>
-                </div>
-                
-                <div class="factura-footer">
-                    <p>¡Gracias por su compra!</p>
-                </div>
+                <div class="factura-cliente"><p><strong>Cliente:</strong> <span id="factura-cliente-nombre"></span></p></div>
+                <table class="factura-items"><thead><tr><th>Producto</th><th>Cant</th><th>Precio</th><th>Total</th></tr></thead><tbody id="factura-items-body"></tbody></table>
+                <div class="factura-total"><p>Total: <span id="factura-total"></span></p></div>
+                <div class="factura-footer"><p>¡Gracias por su compra!</p></div>
             </div>
-            <div class="exportar-factura">
-                <button class="btn btn-primary" onclick="mostrarOpcionesExportacion()">Exportar/Imprimir Factura</button>
-            </div>
+            <div class="exportar-factura"><button class="btn btn-primary" onclick="mostrarOpcionesExportacion()">Exportar/Imprimir Factura</button></div>
         </div>
     </div>
 
     <div class="modal" id="modal-salida">
         <div class="modal-content">
-            <div class="modal-header">
-                <h3>¿Eliminar todos los datos?</h3>
-            </div>
+            <div class="modal-header"><h3>¿Eliminar todos los datos?</h3></div>
             <p>¿Está seguro que desea eliminar todos los datos? Esta acción no se puede deshacer.</p>
-            <div class="botones-confirmacion">
-                <button class="btn btn-danger" onclick="eliminarTodosDatos()">Sí, eliminar</button>
-                <button class="btn btn-primary" onclick="cerrarModal('modal-salida')">Cancelar</button>
-            </div>
+            <div class="botones-confirmacion"><button class="btn btn-danger" onclick="eliminarTodosDatos()">Sí, eliminar</button><button class="btn btn-primary" onclick="cerrarModal('modal-salida')">Cancelar</button></div>
         </div>
     </div>
 
     <div class="modal-exportacion" id="modal-exportar">
         <div class="modal-content">
-            <div class="modal-header">
-                <h3>Exportar Factura</h3>
-                <button class="modal-close" onclick="cerrarModal('modal-exportar')">&times;</button>
-            </div>
+            <div class="modal-header"><h3>Exportar Factura</h3><button class="modal-close" onclick="cerrarModal('modal-exportar')">&times;</button></div>
             
-            <div class="opcion-exportacion" onclick="imprimirFactura()">
-                <div class="icono-exportacion">🖨️</div>
-                <div class="texto-exportacion">
-                    <h4>Imprimir (Térmica 80mm)</h4>
-                    <p>Imprimir factura directamente</p>
-                </div>
-            </div>
-            
-            <div class="opcion-exportacion" onclick="exportarFacturaComo('PDF')">
-                <div class="icono-exportacion">📄</div>
-                <div class="texto-exportacion">
-                    <h4>Exportar a PDF</h4>
-                    <p>Guardar como documento PDF</p>
-                </div>
-            </div>
-            
-            <div class="opcion-exportacion" onclick="exportarFacturaComo('JPEG')">
-                <div class="icono-exportacion">🖼️</div>
-                <div class="texto-exportacion">
-                    <h4>Exportar a JPEG</h4>
-                    <p>Guardar como imagen JPEG</p>
-                </div>
-            </div>
-            
-            <div class="opcion-exportacion" onclick="exportarFacturaComo('TXT')">
-                <div class="icono-exportacion">📝</div>
-                <div class="texto-exportacion">
-                    <h4>Exportar a TXT</h4>
-                    <p>Guardar como archivo de texto</p>
-                </div>
-            </div>
-
-            <div class="opcion-exportacion" onclick="exportarFacturaComo('Excel')">
-                <div class="icono-exportacion">📊</div>
-                <div class="texto-exportacion">
-                    <h4>Exportar a Excel</h4>
-                    <p>Guardar como hoja de cálculo</p>
-                </div>
-            </div>
-            
-            <div class="opcion-exportacion" onclick="mostrarFormularioEmail()">
-                <div class="icono-exportacion">📧</div>
-                <div class="texto-exportacion">
-                    <h4>Enviar por Email</h4>
-                    <p>Enviar factura por correo electrónico</p>
-                </div>
-            </div>
-            
-            <div class="opcion-exportacion" onclick="mostrarFormularioSMS()">
-                <div class="icono-exportacion">💬</div>
-                <div class="texto-exportacion">
-                    <h4>Enviar por SMS</h4>
-                    <p>Enviar factura por mensaje de texto</p>
-                </div>
-            </div>
+            <div class="opcion-exportacion" onclick="exportarFacturaPDF()"><div class="icono-exportacion">📄</div><div class="texto-exportacion"><h4>Exportar a PDF</h4><p>Guardar como documento PDF</p></div></div>
+            <div class="opcion-exportacion" onclick="exportarFacturaJPEG()"><div class="icono-exportacion">🖼️</div><div class="texto-exportacion"><h4>Exportar a JPEG</h4><p>Guardar como imagen JPEG</p></div></div>
+            <div class="opcion-exportacion" onclick="exportarFacturaTXT()"><div class="icono-exportacion">📝</div><div class="texto-exportacion"><h4>Exportar a TXT</h4><p>Guardar como archivo de texto</p></div></div>
+            <div class="opcion-exportacion" onclick="exportarFacturaExcel()"><div class="icono-exportacion">📊</div><div class="texto-exportacion"><h4>Exportar a Excel</h4><p>Guardar como hoja de cálculo</p></div></div>
+            <div class="opcion-exportacion" onclick="imprimirFacturaTermica()"><div class="icono-exportacion">🖨️</div><div class="texto-exportacion"><h4>Imprimir (Térmica 80mm)</h4><p>Imprimir factura directamente</p></div></div>
             
             <div id="formulario-email" class="formulario-envio" style="display: none;">
-                <div class="form-group">
-                    <label for="email-destino">Email destino:</label>
-                    <input type="email" id="email-destino" placeholder="correo@ejemplo.com">
-                </div>
-                <div class="botones-envio">
-                    <button class="btn btn-primary" onclick="enviarFacturaEmail()">Enviar</button>
-                    <button class="btn btn-danger" onclick="ocultarFormularios()">Cancelar</button>
-                </div>
+                <div class="form-group"><label for="email-destino">Email destino:</label><input type="email" id="email-destino" placeholder="correo@ejemplo.com"></div>
+                <div class="botones-envio"><button class="btn btn-primary" onclick="enviarFacturaEmail()">Enviar</button><button class="btn btn-danger" onclick="ocultarFormularios()">Cancelar</button></div>
             </div>
             
             <div id="formulario-sms" class="formulario-envio" style="display: none;">
-                <div class="form-group">
-                    <label for="telefono-destino">Teléfono destino:</label>
-                    <input type="tel" id="telefono-destino" placeholder="+1234567890">
-                </div>
-                <div class="botones-envio">
-                    <button class="btn btn-primary" onclick="enviarFacturaSMS()">Enviar</button>
-                    <button class="btn btn-danger" onclick="ocultarFormularios()">Cancelar</button>
-                </div>
+                <div class="form-group"><label for="telefono-destino">Teléfono destino:</label><input type="tel" id="telefono-destino" placeholder="+1234567890"></div>
+                <div class="botones-envio"><button class="btn btn-primary" onclick="enviarFacturaSMS()">Enviar</button><button class="btn btn-danger" onclick="ocultarFormularios()">Cancelar</button></div>
             </div>
         </div>
     </div>
 
     <script>
-        // ===== CONFIGURACIÓN DE INDEXEDDB =====
+        // ============================================
+        // CONFIGURACIÓN DE INDEXEDDB
+        // ============================================
         const DB_NAME = 'GestorEmpresarialDB';
         const DB_VERSION = 2;
         const STORES = {
@@ -1500,6 +1435,7 @@
         let db = null;
         let dbReady = false;
         let pendingOperations = [];
+        let fechaCalendario = new Date();
 
         // Datos en memoria caché
         let inventario = [];
@@ -1522,118 +1458,82 @@
             },
             mensajeria: null
         };
+        
+        let prevencionCierreActiva = false;
+        let historialPaginacion = [];
 
-        // ===== FUNCIÓN PARA MOSTRAR NOTIFICACIONES =====
+        // ============================================
+        // FUNCIONES DE NOTIFICACIÓN
+        // ============================================
         function mostrarNotificacion(mensaje, tipo = 'success') {
             const toast = document.createElement('div');
             toast.className = `toast-notification ${tipo}`;
             toast.textContent = mensaje;
             document.body.appendChild(toast);
-            
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
+            setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 3000);
         }
 
-        // ===== INICIALIZAR INDEXEDDB =====
+        // ============================================
+        // MANEJO DEL BOTÓN DE RETROCESO
+        // ============================================
+        function handleBackButton() {
+            const paginasAbiertas = document.querySelectorAll('.nueva-pagina');
+            for (let pagina of paginasAbiertas) {
+                if (pagina.style.display === 'block') {
+                    cerrarPagina(pagina.id.replace('pagina-', ''));
+                    return true;
+                }
+            }
+            if (!algunaVisible) { mostrarDialogoSalida(); return false; }
+            return true;
+        }
+        
+        function mostrarDialogoSalida() { const dialog = document.getElementById('dialog-salir'); if (dialog) dialog.style.display = 'flex'; }
+        function cancelarSalida() { const dialog = document.getElementById('dialog-salir'); if (dialog) dialog.style.display = 'none'; }
+        function confirmarSalida() { if (window.history.length > 1) window.history.back(); else window.close(); cancelarSalida(); }
+        
+        document.addEventListener('backbutton', function(e) { e.preventDefault(); handleBackButton(); });
+        window.addEventListener('popstate', function(e) { if (!prevencionCierreActiva) { e.preventDefault(); handleBackButton(); window.history.pushState(null, null, window.location.href); } });
+        window.history.pushState(null, null, window.location.href);
+
+        // ============================================
+        // FUNCIONES DE INDEXEDDB
+        // ============================================
         function initDB() {
             return new Promise((resolve, reject) => {
                 const request = indexedDB.open(DB_NAME, DB_VERSION);
-                
-                request.onerror = (event) => {
-                    console.error('Error al abrir IndexedDB:', event.target.error);
-                    reject(event.target.error);
-                };
-                
-                request.onsuccess = (event) => {
-                    db = event.target.result;
-                    console.log('✅ IndexedDB abierta correctamente');
-                    dbReady = true;
-                    
-                    pendingOperations.forEach(op => op());
-                    pendingOperations = [];
-                    
-                    resolve(db);
-                };
-                
+                request.onerror = (event) => reject(event.target.error);
+                request.onsuccess = (event) => { db = event.target.result; dbReady = true; pendingOperations.forEach(op => op()); pendingOperations = []; resolve(db); };
                 request.onupgradeneeded = (event) => {
                     const db = event.target.result;
-                    
-                    if (!db.objectStoreNames.contains(STORES.INVENTARIO)) {
-                        db.createObjectStore(STORES.INVENTARIO, { keyPath: 'id' });
-                    }
-                    if (!db.objectStoreNames.contains(STORES.CLIENTES)) {
-                        db.createObjectStore(STORES.CLIENTES, { keyPath: 'id' });
-                    }
-                    if (!db.objectStoreNames.contains(STORES.PROVEEDORES)) {
-                        db.createObjectStore(STORES.PROVEEDORES, { keyPath: 'id' });
-                    }
-                    if (!db.objectStoreNames.contains(STORES.GASTOS)) {
-                        db.createObjectStore(STORES.GASTOS, { keyPath: 'id' });
-                    }
-                    if (!db.objectStoreNames.contains(STORES.EMPLEADOS)) {
-                        db.createObjectStore(STORES.EMPLEADOS, { keyPath: 'id' });
-                    }
-                    if (!db.objectStoreNames.contains(STORES.VENTAS)) {
-                        db.createObjectStore(STORES.VENTAS, { keyPath: 'id' });
-                    }
-                    if (!db.objectStoreNames.contains(STORES.CHAT)) {
-                        db.createObjectStore(STORES.CHAT, { keyPath: 'id' });
-                    }
-                    if (!db.objectStoreNames.contains(STORES.TIPO_CAMBIO)) {
-                        db.createObjectStore(STORES.TIPO_CAMBIO, { keyPath: 'id' });
-                    }
-                    if (!db.objectStoreNames.contains(STORES.CONFIGURACION)) {
-                        db.createObjectStore(STORES.CONFIGURACION, { keyPath: 'id' });
-                    }
-                    
-                    console.log('✅ Stores creados en IndexedDB');
+                    if (!db.objectStoreNames.contains(STORES.INVENTARIO)) db.createObjectStore(STORES.INVENTARIO, { keyPath: 'id' });
+                    if (!db.objectStoreNames.contains(STORES.CLIENTES)) db.createObjectStore(STORES.CLIENTES, { keyPath: 'id' });
+                    if (!db.objectStoreNames.contains(STORES.PROVEEDORES)) db.createObjectStore(STORES.PROVEEDORES, { keyPath: 'id' });
+                    if (!db.objectStoreNames.contains(STORES.GASTOS)) db.createObjectStore(STORES.GASTOS, { keyPath: 'id' });
+                    if (!db.objectStoreNames.contains(STORES.EMPLEADOS)) db.createObjectStore(STORES.EMPLEADOS, { keyPath: 'id' });
+                    if (!db.objectStoreNames.contains(STORES.VENTAS)) db.createObjectStore(STORES.VENTAS, { keyPath: 'id' });
+                    if (!db.objectStoreNames.contains(STORES.CHAT)) db.createObjectStore(STORES.CHAT, { keyPath: 'id' });
+                    if (!db.objectStoreNames.contains(STORES.TIPO_CAMBIO)) db.createObjectStore(STORES.TIPO_CAMBIO, { keyPath: 'id' });
+                    if (!db.objectStoreNames.contains(STORES.CONFIGURACION)) db.createObjectStore(STORES.CONFIGURACION, { keyPath: 'id' });
                 };
             });
         }
 
         function withDB(callback) {
             return new Promise((resolve, reject) => {
-                if (dbReady && db) {
-                    try {
-                        const result = callback();
-                        resolve(result);
-                    } catch (error) {
-                        reject(error);
-                    }
-                } else {
-                    pendingOperations.push(() => {
-                        try {
-                            const result = callback();
-                            resolve(result);
-                        } catch (error) {
-                            reject(error);
-                        }
-                    });
-                }
+                if (dbReady && db) { try { resolve(callback()); } catch(e) { reject(e); } }
+                else { pendingOperations.push(() => { try { resolve(callback()); } catch(e) { reject(e); } }); }
             });
         }
 
         function getAllFromStore(storeName) {
             return new Promise((resolve, reject) => {
                 withDB(() => {
-                    try {
-                        const transaction = db.transaction(storeName, 'readonly');
-                        const store = transaction.objectStore(storeName);
-                        const request = store.getAll();
-                        
-                        request.onsuccess = () => {
-                            resolve(request.result);
-                        };
-                        
-                        request.onerror = (event) => {
-                            reject(event.target.error);
-                        };
-                        
-                    } catch (error) {
-                        reject(error);
-                    }
+                    const transaction = db.transaction(storeName, 'readonly');
+                    const store = transaction.objectStore(storeName);
+                    const request = store.getAll();
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = (event) => reject(event.target.error);
                 });
             });
         }
@@ -1641,26 +1541,12 @@
         function putInStore(storeName, item) {
             return new Promise((resolve, reject) => {
                 withDB(() => {
-                    try {
-                        if (!item.id) {
-                            item.id = Date.now();
-                        }
-                        
-                        const transaction = db.transaction(storeName, 'readwrite');
-                        const store = transaction.objectStore(storeName);
-                        const request = store.put(item);
-                        
-                        request.onsuccess = () => {
-                            resolve(request.result);
-                        };
-                        
-                        request.onerror = (event) => {
-                            reject(event.target.error);
-                        };
-                        
-                    } catch (error) {
-                        reject(error);
-                    }
+                    if (!item.id) item.id = Date.now();
+                    const transaction = db.transaction(storeName, 'readwrite');
+                    const store = transaction.objectStore(storeName);
+                    const request = store.put(item);
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = (event) => reject(event.target.error);
                 });
             });
         }
@@ -1668,22 +1554,11 @@
         function deleteFromStore(storeName, id) {
             return new Promise((resolve, reject) => {
                 withDB(() => {
-                    try {
-                        const transaction = db.transaction(storeName, 'readwrite');
-                        const store = transaction.objectStore(storeName);
-                        const request = store.delete(id);
-                        
-                        request.onsuccess = () => {
-                            resolve();
-                        };
-                        
-                        request.onerror = (event) => {
-                            reject(event.target.error);
-                        };
-                        
-                    } catch (error) {
-                        reject(error);
-                    }
+                    const transaction = db.transaction(storeName, 'readwrite');
+                    const store = transaction.objectStore(storeName);
+                    const request = store.delete(id);
+                    request.onsuccess = () => resolve();
+                    request.onerror = (event) => reject(event.target.error);
                 });
             });
         }
@@ -1691,327 +1566,102 @@
         function clearStore(storeName) {
             return new Promise((resolve, reject) => {
                 withDB(() => {
-                    try {
-                        const transaction = db.transaction(storeName, 'readwrite');
-                        const store = transaction.objectStore(storeName);
-                        const request = store.clear();
-                        
-                        request.onsuccess = () => {
-                            resolve();
-                        };
-                        
-                        request.onerror = (event) => {
-                            reject(event.target.error);
-                        };
-                        
-                    } catch (error) {
-                        reject(error);
-                    }
+                    const transaction = db.transaction(storeName, 'readwrite');
+                    const store = transaction.objectStore(storeName);
+                    const request = store.clear();
+                    request.onsuccess = () => resolve();
+                    request.onerror = (event) => reject(event.target.error);
                 });
             });
         }
 
-        // ===== FUNCIÓN PARA ACTUALIZAR EL CAMPO DE TIPO DE CAMBIO =====
-        function actualizarCampoTipoCambio() {
-            const inputTC = document.getElementById('nuevo-tipo-cambio');
-            if (inputTC) {
-                inputTC.value = tipoCambio.toFixed(2);
-            }
-        }
+        // ============================================
+        // FUNCIONES DE TIPO DE CAMBIO
+        // ============================================
+        function actualizarCampoTipoCambio() { const inputTC = document.getElementById('nuevo-tipo-cambio'); if (inputTC) inputTC.value = tipoCambio.toFixed(2); }
 
-        // ===== FUNCIONES PARA TIPO DE CAMBIO =====
         async function obtenerTipoCambioReal() {
             try {
-                // API del BCV
-                const response = await fetch('https://ve.dolarapi.com/v1/dolares/oficial', {
-                    method: 'GET',
-                    headers: {
-                        'Accept': 'application/json'
-                    }
-                });
-                
-                if (!response.ok) {
-                    throw new Error('API no disponible');
-                }
-                
+                const response = await fetch('https://ve.dolarapi.com/v1/dolares/oficial');
+                if (!response.ok) throw new Error('API no disponible');
                 const data = await response.json();
-                
-                let nuevoTipoCambio = null;
-                let fuente = '';
-                
-                if (data && data.promedio) {
-                    nuevoTipoCambio = parseFloat(data.promedio);
-                    fuente = 'dolarapi.com (BCV)';
-                } else if (data && data.venta) {
-                    nuevoTipoCambio = parseFloat(data.venta);
-                    fuente = 'dolarapi.com (Venta)';
-                }
-                
-                if (!nuevoTipoCambio) {
-                    const response2 = await fetch('https://pydolarve.org/api/v1/dollar?page=bcv');
-                    const data2 = await response2.json();
-                    if (data2 && data2.price) {
-                        nuevoTipoCambio = parseFloat(data2.price);
-                        fuente = 'pydolarve.org';
-                    }
-                }
-                
+                let nuevoTipoCambio = null, fuente = '';
+                if (data && data.promedio) { nuevoTipoCambio = parseFloat(data.promedio); fuente = 'dolarapi.com (BCV)'; }
+                else if (data && data.venta) { nuevoTipoCambio = parseFloat(data.venta); fuente = 'dolarapi.com (Venta)'; }
+                if (!nuevoTipoCambio) { const response2 = await fetch('https://pydolarve.org/api/v1/dollar?page=bcv'); const data2 = await response2.json(); if (data2 && data2.price) { nuevoTipoCambio = parseFloat(data2.price); fuente = 'pydolarve.org'; } }
                 if (nuevoTipoCambio && !isNaN(nuevoTipoCambio) && nuevoTipoCambio > 0) {
                     nuevoTipoCambio = Math.round(nuevoTipoCambio * 100) / 100;
-                    
-                    // Actualizar tipo de cambio
-                    tipoCambio = nuevoTipoCambio;
-                    ultimoTipoCambioRegistrado = nuevoTipoCambio;
-                    
-                    // Guardar en historial
-                    const registroCambio = { 
-                        id: Date.now(),
-                        fecha: new Date().toISOString(), 
-                        tasa: tipoCambio,
-                        fuente: fuente
-                    };
-                    
-                    historialTipoCambio.push(registroCambio);
-                    
-                    if (historialTipoCambio.length > 30) {
-                        historialTipoCambio = historialTipoCambio.slice(-30);
-                    }
-                    
-                    await saveTipoCambio();
-                    
-                    // Actualizar precios en inventario
-                    for (let i = 0; i < inventario.length; i++) {
-                        inventario[i].precioBs = redondearPrecioBs(inventario[i].precioUSD * tipoCambio);
-                        await putInStore(STORES.INVENTARIO, inventario[i]);
-                    }
-                    
-                    // ACTUALIZAR EL CAMPO DE TIPO DE CAMBIO
+                    if (Math.abs(tipoCambio - nuevoTipoCambio) > 0.01) {
+                        tipoCambio = nuevoTipoCambio;
+                        historialTipoCambio.push({ id: Date.now(), fecha: new Date().toISOString(), tasa: tipoCambio, fuente: fuente });
+                        if (historialTipoCambio.length > 30) historialTipoCambio = historialTipoCambio.slice(-30);
+                        await saveTipoCambio();
+                        for (let i = 0; i < inventario.length; i++) { inventario[i].precioBs = redondearPrecioBs(inventario[i].precioUSD * tipoCambio); await putInStore(STORES.INVENTARIO, inventario[i]); }
+                        mostrarNotificacion(`✅ Tipo de cambio actualizado: 1$ = ${formatearBs(tipoCambio)}`, 'success');
+                    } else { if (historialTipoCambio.length > 0) { historialTipoCambio[historialTipoCambio.length - 1].fecha = new Date().toISOString(); await saveTipoCambio(); } }
                     actualizarCampoTipoCambio();
-                    
-                    mostrarNotificacion(`✅ Tipo de cambio actualizado: 1$ = ${formatearBs(tipoCambio)}`, 'success');
-                    
-                } else {
-                    throw new Error('No se pudo obtener el tipo de cambio');
-                }
-                
+                } else throw new Error('No se pudo obtener el tipo de cambio');
                 actualizarTipoCambioVisual();
-                
-                if (document.getElementById('pagina-tipo-cambio').style.display === 'block') {
-                    cargarHistorialTipoCambio();
-                }
-                
-            } catch (error) {
-                console.error("Error al obtener tipo de cambio:", error);
-                mostrarNotificacion('No se pudo conectar a la API. Usando último valor guardado.', 'warning');
-                
-                // Asegurar que el campo tenga el valor guardado
-                actualizarCampoTipoCambio();
-                actualizarTipoCambioVisual();
-            }
+                if (document.getElementById('pagina-tipo-cambio').style.display === 'block') cargarHistorialTipoCambio();
+            } catch (error) { mostrarNotificacion('No se pudo conectar a la API. Usando último valor guardado.', 'warning'); actualizarCampoTipoCambio(); actualizarTipoCambioVisual(); }
         }
 
-        async function saveTipoCambio() {
-            try {
-                await putInStore(STORES.TIPO_CAMBIO, { id: 'actual', tasa: tipoCambio });
-                await putInStore(STORES.TIPO_CAMBIO, { id: 'historial', datos: historialTipoCambio });
-            } catch (error) {
-                console.error('Error guardando tipo de cambio:', error);
-            }
-        }
+        async function saveTipoCambio() { try { await putInStore(STORES.TIPO_CAMBIO, { id: 'actual', tasa: tipoCambio }); await putInStore(STORES.TIPO_CAMBIO, { id: 'historial', datos: historialTipoCambio }); } catch(e) { console.error(e); } }
 
         async function actualizarTipoCambioManual() {
             const nuevoTC = parseFloat(document.getElementById('nuevo-tipo-cambio').value);
-            if (isNaN(nuevoTC) || nuevoTC <= 0) {
-                mostrarNotificacion('Por favor ingrese un valor válido', 'error');
-                return;
-            }
-            
-            tipoCambio = nuevoTC;
-            ultimoTipoCambioRegistrado = nuevoTC;
-            
-            historialTipoCambio.push({ 
-                id: Date.now(),
-                fecha: new Date().toISOString(), 
-                tasa: tipoCambio,
-                fuente: 'Manual'
-            });
-            
-            if (historialTipoCambio.length > 30) {
-                historialTipoCambio = historialTipoCambio.slice(-30);
-            }
-            
-            await saveTipoCambio();
-            
-            // Actualizar precios en inventario
-            for (let i = 0; i < inventario.length; i++) {
-                inventario[i].precioBs = redondearPrecioBs(inventario[i].precioUSD * tipoCambio);
-                await putInStore(STORES.INVENTARIO, inventario[i]);
-            }
-            
+            if (isNaN(nuevoTC) || nuevoTC <= 0) { mostrarNotificacion('Por favor ingrese un valor válido', 'error'); return; }
+            if (Math.abs(tipoCambio - nuevoTC) > 0.01) {
+                tipoCambio = nuevoTC;
+                historialTipoCambio.push({ id: Date.now(), fecha: new Date().toISOString(), tasa: tipoCambio, fuente: 'Manual' });
+                if (historialTipoCambio.length > 30) historialTipoCambio = historialTipoCambio.slice(-30);
+                await saveTipoCambio();
+                for (let i = 0; i < inventario.length; i++) { inventario[i].precioBs = redondearPrecioBs(inventario[i].precioUSD * tipoCambio); await putInStore(STORES.INVENTARIO, inventario[i]); }
+                mostrarNotificacion('✅ Tipo de cambio actualizado manualmente', 'success');
+            } else { if (historialTipoCambio.length > 0) { historialTipoCambio[historialTipoCambio.length - 1].fecha = new Date().toISOString(); await saveTipoCambio(); mostrarNotificacion('📅 Se actualizó la hora de verificación, el valor no cambió', 'info'); } }
             actualizarTipoCambioVisual();
-            cargarHistorialTipoCambio();
-            mostrarNotificacion('✅ Tipo de cambio actualizado manualmente', 'success');
+            if (document.getElementById('pagina-tipo-cambio').style.display === 'block') cargarHistorialTipoCambio();
         }
 
-        // ===== CARGAR DATOS INICIALES =====
-        async function loadInitialData() {
-            try {
-                const tipoCambioData = await getAllFromStore(STORES.TIPO_CAMBIO);
-                
-                if (tipoCambioData.length > 0) {
-                    const actual = tipoCambioData.find(item => item.id === 'actual');
-                    if (actual && actual.tasa) {
-                        tipoCambio = actual.tasa;
-                        ultimoTipoCambioRegistrado = actual.tasa;
-                    }
-                    
-                    const historial = tipoCambioData.find(item => item.id === 'historial');
-                    if (historial && historial.datos) {
-                        historialTipoCambio = historial.datos;
-                        if (historialTipoCambio.length > 0) {
-                            ultimoTipoCambioRegistrado = historialTipoCambio[historialTipoCambio.length - 1].tasa;
-                        }
-                    }
-                }
-                
-                inventario = await getAllFromStore(STORES.INVENTARIO);
-                clientes = await getAllFromStore(STORES.CLIENTES);
-                proveedores = await getAllFromStore(STORES.PROVEEDORES);
-                gastos = await getAllFromStore(STORES.GASTOS);
-                empleados = await getAllFromStore(STORES.EMPLEADOS);
-                ventas = await getAllFromStore(STORES.VENTAS);
-                chatHistory = await getAllFromStore(STORES.CHAT);
-                
-                const configData = await getAllFromStore(STORES.CONFIGURACION);
-                if (configData.length > 0) {
-                    const data = configData.find(item => item.id === 'config');
-                    if (data && data.config) {
-                        configuracion = { ...configuracion, ...data.config };
-                    }
-                }
-                
-                // Datos de ejemplo si no hay nada
-                if (inventario.length === 0) {
-                    inventario = [
-                        { id: 1, nombre: "Maxicaucho", precioUSD: 9.00, precioBs: redondearPrecioBs(9.00 * tipoCambio), stock: 10 }
-                    ];
-                    await putInStore(STORES.INVENTARIO, inventario[0]);
-                }
-                
-                if (clientes.length === 0) {
-                    clientes = [
-                        { id: 1, nombre: "Juan Pérez", telefono: "12345678", email: "juan@email.com", direccion: "Av. Siempre Viva 123" }
-                    ];
-                    await putInStore(STORES.CLIENTES, clientes[0]);
-                }
-                
-                if (proveedores.length === 0) {
-                    proveedores = [
-                        { id: 1, nombre: "Distribuidora ABC", contacto: "María González", telefono: "98765432", email: "contacto@distribuidoraabc.com", productos: "Materiales de oficina" }
-                    ];
-                    await putInStore(STORES.PROVEEDORES, proveedores[0]);
-                }
-                
-                if (gastos.length === 0) {
-                    gastos = [
-                        { id: 1, descripcion: "Papelería", categoria: "oficina", monto: 150.50, fecha: new Date().toISOString().split('T')[0] }
-                    ];
-                    await putInStore(STORES.GASTOS, gastos[0]);
-                }
-                
-                if (empleados.length === 0) {
-                    empleados = [
-                        { id: 1, nombre: "Carlos Rodríguez", cargo: "Vendedor", salario: 1200.00, telefono: "5551234", fechaContrato: new Date().toISOString().split('T')[0] }
-                    ];
-                    await putInStore(STORES.EMPLEADOS, empleados[0]);
-                }
-                
-                if (historialTipoCambio.length === 0) {
-                    historialTipoCambio = [
-                        { id: Date.now(), fecha: new Date().toISOString(), tasa: tipoCambio, fuente: 'Inicial' }
-                    ];
-                    await saveTipoCambio();
-                }
-                
-                console.log('✅ Datos cargados exitosamente');
-                
-            } catch (error) {
-                console.error('Error al cargar datos:', error);
-            }
-        }
-
-        // ===== FUNCIONES DE UTILIDAD =====
-        function redondearPrecioBs(precio) {
-            return Math.round(precio * 2) / 2;
-        }
-
-        function formatearBs(numero) {
-            if (typeof numero !== 'number') {
-                numero = parseFloat(numero) || 0;
-            }
-            const formato = new Intl.NumberFormat('es-VE', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            }).format(numero);
-            return formato + ' Bs';
-        }
-
+        // ============================================
+        // FUNCIONES DE UTILIDAD
+        // ============================================
+        function redondearPrecioBs(precio) { return Math.round(precio * 2) / 2; }
+        function formatearBs(numero) { if (typeof numero !== 'number') numero = parseFloat(numero) || 0; return new Intl.NumberFormat('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(numero) + ' Bs'; }
+        
         function actualizarTipoCambioVisual() {
-            const tasaFormateada = new Intl.NumberFormat('es-VE', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            }).format(tipoCambio);
-            
+            const tasaFormateada = new Intl.NumberFormat('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(tipoCambio);
             document.getElementById('tipo-cambio-btn').innerHTML = `1$ = ${tasaFormateada} Bs`;
-            document.getElementById('tipo-cambio-venta').textContent = `1$ = ${tasaFormateada} Bs`;
-            document.getElementById('tipo-cambio-actual').textContent = tasaFormateada;
-            
-            // Actualizar el campo de entrada también
+            const tcVenta = document.getElementById('tipo-cambio-venta'); if (tcVenta) tcVenta.textContent = `1$ = ${tasaFormateada} Bs`;
+            const tcActual = document.getElementById('tipo-cambio-actual'); if (tcActual) tcActual.textContent = tasaFormateada;
             actualizarCampoTipoCambio();
-            
             if (historialTipoCambio.length > 0) {
                 const ultimo = historialTipoCambio[historialTipoCambio.length - 1];
-                document.getElementById('fecha-actualizacion').textContent = new Date(ultimo.fecha).toLocaleString();
-                document.getElementById('fuente-actualizacion').textContent = ultimo.fuente || 'Desconocida';
+                const fechaElem = document.getElementById('fecha-actualizacion'); if (fechaElem) fechaElem.textContent = new Date(ultimo.fecha).toLocaleString();
+                const fuenteElem = document.getElementById('fuente-actualizacion'); if (fuenteElem) fuenteElem.textContent = ultimo.fuente || 'Desconocida';
             }
         }
 
         function cargarHistorialTipoCambio() {
-            const cont = document.getElementById('historial-tipo-cambio');
-            if (!cont) return;
-            
+            const cont = document.getElementById('historial-tipo-cambio'); if (!cont) return;
             cont.innerHTML = '';
-            
-            if (historialTipoCambio.length === 0) {
-                cont.innerHTML = '<p>No hay historial disponible</p>';
-                return;
-            }
-            
+            if (historialTipoCambio.length === 0) { cont.innerHTML = '<p>No hay historial disponible</p>'; return; }
             [...historialTipoCambio].reverse().forEach(item => {
                 const el = document.createElement('div');
-                el.style.cssText = 'padding: 8px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between;';
-                
-                const fecha = new Date(item.fecha).toLocaleString();
-                const tasa = new Intl.NumberFormat('es-VE', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                }).format(item.tasa);
-                
-                el.innerHTML = `
-                    <span>${fecha}</span>
-                    <span><strong>${tasa} Bs</strong></span>
-                    <span style="font-size: 0.8em; color: #666;">${item.fuente || 'API'}</span>
-                `;
+                el.style.cssText = 'padding: 8px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; flex-wrap: wrap;';
+                el.innerHTML = `<span style="font-size: 0.85em;">${new Date(item.fecha).toLocaleString()}</span><span><strong>${new Intl.NumberFormat('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(item.tasa)} Bs</strong></span><span style="font-size: 0.75em; color: #666;">${item.fuente || 'API'}</span>`;
                 cont.appendChild(el);
             });
         }
 
-        // ===== FUNCIONES DE NAVEGACIÓN =====
+        // ============================================
+        // FUNCIONES DE NAVEGACIÓN
+        // ============================================
         function abrirPagina(paginaId) {
             document.querySelectorAll('.nueva-pagina').forEach(p => p.style.display = 'none');
             const pagina = document.getElementById(`pagina-${paginaId}`);
             if (pagina) pagina.style.display = 'block';
-            
+            historialPaginacion.push(paginaId);
             switch(paginaId) {
                 case 'inventario': cargarInventario(); break;
                 case 'ventas': reiniciarVenta(); break;
@@ -2019,346 +1669,158 @@
                 case 'proveedores': cargarProveedores(); break;
                 case 'gastos': cargarGastos(); break;
                 case 'empleados': cargarEmpleados(); break;
-                case 'tipo-cambio': 
-                    cargarHistorialTipoCambio(); 
-                    actualizarCampoTipoCambio(); // Asegurar que el campo esté actualizado
-                    break;
+                case 'tipo-cambio': cargarHistorialTipoCambio(); actualizarCampoTipoCambio(); break;
                 case 'mensajes': iniciarInterfazMensajeria(); break;
-                case 'reportes': generarCalendario(new Date().getFullYear(), new Date().getMonth()); break;
+                case 'reportes': generarCalendario(fechaCalendario.getFullYear(), fechaCalendario.getMonth()); break;
                 case 'config': cargarConfiguracion(); break;
             }
         }
 
-        function cerrarPagina(paginaId) {
-            document.getElementById(`pagina-${paginaId}`).style.display = 'none';
+        function cerrarPagina(paginaId) { const pagina = document.getElementById(`pagina-${paginaId}`); if (pagina) pagina.style.display = 'none'; historialPaginacion.pop(); }
+        function mostrarModal(modalId) { document.getElementById(modalId).style.display = 'flex'; }
+        function cerrarModal(modalId) { document.getElementById(modalId).style.display = 'none'; }
+        function detectarDispositivo() { return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ? 'móvil' : 'PC'; }
+
+        // ============================================
+        // CARGAR DATOS INICIALES
+        // ============================================
+        async function loadInitialData() {
+            try {
+                const tipoCambioData = await getAllFromStore(STORES.TIPO_CAMBIO);
+                if (tipoCambioData.length > 0) {
+                    const actual = tipoCambioData.find(item => item.id === 'actual');
+                    if (actual && actual.tasa) { tipoCambio = actual.tasa; ultimoTipoCambioRegistrado = actual.tasa; }
+                    const historial = tipoCambioData.find(item => item.id === 'historial');
+                    if (historial && historial.datos) { historialTipoCambio = historial.datos; if (historialTipoCambio.length > 0) ultimoTipoCambioRegistrado = historialTipoCambio[historialTipoCambio.length - 1].tasa; }
+                }
+                const [inv, cli, prov, gast, empl, vent, chat, conf] = await Promise.all([getAllFromStore(STORES.INVENTARIO), getAllFromStore(STORES.CLIENTES), getAllFromStore(STORES.PROVEEDORES), getAllFromStore(STORES.GASTOS), getAllFromStore(STORES.EMPLEADOS), getAllFromStore(STORES.VENTAS), getAllFromStore(STORES.CHAT), getAllFromStore(STORES.CONFIGURACION)]);
+                inventario = inv; clientes = cli; proveedores = prov; gastos = gast; empleados = empl; ventas = vent; chatHistory = chat;
+                if (conf.length > 0) { const data = conf.find(item => item.id === 'config'); if (data && data.config) configuracion = { ...configuracion, ...data.config }; }
+                if (inventario.length === 0) { inventario = [{ id: 1, nombre: "Maxicaucho", precioUSD: 9.00, precioBs: redondearPrecioBs(9.00 * tipoCambio), stock: 10 }]; await putInStore(STORES.INVENTARIO, inventario[0]); }
+                if (clientes.length === 0) { clientes = [{ id: 1, nombre: "Juan Pérez", telefono: "12345678", email: "juan@email.com", direccion: "Av. Siempre Viva 123" }]; await putInStore(STORES.CLIENTES, clientes[0]); }
+                if (proveedores.length === 0) { proveedores = [{ id: 1, nombre: "Distribuidora ABC", contacto: "María González", telefono: "98765432", email: "contacto@distribuidoraabc.com", productos: "Materiales de oficina" }]; await putInStore(STORES.PROVEEDORES, proveedores[0]); }
+                if (gastos.length === 0) { gastos = [{ id: 1, descripcion: "Papelería", categoria: "oficina", monto: 150.50, fecha: new Date().toISOString().split('T')[0] }]; await putInStore(STORES.GASTOS, gastos[0]); }
+                if (empleados.length === 0) { empleados = [{ id: 1, nombre: "Carlos Rodríguez", cargo: "Vendedor", salario: 1200.00, telefono: "5551234", fechaContrato: new Date().toISOString().split('T')[0] }]; await putInStore(STORES.EMPLEADOS, empleados[0]); }
+                if (historialTipoCambio.length === 0) { historialTipoCambio = [{ id: Date.now(), fecha: new Date().toISOString(), tasa: tipoCambio, fuente: 'Inicial' }]; await saveTipoCambio(); }
+            } catch(e) { console.error('Error al cargar datos:', e); }
         }
 
-        function mostrarModal(modalId) { 
-            document.getElementById(modalId).style.display = 'flex'; 
-        }
-        
-        function cerrarModal(modalId) { 
-            document.getElementById(modalId).style.display = 'none'; 
-        }
-
-        function detectarDispositivo() {
-            miDispositivo = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ? 'móvil' : 'PC';
-        }
-
-        // ===== FUNCIONES PARA INVENTARIO =====
+        // ============================================
+        // FUNCIONES DE INVENTARIO
+        // ============================================
         function cargarInventario() {
-            const tbody = document.querySelector("#tabla-inventario tbody");
-            if (!tbody) return;
+            const tbody = document.querySelector("#tabla-inventario tbody"); if (!tbody) return;
             tbody.innerHTML = "";
-            inventario.forEach(p => {
-                const row = document.createElement("tr");
-                row.innerHTML = `<td>${p.nombre}</td> <td>$${p.precioUSD.toFixed(2)}</td> <td>${formatearBs(p.precioBs)}</td> <td>${p.stock}</td> <td> <div class="acciones-tabla"> <button class="btn btn-sell" onclick="venderProducto(${p.id})">Vender</button> <button class="btn btn-primary" onclick="editarProducto(${p.id})">Editar</button> <button class="btn btn-danger" onclick="eliminarProducto(${p.id})">Eliminar</button> </div> </td>`;
-                tbody.appendChild(row);
-            });
+            inventario.forEach(p => { const row = document.createElement("tr"); row.innerHTML = `<td>${p.nombre}</td><td>$${p.precioUSD.toFixed(2)}</td><td>${formatearBs(p.precioBs)}</td><td>${p.stock}</td><td><div class="acciones-tabla"><button class="btn btn-sell" onclick="venderProducto(${p.id})">Vender</button><button class="btn btn-primary" onclick="editarProducto(${p.id})">Editar</button><button class="btn btn-danger" onclick="eliminarProducto(${p.id})">Eliminar</button></div></td>`; tbody.appendChild(row); });
         }
 
-        function venderProducto(id) {
-            abrirPagina('ventas');
-            setTimeout(() => agregarProductoVenta(id), 100);
-        }
-
-        function calcularPrecioBs() {
-            const precioUSD = parseFloat(document.getElementById('precio-usd-producto').value) || 0;
-            document.getElementById('precio-bs-producto').value = redondearPrecioBs(precioUSD * tipoCambio).toFixed(2);
-        }
+        function venderProducto(id) { abrirPagina('ventas'); setTimeout(() => agregarProductoVenta(id), 100); }
+        function calcularPrecioBs() { const precioUSD = parseFloat(document.getElementById('precio-usd-producto').value) || 0; document.getElementById('precio-bs-producto').value = redondearPrecioBs(precioUSD * tipoCambio).toFixed(2); }
 
         async function guardarNuevoProducto() {
             const nombre = document.getElementById('nombre-producto').value;
-            if (!nombre.trim()) {
-                mostrarNotificacion('Por favor ingrese un nombre para el producto', 'error');
-                return;
-            }
-            
+            if (!nombre.trim()) { mostrarNotificacion('Por favor ingrese un nombre para el producto', 'error'); return; }
             try {
-                const nuevoProducto = {
-                    id: Date.now(),
-                    nombre: nombre.trim(),
-                    precioUSD: parseFloat(document.getElementById('precio-usd-producto').value) || 0,
-                    precioBs: redondearPrecioBs((parseFloat(document.getElementById('precio-usd-producto').value) || 0) * tipoCambio),
-                    stock: parseInt(document.getElementById('stock-producto').value) || 0
-                };
-                
-                inventario.push(nuevoProducto);
-                await putInStore(STORES.INVENTARIO, nuevoProducto);
-                
-                cargarInventario();
-                cerrarModal('modal-agregar-producto');
-                document.getElementById('form-agregar-producto').reset();
-                
+                const nuevoProducto = { id: Date.now(), nombre: nombre.trim(), precioUSD: parseFloat(document.getElementById('precio-usd-producto').value) || 0, precioBs: redondearPrecioBs((parseFloat(document.getElementById('precio-usd-producto').value) || 0) * tipoCambio), stock: parseInt(document.getElementById('stock-producto').value) || 0 };
+                inventario.push(nuevoProducto); await putInStore(STORES.INVENTARIO, nuevoProducto);
+                cargarInventario(); cerrarModal('modal-agregar-producto'); document.getElementById('form-agregar-producto').reset();
                 mostrarNotificacion('✅ Producto guardado correctamente');
-                
-            } catch (error) {
-                console.error('Error guardando producto:', error);
-                mostrarNotificacion('❌ Error al guardar el producto', 'error');
-            }
+            } catch(e) { mostrarNotificacion('❌ Error al guardar el producto', 'error'); }
         }
 
-        function editarProducto(id) {
-            const p = inventario.find(prod => prod.id === id);
-            if (!p) return;
-            document.getElementById('nombre-producto').value = p.nombre;
-            document.getElementById('precio-usd-producto').value = p.precioUSD;
-            document.getElementById('precio-bs-producto').value = p.precioBs.toFixed(2);
-            document.getElementById('stock-producto').value = p.stock;
-            document.getElementById('titulo-modal-producto').textContent = 'Editar Producto';
-            mostrarModal('modal-agregar-producto');
-            document.getElementById('form-agregar-producto').onsubmit = e => { e.preventDefault(); actualizarProducto(id); };
-        }
+        function editarProducto(id) { const p = inventario.find(prod => prod.id === id); if (!p) return; document.getElementById('nombre-producto').value = p.nombre; document.getElementById('precio-usd-producto').value = p.precioUSD; document.getElementById('precio-bs-producto').value = p.precioBs.toFixed(2); document.getElementById('stock-producto').value = p.stock; document.getElementById('titulo-modal-producto').textContent = 'Editar Producto'; mostrarModal('modal-agregar-producto'); document.getElementById('form-agregar-producto').onsubmit = e => { e.preventDefault(); actualizarProducto(id); }; }
 
         async function actualizarProducto(id) {
-            const index = inventario.findIndex(p => p.id === id);
-            if (index === -1) return;
-            
+            const index = inventario.findIndex(p => p.id === id); if (index === -1) return;
             try {
                 const precioUSD = parseFloat(document.getElementById('precio-usd-producto').value) || 0;
-                inventario[index] = {
-                    id: id,
-                    nombre: document.getElementById('nombre-producto').value || 'Sin nombre',
-                    precioUSD: precioUSD,
-                    precioBs: redondearPrecioBs(precioUSD * tipoCambio),
-                    stock: parseInt(document.getElementById('stock-producto').value) || 0
-                };
-                
+                inventario[index] = { id: id, nombre: document.getElementById('nombre-producto').value || 'Sin nombre', precioUSD: precioUSD, precioBs: redondearPrecioBs(precioUSD * tipoCambio), stock: parseInt(document.getElementById('stock-producto').value) || 0 };
                 await putInStore(STORES.INVENTARIO, inventario[index]);
-                
-                cargarInventario();
-                cerrarModal('modal-agregar-producto');
-                const form = document.getElementById('form-agregar-producto');
-                form.onsubmit = e => { e.preventDefault(); guardarNuevoProducto(); };
-                document.getElementById('titulo-modal-producto').textContent = 'Agregar Producto';
-                form.reset();
-                
+                cargarInventario(); cerrarModal('modal-agregar-producto');
+                const form = document.getElementById('form-agregar-producto'); form.onsubmit = e => { e.preventDefault(); guardarNuevoProducto(); }; document.getElementById('titulo-modal-producto').textContent = 'Agregar Producto'; form.reset();
                 mostrarNotificacion('✅ Producto actualizado correctamente');
-                
-            } catch (error) {
-                console.error('Error actualizando producto:', error);
-                mostrarNotificacion('❌ Error al actualizar el producto', 'error');
-            }
+            } catch(e) { mostrarNotificacion('❌ Error al actualizar el producto', 'error'); }
         }
 
-        async function eliminarProducto(id) {
-            if (confirm("¿Está seguro de eliminar este producto?")) {
-                try {
-                    inventario = inventario.filter(p => p.id !== id);
-                    await deleteFromStore(STORES.INVENTARIO, id);
-                    cargarInventario();
-                    mostrarNotificacion('✅ Producto eliminado');
-                } catch (error) {
-                    console.error('Error eliminando producto:', error);
-                    mostrarNotificacion('❌ Error al eliminar el producto', 'error');
-                }
-            }
-        }
+        async function eliminarProducto(id) { if (confirm("¿Está seguro de eliminar este producto?")) { try { inventario = inventario.filter(p => p.id !== id); await deleteFromStore(STORES.INVENTARIO, id); cargarInventario(); mostrarNotificacion('✅ Producto eliminado'); } catch(e) { mostrarNotificacion('❌ Error al eliminar el producto', 'error'); } } }
 
-        // ===== FUNCIONES PARA CLIENTES =====
+        // ============================================
+        // FUNCIONES DE CLIENTES
+        // ============================================
         function cargarClientes() {
-            const tbody = document.querySelector("#tabla-clientes tbody");
-            if (!tbody) return;
+            const tbody = document.querySelector("#tabla-clientes tbody"); if (!tbody) return;
             tbody.innerHTML = "";
-            clientes.forEach(c => {
-                const row = document.createElement("tr");
-                row.innerHTML = `<td>${c.nombre}</td> <td>${c.telefono || '-'}</td> <td>${c.email || '-'}</td> <td> <div class="acciones-tabla"> <button class="btn btn-primary" onclick="editarCliente(${c.id})">Editar</button> <button class="btn btn-danger" onclick="eliminarCliente(${c.id})">Eliminar</button> </div> </td>`;
-                tbody.appendChild(row);
-            });
+            clientes.forEach(c => { const row = document.createElement("tr"); row.innerHTML = `<td>${c.nombre}</td><td>${c.telefono || '-'}</td><td>${c.email || '-'}</td><td><div class="acciones-tabla"><button class="btn btn-primary" onclick="editarCliente(${c.id})">Editar</button><button class="btn btn-danger" onclick="eliminarCliente(${c.id})">Eliminar</button></div></td>`; tbody.appendChild(row); });
         }
 
         async function guardarNuevoClienteDesdeModal() {
             try {
-                const nuevoCliente = {
-                    id: Date.now(),
-                    nombre: document.getElementById('nombre-cliente-modal').value || 'Sin nombre',
-                    telefono: document.getElementById('telefono-cliente-modal').value,
-                    email: document.getElementById('email-cliente-modal').value,
-                    direccion: document.getElementById('direccion-cliente-modal').value
-                };
-                
-                clientes.push(nuevoCliente);
-                await putInStore(STORES.CLIENTES, nuevoCliente);
-                
-                if (document.getElementById('pagina-ventas').style.display === 'block') {
-                    seleccionarCliente(nuevoCliente.id);
-                }
-                
-                cerrarModal('modal-nuevo-cliente');
-                document.getElementById('form-nuevo-cliente').reset();
-                
+                const nuevoCliente = { id: Date.now(), nombre: document.getElementById('nombre-cliente-modal').value || 'Sin nombre', telefono: document.getElementById('telefono-cliente-modal').value, email: document.getElementById('email-cliente-modal').value, direccion: document.getElementById('direccion-cliente-modal').value };
+                clientes.push(nuevoCliente); await putInStore(STORES.CLIENTES, nuevoCliente);
+                if (document.getElementById('pagina-ventas').style.display === 'block') seleccionarCliente(nuevoCliente.id);
+                cerrarModal('modal-nuevo-cliente'); document.getElementById('form-nuevo-cliente').reset();
                 mostrarNotificacion('✅ Cliente guardado correctamente');
-                
-            } catch (error) {
-                console.error('Error guardando cliente:', error);
-                mostrarNotificacion('❌ Error al guardar el cliente', 'error');
-            }
+            } catch(e) { mostrarNotificacion('❌ Error al guardar el cliente', 'error'); }
         }
 
-        function editarCliente(id) {
-            const c = clientes.find(cli => cli.id === id);
-            if (!c) return;
-            document.getElementById('nombre-cliente-modal').value = c.nombre;
-            document.getElementById('telefono-cliente-modal').value = c.telefono || '';
-            document.getElementById('email-cliente-modal').value = c.email || '';
-            document.getElementById('direccion-cliente-modal').value = c.direccion || '';
-            mostrarModal('modal-nuevo-cliente');
-            document.getElementById('form-nuevo-cliente').onsubmit = e => { e.preventDefault(); actualizarCliente(id); };
-        }
+        function editarCliente(id) { const c = clientes.find(cli => cli.id === id); if (!c) return; document.getElementById('nombre-cliente-modal').value = c.nombre; document.getElementById('telefono-cliente-modal').value = c.telefono || ''; document.getElementById('email-cliente-modal').value = c.email || ''; document.getElementById('direccion-cliente-modal').value = c.direccion || ''; mostrarModal('modal-nuevo-cliente'); document.getElementById('form-nuevo-cliente').onsubmit = e => { e.preventDefault(); actualizarCliente(id); }; }
 
         async function actualizarCliente(id) {
-            const index = clientes.findIndex(c => c.id === id);
-            if (index === -1) return;
-            
+            const index = clientes.findIndex(c => c.id === id); if (index === -1) return;
             try {
-                clientes[index] = {
-                    id: id,
-                    nombre: document.getElementById('nombre-cliente-modal').value || 'Sin nombre',
-                    telefono: document.getElementById('telefono-cliente-modal').value,
-                    email: document.getElementById('email-cliente-modal').value,
-                    direccion: document.getElementById('direccion-cliente-modal').value
-                };
-                
+                clientes[index] = { id: id, nombre: document.getElementById('nombre-cliente-modal').value || 'Sin nombre', telefono: document.getElementById('telefono-cliente-modal').value, email: document.getElementById('email-cliente-modal').value, direccion: document.getElementById('direccion-cliente-modal').value };
                 await putInStore(STORES.CLIENTES, clientes[index]);
-                
-                cargarClientes();
-                cerrarModal('modal-nuevo-cliente');
-                const form = document.getElementById('form-nuevo-cliente');
-                form.onsubmit = e => { e.preventDefault(); guardarNuevoClienteDesdeModal(); };
-                form.reset();
-                
+                cargarClientes(); cerrarModal('modal-nuevo-cliente');
+                const form = document.getElementById('form-nuevo-cliente'); form.onsubmit = e => { e.preventDefault(); guardarNuevoClienteDesdeModal(); }; form.reset();
                 mostrarNotificacion('✅ Cliente actualizado correctamente');
-                
-            } catch (error) {
-                console.error('Error actualizando cliente:', error);
-                mostrarNotificacion('❌ Error al actualizar el cliente', 'error');
-            }
+            } catch(e) { mostrarNotificacion('❌ Error al actualizar el cliente', 'error'); }
         }
 
-        async function eliminarCliente(id) {
-            if (confirm("¿Está seguro de eliminar este cliente?")) {
-                try {
-                    clientes = clientes.filter(c => c.id !== id);
-                    await deleteFromStore(STORES.CLIENTES, id);
-                    cargarClientes();
-                    mostrarNotificacion('✅ Cliente eliminado');
-                } catch (error) {
-                    console.error('Error eliminando cliente:', error);
-                    mostrarNotificacion('❌ Error al eliminar el cliente', 'error');
-                }
-            }
-        }
+        async function eliminarCliente(id) { if (confirm("¿Está seguro de eliminar este cliente?")) { try { clientes = clientes.filter(c => c.id !== id); await deleteFromStore(STORES.CLIENTES, id); cargarClientes(); mostrarNotificacion('✅ Cliente eliminado'); } catch(e) { mostrarNotificacion('❌ Error al eliminar el cliente', 'error'); } } }
 
-        // ===== FUNCIONES PARA PROVEEDORES =====
+        // ============================================
+        // FUNCIONES DE PROVEEDORES
+        // ============================================
         function cargarProveedores() {
-            const tbody = document.querySelector("#tabla-proveedores tbody");
-            if (!tbody) return;
+            const tbody = document.querySelector("#tabla-proveedores tbody"); if (!tbody) return;
             tbody.innerHTML = "";
-            proveedores.forEach(p => {
-                const row = document.createElement("tr");
-                row.innerHTML = `<td>${p.nombre}</td><td>${p.contacto || '-'}</td><td>${p.telefono || '-'}</td><td><div class="acciones-tabla"><button class="btn btn-primary" onclick="editarProveedor(${p.id})">Editar</button><button class="btn btn-danger" onclick="eliminarProveedor(${p.id})">Eliminar</button></div></td>`;
-                tbody.appendChild(row);
-            });
+            proveedores.forEach(p => { const row = document.createElement("tr"); row.innerHTML = `<td>${p.nombre}</td><td>${p.contacto || '-'}</td><td>${p.telefono || '-'}</td><td><div class="acciones-tabla"><button class="btn btn-primary" onclick="editarProveedor(${p.id})">Editar</button><button class="btn btn-danger" onclick="eliminarProveedor(${p.id})">Eliminar</button></div></td>`; tbody.appendChild(row); });
         }
         
         async function guardarNuevoProveedor() {
             try {
-                const nuevoProveedor = {
-                    id: Date.now(),
-                    nombre: document.getElementById('nombre-proveedor').value || 'Sin nombre',
-                    contacto: document.getElementById('contacto-proveedor').value,
-                    telefono: document.getElementById('telefono-proveedor').value,
-                    email: document.getElementById('email-proveedor').value,
-                    productos: document.getElementById('productos-proveedor').value
-                };
-                
-                proveedores.push(nuevoProveedor);
-                await putInStore(STORES.PROVEEDORES, nuevoProveedor);
-                
-                cargarProveedores();
-                cerrarModal('modal-agregar-proveedor');
-                document.getElementById('form-agregar-proveedor').reset();
-                
+                const nuevoProveedor = { id: Date.now(), nombre: document.getElementById('nombre-proveedor').value || 'Sin nombre', contacto: document.getElementById('contacto-proveedor').value, telefono: document.getElementById('telefono-proveedor').value, email: document.getElementById('email-proveedor').value, productos: document.getElementById('productos-proveedor').value };
+                proveedores.push(nuevoProveedor); await putInStore(STORES.PROVEEDORES, nuevoProveedor);
+                cargarProveedores(); cerrarModal('modal-agregar-proveedor'); document.getElementById('form-agregar-proveedor').reset();
                 mostrarNotificacion('✅ Proveedor guardado correctamente');
-                
-            } catch (error) {
-                console.error('Error guardando proveedor:', error);
-                mostrarNotificacion('❌ Error al guardar el proveedor', 'error');
-            }
+            } catch(e) { mostrarNotificacion('❌ Error al guardar el proveedor', 'error'); }
         }
         
-        function editarProveedor(id) {
-            const p = proveedores.find(prov => prov.id === id);
-            if (!p) return;
-            document.getElementById('nombre-proveedor').value = p.nombre;
-            document.getElementById('contacto-proveedor').value = p.contacto || '';
-            document.getElementById('telefono-proveedor').value = p.telefono || '';
-            document.getElementById('email-proveedor').value = p.email || '';
-            document.getElementById('productos-proveedor').value = p.productos || '';
-            mostrarModal('modal-agregar-proveedor');
-            document.getElementById('form-agregar-proveedor').onsubmit = e => { e.preventDefault(); actualizarProveedor(id); };
-        }
+        function editarProveedor(id) { const p = proveedores.find(prov => prov.id === id); if (!p) return; document.getElementById('nombre-proveedor').value = p.nombre; document.getElementById('contacto-proveedor').value = p.contacto || ''; document.getElementById('telefono-proveedor').value = p.telefono || ''; document.getElementById('email-proveedor').value = p.email || ''; document.getElementById('productos-proveedor').value = p.productos || ''; mostrarModal('modal-agregar-proveedor'); document.getElementById('form-agregar-proveedor').onsubmit = e => { e.preventDefault(); actualizarProveedor(id); }; }
         
         async function actualizarProveedor(id) {
-            const index = proveedores.findIndex(p => p.id === id);
-            if (index === -1) return;
-            
+            const index = proveedores.findIndex(p => p.id === id); if (index === -1) return;
             try {
-                proveedores[index] = {
-                    id: id,
-                    nombre: document.getElementById('nombre-proveedor').value || 'Sin nombre',
-                    contacto: document.getElementById('contacto-proveedor').value,
-                    telefono: document.getElementById('telefono-proveedor').value,
-                    email: document.getElementById('email-proveedor').value,
-                    productos: document.getElementById('productos-proveedor').value
-                };
-                
+                proveedores[index] = { id: id, nombre: document.getElementById('nombre-proveedor').value || 'Sin nombre', contacto: document.getElementById('contacto-proveedor').value, telefono: document.getElementById('telefono-proveedor').value, email: document.getElementById('email-proveedor').value, productos: document.getElementById('productos-proveedor').value };
                 await putInStore(STORES.PROVEEDORES, proveedores[index]);
-                
-                cargarProveedores();
-                cerrarModal('modal-agregar-proveedor');
-                const form = document.getElementById('form-agregar-proveedor');
-                form.onsubmit = e => { e.preventDefault(); guardarNuevoProveedor(); };
-                form.reset();
-                
+                cargarProveedores(); cerrarModal('modal-agregar-proveedor');
+                const form = document.getElementById('form-agregar-proveedor'); form.onsubmit = e => { e.preventDefault(); guardarNuevoProveedor(); }; form.reset();
                 mostrarNotificacion('✅ Proveedor actualizado correctamente');
-                
-            } catch (error) {
-                console.error('Error actualizando proveedor:', error);
-                mostrarNotificacion('❌ Error al actualizar el proveedor', 'error');
-            }
+            } catch(e) { mostrarNotificacion('❌ Error al actualizar el proveedor', 'error'); }
         }
         
-        async function eliminarProveedor(id) {
-            if (confirm("¿Está seguro de eliminar este proveedor?")) {
-                try {
-                    proveedores = proveedores.filter(p => p.id !== id);
-                    await deleteFromStore(STORES.PROVEEDORES, id);
-                    cargarProveedores();
-                    mostrarNotificacion('✅ Proveedor eliminado');
-                } catch (error) {
-                    console.error('Error eliminando proveedor:', error);
-                    mostrarNotificacion('❌ Error al eliminar el proveedor', 'error');
-                }
-            }
-        }
+        async function eliminarProveedor(id) { if (confirm("¿Está seguro de eliminar este proveedor?")) { try { proveedores = proveedores.filter(p => p.id !== id); await deleteFromStore(STORES.PROVEEDORES, id); cargarProveedores(); mostrarNotificacion('✅ Proveedor eliminado'); } catch(e) { mostrarNotificacion('❌ Error al eliminar el proveedor', 'error'); } } }
 
-        // ===== FUNCIONES PARA GASTOS =====
+        // ============================================
+        // FUNCIONES DE GASTOS
+        // ============================================
         function cargarGastos() {
             const filtroMes = document.getElementById('filtro-fecha-gastos').value || new Date().toISOString().slice(0, 7);
             document.getElementById('filtro-fecha-gastos').value = filtroMes;
             const gastosFiltrados = gastos.filter(g => g.fecha && g.fecha.startsWith(filtroMes));
-            
-            const listaGastos = document.getElementById('lista-gastos');
-            if (!listaGastos) return;
-            
+            const listaGastos = document.getElementById('lista-gastos'); if (!listaGastos) return;
             listaGastos.innerHTML = '';
-            gastosFiltrados.forEach(g => {
-                const el = document.createElement('div');
-                el.className = 'gasto-item card';
-                el.innerHTML = `<h3>${g.descripcion}</h3> <p><strong>Categoría:</strong> ${g.categoria}</p> <p><strong>Monto:</strong> ${formatearBs(g.monto)}</p> <p><strong>Fecha:</strong> ${new Date(g.fecha).toLocaleDateString()}</p>`;
-                listaGastos.appendChild(el);
-            });
+            gastosFiltrados.forEach(g => { const el = document.createElement('div'); el.className = 'gasto-item card'; el.innerHTML = `<h3>${g.descripcion}</h3><p><strong>Categoría:</strong> ${g.categoria}</p><p><strong>Monto:</strong> ${formatearBs(g.monto)}</p><p><strong>Fecha:</strong> ${new Date(g.fecha).toLocaleDateString()}</p>`; listaGastos.appendChild(el); });
             actualizarResumenGastos(gastosFiltrados);
         }
         
@@ -2368,111 +1830,50 @@
             const total = gastosFiltrados.reduce((sum, g) => sum + g.monto, 0);
             document.getElementById('total-gastos').textContent = formatearBs(total);
             const categorias = {};
-            gastosFiltrados.forEach(g => {
-                if (!categorias[g.categoria]) categorias[g.categoria] = 0;
-                categorias[g.categoria] += g.monto;
-            });
-            const listaCategorias = document.getElementById('categorias-gastos');
-            if (!listaCategorias) return;
+            gastosFiltrados.forEach(g => { if (!categorias[g.categoria]) categorias[g.categoria] = 0; categorias[g.categoria] += g.monto; });
+            const listaCategorias = document.getElementById('categorias-gastos'); if (!listaCategorias) return;
             listaCategorias.innerHTML = '';
-            for (const cat in categorias) {
-                const item = document.createElement('li');
-                item.textContent = `${cat}: ${formatearBs(categorias[cat])}`;
-                listaCategorias.appendChild(item);
-            }
+            for (const cat in categorias) { const item = document.createElement('li'); item.textContent = `${cat}: ${formatearBs(categorias[cat])}`; listaCategorias.appendChild(item); }
         }
         
         async function guardarNuevoGasto() {
             try {
-                const nuevoGasto = {
-                    id: Date.now(),
-                    descripcion: document.getElementById('descripcion-gasto').value || 'Sin descripción',
-                    categoria: document.getElementById('categoria-gasto').value,
-                    monto: parseFloat(document.getElementById('monto-gasto').value) || 0,
-                    fecha: document.getElementById('fecha-gasto').value
-                };
-                
-                gastos.push(nuevoGasto);
-                await putInStore(STORES.GASTOS, nuevoGasto);
-                
-                cargarGastos();
-                cerrarModal('modal-agregar-gasto');
-                document.getElementById('form-agregar-gasto').reset();
-                document.getElementById('fecha-gasto').value = new Date().toISOString().split('T')[0];
-                
+                const nuevoGasto = { id: Date.now(), descripcion: document.getElementById('descripcion-gasto').value || 'Sin descripción', categoria: document.getElementById('categoria-gasto').value, monto: parseFloat(document.getElementById('monto-gasto').value) || 0, fecha: document.getElementById('fecha-gasto').value };
+                gastos.push(nuevoGasto); await putInStore(STORES.GASTOS, nuevoGasto);
+                cargarGastos(); cerrarModal('modal-agregar-gasto'); document.getElementById('form-agregar-gasto').reset(); document.getElementById('fecha-gasto').value = new Date().toISOString().split('T')[0];
                 mostrarNotificacion('✅ Gasto registrado correctamente');
-                
-            } catch (error) {
-                console.error('Error guardando gasto:', error);
-                mostrarNotificacion('❌ Error al guardar el gasto', 'error');
-            }
+            } catch(e) { mostrarNotificacion('❌ Error al guardar el gasto', 'error'); }
         }
         
         function cargarEmpleados() {
-            const contenedor = document.getElementById('lista-empleados');
-            if (!contenedor) return;
+            const contenedor = document.getElementById('lista-empleados'); if (!contenedor) return;
             contenedor.innerHTML = '';
-            empleados.forEach(e => {
-                const el = document.createElement('div');
-                el.className = 'empleado-item card';
-                el.innerHTML = `<h3>${e.nombre}</h3><p><strong>Cargo:</strong> ${e.cargo || 'N/A'}</p>`;
-                contenedor.appendChild(el);
-            });
+            empleados.forEach(e => { const el = document.createElement('div'); el.className = 'empleado-item card'; el.innerHTML = `<h3>${e.nombre}</h3><p><strong>Cargo:</strong> ${e.cargo || 'N/A'}</p><p><strong>Salario:</strong> ${formatearBs(e.salario || 0)}</p><p><strong>Teléfono:</strong> ${e.telefono || 'N/A'}</p>`; contenedor.appendChild(el); });
         }
         
         async function guardarNuevoEmpleado() {
             try {
-                const nuevoEmpleado = {
-                    id: Date.now(),
-                    nombre: document.getElementById('nombre-empleado').value || 'Sin nombre',
-                    cargo: document.getElementById('cargo-empleado').value,
-                    salario: parseFloat(document.getElementById('salario-empleado').value) || 0,
-                    telefono: document.getElementById('telefono-empleado').value,
-                    fechaContrato: document.getElementById('fecha-contracto').value
-                };
-                
-                empleados.push(nuevoEmpleado);
-                await putInStore(STORES.EMPLEADOS, nuevoEmpleado);
-                
-                cargarEmpleados();
-                cerrarModal('modal-agregar-empleado');
-                document.getElementById('form-agregar-empleado').reset();
-                document.getElementById('fecha-contracto').value = new Date().toISOString().split('T')[0];
-                
+                const nuevoEmpleado = { id: Date.now(), nombre: document.getElementById('nombre-empleado').value || 'Sin nombre', cargo: document.getElementById('cargo-empleado').value, salario: parseFloat(document.getElementById('salario-empleado').value) || 0, telefono: document.getElementById('telefono-empleado').value, fechaContrato: document.getElementById('fecha-contracto').value };
+                empleados.push(nuevoEmpleado); await putInStore(STORES.EMPLEADOS, nuevoEmpleado);
+                cargarEmpleados(); cerrarModal('modal-agregar-empleado'); document.getElementById('form-agregar-empleado').reset(); document.getElementById('fecha-contracto').value = new Date().toISOString().split('T')[0];
                 mostrarNotificacion('✅ Empleado guardado correctamente');
-                
-            } catch (error) {
-                console.error('Error guardando empleado:', error);
-                mostrarNotificacion('❌ Error al guardar el empleado', 'error');
-            }
+            } catch(e) { mostrarNotificacion('❌ Error al guardar el empleado', 'error'); }
         }
 
-        // ===== FUNCIONES PARA VENTAS =====
-        let ventaActual = {
-            cliente: null,
-            productos: [],
-            totalBs: 0,
-            metodoPago: 'Pagomóvil',
-        };
+        // ============================================
+        // FUNCIONES DE VENTAS
+        // ============================================
+        let ventaActual = { cliente: null, productos: [], totalBs: 0, metodoPago: 'Pagomóvil' };
 
-        function seleccionarCliente(id) {
-            const cliente = clientes.find(c => c.id === id);
-            if (cliente) {
-                ventaActual.cliente = cliente;
-                document.getElementById('buscador-cliente-venta').value = cliente.nombre;
-                document.getElementById('resultados-cliente-venta').style.display = 'none';
-            }
-        }
+        function seleccionarCliente(id) { const cliente = clientes.find(c => c.id === id); if (cliente) { ventaActual.cliente = cliente; document.getElementById('buscador-cliente-venta').value = cliente.nombre; document.getElementById('resultados-cliente-venta').style.display = 'none'; } }
 
         function agregarProductoVenta(id) {
             const producto = inventario.find(p => p.id === id);
             if (producto) {
                 const existente = ventaActual.productos.find(p => p.id === id);
-                if (existente) {
-                    existente.cantidad += 1;
-                } else {
-                    ventaActual.productos.push({ ...producto, cantidad: 1 });
-                }
+                const nuevaCantidad = existente ? existente.cantidad + 1 : 1;
+                if (nuevaCantidad > producto.stock) { mostrarNotificacion(`⚠️ Stock insuficiente. Solo hay ${producto.stock} unidades`, 'warning'); return; }
+                if (existente) { existente.cantidad = nuevaCantidad; } else { ventaActual.productos.push({ ...producto, cantidad: 1 }); }
                 actualizarProductosVenta();
                 document.getElementById('buscador-producto-venta').value = '';
                 document.getElementById('resultados-producto-venta').style.display = 'none';
@@ -2480,14 +1881,13 @@
         }
 
         function actualizarProductosVenta() {
-            const contenedor = document.getElementById('productos-seleccionados');
-            if (!contenedor) return;
+            const contenedor = document.getElementById('productos-seleccionados'); if (!contenedor) return;
             contenedor.innerHTML = '';
             ventaActual.productos.forEach(producto => {
                 const elemento = document.createElement('div');
                 elemento.className = 'producto-venta';
                 const subtotalBs = producto.precioBs * producto.cantidad;
-                elemento.innerHTML = `<div class="producto-info"> <strong>${producto.nombre}</strong> <div>Cantidad: ${producto.cantidad}</div> <div>Precio: ${formatearBs(producto.precioBs)}</div> <div>Subtotal: ${formatearBs(subtotalBs)}</div> </div> <div class="producto-acciones"> <button class="btn btn-primary" onclick="modificarCantidad(${producto.id}, 1)">+</button> <button class="btn btn-warning" onclick="modificarCantidad(${producto.id}, -1)">-</button> <button class="btn btn-danger" onclick="eliminarProductoVenta(${producto.id})">X</button> </div>`;
+                elemento.innerHTML = `<div class="producto-info"><strong>${producto.nombre}</strong><div>Cantidad: ${producto.cantidad}</div><div>Precio: ${formatearBs(producto.precioBs)}</div><div>Subtotal: ${formatearBs(subtotalBs)}</div></div><div class="producto-acciones"><button class="btn btn-primary" onclick="modificarCantidad(${producto.id}, 1)">+</button><button class="btn btn-warning" onclick="modificarCantidad(${producto.id}, -1)">-</button><button class="btn btn-danger" onclick="eliminarProductoVenta(${producto.id})">X</button></div>`;
                 contenedor.appendChild(elemento);
             });
             calcularTotalVenta();
@@ -2496,884 +1896,303 @@
         function modificarCantidad(id, cambio) {
             const producto = ventaActual.productos.find(p => p.id === id);
             if (producto) {
+                const nuevaCantidad = producto.cantidad + cambio;
+                const productoOriginal = inventario.find(p => p.id === id);
+                if (nuevaCantidad > productoOriginal.stock) { mostrarNotificacion(`⚠️ Stock insuficiente. Solo hay ${productoOriginal.stock} unidades`, 'warning'); return; }
                 producto.cantidad += cambio;
-                if (producto.cantidad <= 0) {
-                    eliminarProductoVenta(id);
-                } else {
-                    actualizarProductosVenta();
-                }
+                if (producto.cantidad <= 0) { eliminarProductoVenta(id); } else { actualizarProductosVenta(); }
             }
         }
 
-        function eliminarProductoVenta(id) {
-            ventaActual.productos = ventaActual.productos.filter(p => p.id !== id);
-            actualizarProductosVenta();
-        }
-
-        function calcularTotalVenta() {
-            let subtotalBs = ventaActual.productos.reduce((acc, p) => acc + (p.precioBs * p.cantidad), 0);
-            ventaActual.totalBs = subtotalBs;
-            document.getElementById('total-bs').textContent = formatearBs(subtotalBs);
-        }
+        function eliminarProductoVenta(id) { ventaActual.productos = ventaActual.productos.filter(p => p.id !== id); actualizarProductosVenta(); }
+        function calcularTotalVenta() { let subtotalBs = ventaActual.productos.reduce((acc, p) => acc + (p.precioBs * p.cantidad), 0); ventaActual.totalBs = subtotalBs; document.getElementById('total-bs').textContent = formatearBs(subtotalBs); }
 
         async function finalizarVenta() {
-            if (ventaActual.productos.length === 0) {
-                mostrarNotificacion('Debe agregar al menos un producto a la venta', 'error');
-                return;
-            }
-            
+            if (ventaActual.productos.length === 0) { mostrarNotificacion('Debe agregar al menos un producto a la venta', 'error'); return; }
             try {
-                for (const pVenta of ventaActual.productos) {
-                    const pInv = inventario.find(p => p.id === pVenta.id);
-                    if (pInv && pInv.stock < pVenta.cantidad) {
-                        mostrarNotificacion(`No hay suficiente stock de ${pInv.nombre}. Stock: ${pInv.stock}`, 'error');
-                        return;
-                    }
-                }
-                
-                for (const pVenta of ventaActual.productos) {
-                    const pInv = inventario.find(p => p.id === pVenta.id);
-                    if (pInv) {
-                        pInv.stock -= pVenta.cantidad;
-                        await putInStore(STORES.INVENTARIO, pInv);
-                    }
-                }
-                
-                const nuevaVenta = { 
-                    ...ventaActual, 
-                    id: Date.now(), 
-                    timestamp: Date.now(), 
-                    metodoPago: document.getElementById('metodo-pago').value 
-                };
-                
-                ventas.push(nuevaVenta);
-                await putInStore(STORES.VENTAS, nuevaVenta);
-                
-                mostrarNotificacion('✅ Venta registrada con éxito');
-                mostrarFactura();
-                reiniciarVenta();
-                
-            } catch (error) {
-                console.error('Error finalizando venta:', error);
-                mostrarNotificacion('❌ Error al registrar la venta', 'error');
-            }
+                for (const pVenta of ventaActual.productos) { const pInv = inventario.find(p => p.id === pVenta.id); if (pInv && pInv.stock < pVenta.cantidad) { mostrarNotificacion(`No hay suficiente stock de ${pInv.nombre}. Stock: ${pInv.stock}`, 'error'); return; } }
+                for (const pVenta of ventaActual.productos) { const pInv = inventario.find(p => p.id === pVenta.id); if (pInv) { pInv.stock -= pVenta.cantidad; await putInStore(STORES.INVENTARIO, pInv); } }
+                const nuevaVenta = { ...ventaActual, id: Date.now(), timestamp: Date.now(), metodoPago: document.getElementById('metodo-pago').value };
+                ventas.push(nuevaVenta); await putInStore(STORES.VENTAS, nuevaVenta);
+                mostrarNotificacion('✅ Venta registrada con éxito'); mostrarFactura(); reiniciarVenta();
+            } catch(e) { mostrarNotificacion('❌ Error al registrar la venta', 'error'); }
         }
 
-        function reiniciarVenta() {
-            ventaActual = { cliente: null, productos: [], totalBs: 0, metodoPago: 'Pagomóvil' };
-            document.getElementById('buscador-cliente-venta').value = '';
-            document.getElementById('buscador-producto-venta').value = '';
-            document.getElementById('productos-seleccionados').innerHTML = '';
-            calcularTotalVenta();
-        }
+        function reiniciarVenta() { ventaActual = { cliente: null, productos: [], totalBs: 0, metodoPago: 'Pagomóvil' }; const inputCliente = document.getElementById('buscador-cliente-venta'); if (inputCliente) inputCliente.value = ''; const inputProducto = document.getElementById('buscador-producto-venta'); if (inputProducto) inputProducto.value = ''; const productosContainer = document.getElementById('productos-seleccionados'); if (productosContainer) productosContainer.innerHTML = ''; calcularTotalVenta(); }
 
         function mostrarFactura() {
-            if (ventaActual.productos.length === 0) {
-                mostrarNotificacion('No hay productos en la venta actual', 'warning');
-                return;
-            }
-            
+            if (ventaActual.productos.length === 0) { mostrarNotificacion('No hay productos en la venta actual', 'warning'); return; }
             document.getElementById('factura-fecha').textContent = new Date().toLocaleString();
             document.getElementById('factura-cliente-nombre').textContent = ventaActual.cliente ? ventaActual.cliente.nombre : 'Cliente General';
             document.getElementById('nombre-empresa-factura').textContent = configuracion.empresa.nombre;
             document.getElementById('rif-empresa-factura').textContent = configuracion.empresa.rif;
             document.getElementById('telefono-empresa-factura').textContent = configuracion.empresa.telefono;
-            
-            const tbody = document.getElementById('factura-items-body');
-            tbody.innerHTML = '';
-            ventaActual.productos.forEach(p => {
-                const row = document.createElement('tr');
-                row.innerHTML = `<td>${p.nombre}</td> <td>${p.cantidad}</td> <td>${formatearBs(p.precioBs).replace(' Bs','')}</td> <td>${formatearBs(p.precioBs * p.cantidad).replace(' Bs','')}</td>`;
-                tbody.appendChild(row);
-            });
-            
+            const tbody = document.getElementById('factura-items-body'); tbody.innerHTML = '';
+            ventaActual.productos.forEach(p => { const row = document.createElement('tr'); row.innerHTML = `<td>${p.nombre}</td><td>${p.cantidad}</td><td>${formatearBs(p.precioBs).replace(' Bs','')}</td><td>${formatearBs(p.precioBs * p.cantidad).replace(' Bs','')}</td>`; tbody.appendChild(row); });
             document.getElementById('factura-total').textContent = formatearBs(ventaActual.totalBs);
             mostrarModal('modal-factura');
         }
 
-        function mostrarOpcionesExportacion() {
-            if (ventaActual.productos.length === 0) {
-                mostrarNotificacion('No hay productos en la venta para generar una factura', 'warning');
-                return;
-            }
-            if (document.getElementById('modal-factura').style.display !== 'flex') mostrarFactura();
-            mostrarModal('modal-exportar');
+        function mostrarOpcionesExportacion() { if (ventaActual.productos.length === 0) { mostrarNotificacion('No hay productos en la venta para generar una factura', 'warning'); return; } if (document.getElementById('modal-factura').style.display !== 'flex') mostrarFactura(); mostrarModal('modal-exportar'); }
+
+        // ============================================
+        // FUNCIONES DE EXPORTACIÓN REAL
+        // ============================================
+        async function exportarFacturaPDF() {
+            const btn = event.target; const textoOriginal = btn.textContent;
+            btn.disabled = true; btn.textContent = '⏳ Generando PDF...';
+            try {
+                const { jsPDF } = window.jspdf;
+                const facturaElement = document.getElementById('area-factura');
+                const canvas = await html2canvas(facturaElement, { scale: 3, backgroundColor: '#ffffff', logging: false });
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF({ unit: 'mm', format: [80, canvas.height * 80 / canvas.width + 20], orientation: 'portrait' });
+                pdf.addImage(imgData, 'PNG', 0, 0, 80, canvas.height * 80 / canvas.width);
+                pdf.save(`factura_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.pdf`);
+                mostrarNotificacion('✅ PDF generado correctamente', 'success');
+                cerrarModal('modal-exportar');
+            } catch(e) { console.error(e); mostrarNotificacion('❌ Error al generar PDF', 'error'); }
+            finally { btn.disabled = false; btn.textContent = textoOriginal; }
         }
 
-        // ===== FUNCIONES PARA REPORTES =====
+        async function exportarFacturaJPEG() {
+            const btn = event.target; const textoOriginal = btn.textContent;
+            btn.disabled = true; btn.textContent = '⏳ Generando imagen...';
+            try {
+                const facturaElement = document.getElementById('area-factura');
+                const canvas = await html2canvas(facturaElement, { scale: 3, backgroundColor: '#ffffff', logging: false });
+                const link = document.createElement('a');
+                link.download = `factura_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.jpeg`;
+                link.href = canvas.toDataURL('image/jpeg', 0.9);
+                link.click();
+                mostrarNotificacion('✅ Imagen JPEG generada correctamente', 'success');
+                cerrarModal('modal-exportar');
+            } catch(e) { console.error(e); mostrarNotificacion('❌ Error al generar JPEG', 'error'); }
+            finally { btn.disabled = false; btn.textContent = textoOriginal; }
+        }
+
+        function exportarFacturaTXT() {
+            const btn = event.target; const textoOriginal = btn.textContent;
+            btn.disabled = true; btn.textContent = '⏳ Generando TXT...';
+            try {
+                let contenido = '';
+                contenido += `${configuracion.empresa.nombre}\n`;
+                contenido += `RIF: ${configuracion.empresa.rif}\n`;
+                contenido += `Teléfono: ${configuracion.empresa.telefono}\n`;
+                contenido += `Fecha: ${new Date().toLocaleString()}\n`;
+                contenido += `${'='.repeat(40)}\n`;
+                contenido += `Cliente: ${ventaActual.cliente ? ventaActual.cliente.nombre : 'Cliente General'}\n`;
+                contenido += `${'='.repeat(40)}\n`;
+                contenido += `Producto\tCant\tPrecio\tTotal\n`;
+                contenido += `${'-'.repeat(40)}\n`;
+                ventaActual.productos.forEach(p => { contenido += `${p.nombre}\t${p.cantidad}\t${p.precioBs.toFixed(2)}\t${(p.precioBs * p.cantidad).toFixed(2)}\n`; });
+                contenido += `${'='.repeat(40)}\n`;
+                contenido += `TOTAL: ${ventaActual.totalBs.toFixed(2)} Bs\n`;
+                contenido += `${'='.repeat(40)}\n`;
+                contenido += `¡Gracias por su compra!\n`;
+                const blob = new Blob([contenido], { type: 'text/plain;charset=utf-8' });
+                const link = document.createElement('a');
+                link.download = `factura_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.txt`;
+                link.href = URL.createObjectURL(blob);
+                link.click();
+                URL.revokeObjectURL(link.href);
+                mostrarNotificacion('✅ Archivo TXT generado correctamente', 'success');
+                cerrarModal('modal-exportar');
+            } catch(e) { console.error(e); mostrarNotificacion('❌ Error al generar TXT', 'error'); }
+            finally { btn.disabled = false; btn.textContent = textoOriginal; }
+        }
+
+        function exportarFacturaExcel() {
+            const btn = event.target; const textoOriginal = btn.textContent;
+            btn.disabled = true; btn.textContent = '⏳ Generando Excel...';
+            try {
+                const data = [];
+                data.push(['EMPRESA:', configuracion.empresa.nombre]);
+                data.push(['RIF:', configuracion.empresa.rif]);
+                data.push(['TELÉFONO:', configuracion.empresa.telefono]);
+                data.push(['FECHA:', new Date().toLocaleString()]);
+                data.push(['CLIENTE:', ventaActual.cliente ? ventaActual.cliente.nombre : 'Cliente General']);
+                data.push([]);
+                data.push(['Producto', 'Cantidad', 'Precio Unitario (Bs)', 'Subtotal (Bs)']);
+                ventaActual.productos.forEach(p => { data.push([p.nombre, p.cantidad, p.precioBs.toFixed(2), (p.precioBs * p.cantidad).toFixed(2)]); });
+                data.push([]);
+                data.push(['TOTAL:', '', '', ventaActual.totalBs.toFixed(2) + ' Bs']);
+                const ws = XLSX.utils.aoa_to_sheet(data);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, 'Factura');
+                XLSX.writeFile(wb, `factura_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.xlsx`);
+                mostrarNotificacion('✅ Archivo Excel generado correctamente', 'success');
+                cerrarModal('modal-exportar');
+            } catch(e) { console.error(e); mostrarNotificacion('❌ Error al generar Excel', 'error'); }
+            finally { btn.disabled = false; btn.textContent = textoOriginal; }
+        }
+
+        function imprimirFacturaTermica() { window.print(); cerrarModal('modal-exportar'); }
+
+        // ============================================
+        // FUNCIONES DE REPORTES
+        // ============================================
         function generarCalendario(year, month) {
-            const grid = document.getElementById('calendario-grid');
-            if (!grid) return;
+            const grid = document.getElementById('calendario-grid'); if (!grid) return;
             grid.innerHTML = '';
             const titulo = document.getElementById('mes-actual-titulo');
             const primerDia = new Date(year, month, 1);
             const ultimoDia = new Date(year, month + 1, 0);
             const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
             titulo.textContent = `${meses[month]} ${year}`;
-            ['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa'].forEach(dia => {
-                const diaEl = document.createElement('div');
-                diaEl.className = 'calendario-dia-nombre';
-                diaEl.textContent = dia;
-                grid.appendChild(diaEl);
-            });
+            ['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa'].forEach(dia => { const diaEl = document.createElement('div'); diaEl.className = 'calendario-dia-nombre'; diaEl.textContent = dia; grid.appendChild(diaEl); });
             for (let i = 0; i < primerDia.getDay(); i++) grid.appendChild(document.createElement('div'));
             for (let dia = 1; dia <= ultimoDia.getDate(); dia++) {
-                const diaEl = document.createElement('div');
-                diaEl.className = 'calendario-dia';
-                diaEl.textContent = dia;
+                const diaEl = document.createElement('div'); diaEl.className = 'calendario-dia'; diaEl.textContent = dia;
                 const fecha = new Date(year, month, dia);
                 if (fecha.toDateString() === new Date().toDateString()) diaEl.classList.add('dia-actual');
-                diaEl.addEventListener('click', () => {
-                    document.querySelectorAll('.calendario-dia').forEach(d => d.classList.remove('dia-seleccionado'));
-                    diaEl.classList.add('dia-seleccionado');
-                    mostrarVentasDelDia(fecha);
-                });
+                diaEl.addEventListener('click', () => { document.querySelectorAll('.calendario-dia').forEach(d => d.classList.remove('dia-seleccionado')); diaEl.classList.add('dia-seleccionado'); mostrarVentasDelDia(fecha); });
                 grid.appendChild(diaEl);
             }
         }
         
         function mostrarVentasDelDia(fecha) {
-            const cont = document.getElementById('reporte-diario-container');
-            if (!cont) return;
+            const cont = document.getElementById('reporte-diario-container'); if (!cont) return;
             const ventasDelDia = ventas.filter(v => new Date(v.timestamp).toDateString() === fecha.toDateString());
-            if (ventasDelDia.length === 0) {
-                cont.innerHTML = `<p>No se encontraron ventas para el ${fecha.toLocaleDateString('es-ES')}.</p>`;
-                return;
-            }
+            if (ventasDelDia.length === 0) { cont.innerHTML = `<p>No se encontraron ventas para el ${fecha.toLocaleDateString('es-ES')}.</p>`; return; }
             let html = `<h4>Ventas de ${fecha.toLocaleDateString('es-ES')}</h4>`;
-            ventasDelDia.forEach(v => {
-                const productos = v.productos.map(p => `${p.cantidad}x ${p.nombre}`).join(', ');
-                const totalUSD = v.productos.reduce((acc, p) => acc + p.precioUSD * p.cantidad, 0);
-                html += `<div class="reporte-item card"><strong>${new Date(v.timestamp).toLocaleTimeString()}</strong><p>Venta de ${productos}. Por ${v.metodoPago} en ${totalUSD.toFixed(2)}$ / ${formatearBs(v.totalBs)}</p><p>Cliente: ${v.cliente ? v.cliente.nombre : 'General'}</p></div>`;
-            });
+            ventasDelDia.forEach(v => { const productos = v.productos.map(p => `${p.cantidad}x ${p.nombre}`).join(', '); const totalUSD = v.productos.reduce((acc, p) => acc + p.precioUSD * p.cantidad, 0); html += `<div class="reporte-item card"><strong>${new Date(v.timestamp).toLocaleTimeString()}</strong><p>Venta de ${productos}. Por ${v.metodoPago} en ${totalUSD.toFixed(2)}$ / ${formatearBs(v.totalBs)}</p><p>Cliente: ${v.cliente ? v.cliente.nombre : 'General'}</p></div>`; });
             cont.innerHTML = html;
         }
         
-        function generarReporte() { 
-            mostrarNotificacion('Función de reportes en desarrollo', 'warning');
-        }
+        function generarReporte() { mostrarNotificacion('Función de reportes en desarrollo', 'warning'); }
 
-        // ===== BÚSQUEDA GLOBAL =====
+        // ============================================
+        // BÚSQUEDA GLOBAL Y MÓDULOS
+        // ============================================
         function configurarBuscadorGlobal() {
-            const buscador = document.getElementById('buscador-global');
-            const resultados = document.getElementById('resultados-busqueda');
-            
-            buscador.addEventListener('input', function() {
-                const query = this.value.toLowerCase().trim();
-                if (query.length < 2) {
-                    resultados.style.display = 'none';
-                    return;
-                }
-                const resultadosInventario = inventario.filter(item => item.nombre.toLowerCase().includes(query));
-                const resultadosClientes = clientes.filter(item => item.nombre.toLowerCase().includes(query));
-                const resultadosProveedores = proveedores.filter(item => item.nombre.toLowerCase().includes(query));
-                
-                const todosResultados = [
-                    ...resultadosInventario.map(item => ({...item, tipo: 'producto'})),
-                    ...resultadosClientes.map(item => ({...item, tipo: 'cliente'})),
-                    ...resultadosProveedores.map(item => ({...item, tipo: 'proveedor'}))
-                ];
-                mostrarResultadosBusquedaGlobal(todosResultados, resultados);
-            });
+            const buscador = document.getElementById('buscador-global'); const resultados = document.getElementById('resultados-busqueda');
+            buscador.addEventListener('input', function() { const query = this.value.toLowerCase().trim(); if (query.length < 2) { resultados.style.display = 'none'; return; } const resultadosInventario = inventario.filter(item => item.nombre.toLowerCase().includes(query)); const resultadosClientes = clientes.filter(item => item.nombre.toLowerCase().includes(query)); const resultadosProveedores = proveedores.filter(item => item.nombre.toLowerCase().includes(query)); const todosResultados = [...resultadosInventario.map(item => ({...item, tipo: 'producto'})), ...resultadosClientes.map(item => ({...item, tipo: 'cliente'})), ...resultadosProveedores.map(item => ({...item, tipo: 'proveedor'}))]; mostrarResultadosBusquedaGlobal(todosResultados, resultados); });
         }
 
         function configurarBuscadoresModulos() {
-            const buscadorClientes = document.getElementById('buscador-clientes');
-            if (buscadorClientes) {
-                buscadorClientes.addEventListener('input', function() {
-                    const query = this.value.toLowerCase().trim();
-                    if (query.length < 2) {
-                        document.getElementById('resultados-clientes').style.display = 'none';
-                        return;
-                    }
-                    const resultados = clientes.filter(item => item.nombre.toLowerCase().includes(query));
-                    mostrarResultadosBusqueda(resultados, document.getElementById('resultados-clientes'), 'clientes');
-                });
-            }
-            
-            const buscadorClienteVenta = document.getElementById('buscador-cliente-venta');
-            if (buscadorClienteVenta) {
-                buscadorClienteVenta.addEventListener('input', function() {
-                    const query = this.value.toLowerCase().trim();
-                    if (query.length < 2) {
-                        document.getElementById('resultados-cliente-venta').style.display = 'none';
-                        return;
-                    }
-                    const resultados = clientes.filter(item => item.nombre.toLowerCase().includes(query));
-                    mostrarResultadosBusqueda(resultados, document.getElementById('resultados-cliente-venta'), 'cliente-venta');
-                });
-            }
-            
-            const buscadorProductoVenta = document.getElementById('buscador-producto-venta');
-            if (buscadorProductoVenta) {
-                buscadorProductoVenta.addEventListener('input', function() {
-                    const query = this.value.toLowerCase().trim();
-                    if (query.length < 2) {
-                        document.getElementById('resultados-producto-venta').style.display = 'none';
-                        return;
-                    }
-                    const resultados = inventario.filter(item => item.nombre.toLowerCase().includes(query));
-                    mostrarResultadosBusqueda(resultados, document.getElementById('resultados-producto-venta'), 'producto-venta');
-                });
-            }
-            
-            const buscadorInventario = document.getElementById('buscador-inventario');
-            if (buscadorInventario) {
-                buscadorInventario.addEventListener('input', function() {
-                    const query = this.value.toLowerCase().trim();
-                    if (query.length < 2) {
-                        document.getElementById('resultados-inventario').style.display = 'none';
-                        return;
-                    }
-                    const resultados = inventario.filter(item => item.nombre.toLowerCase().includes(query));
-                    mostrarResultadosBusqueda(resultados, document.getElementById('resultados-inventario'), 'inventario');
-                });
-            }
-            
-            const buscadorProveedores = document.getElementById('buscador-proveedores');
-            if (buscadorProveedores) {
-                buscadorProveedores.addEventListener('input', function() {
-                    const query = this.value.toLowerCase().trim();
-                    if (query.length < 2) {
-                        document.getElementById('resultados-proveedores').style.display = 'none';
-                        return;
-                    }
-                    const resultados = proveedores.filter(item => item.nombre.toLowerCase().includes(query));
-                    mostrarResultadosBusqueda(resultados, document.getElementById('resultados-proveedores'), 'proveedores');
-                });
-            }
-            
-            const buscadorEmpleados = document.getElementById('buscador-empleados');
-            if (buscadorEmpleados) {
-                buscadorEmpleados.addEventListener('input', function() {
-                    const query = this.value.toLowerCase().trim();
-                    if (query.length < 2) {
-                        document.getElementById('resultados-empleados').style.display = 'none';
-                        return;
-                    }
-                    const resultados = empleados.filter(item => item.nombre.toLowerCase().includes(query));
-                    mostrarResultadosBusqueda(resultados, document.getElementById('resultados-empleados'), 'empleados');
-                });
-            }
+            const buscadorClientes = document.getElementById('buscador-clientes'); if (buscadorClientes) { buscadorClientes.addEventListener('input', function() { const query = this.value.toLowerCase().trim(); if (query.length < 2) { document.getElementById('resultados-clientes').style.display = 'none'; return; } const resultados = clientes.filter(item => item.nombre.toLowerCase().includes(query)); mostrarResultadosBusqueda(resultados, document.getElementById('resultados-clientes'), 'clientes'); }); }
+            const buscadorClienteVenta = document.getElementById('buscador-cliente-venta'); if (buscadorClienteVenta) { buscadorClienteVenta.addEventListener('input', function() { const query = this.value.toLowerCase().trim(); if (query.length < 2) { document.getElementById('resultados-cliente-venta').style.display = 'none'; return; } const resultados = clientes.filter(item => item.nombre.toLowerCase().includes(query)); mostrarResultadosBusqueda(resultados, document.getElementById('resultados-cliente-venta'), 'cliente-venta'); }); }
+            const buscadorProductoVenta = document.getElementById('buscador-producto-venta'); if (buscadorProductoVenta) { buscadorProductoVenta.addEventListener('input', function() { const query = this.value.toLowerCase().trim(); if (query.length < 2) { document.getElementById('resultados-producto-venta').style.display = 'none'; return; } const resultados = inventario.filter(item => item.nombre.toLowerCase().includes(query)); mostrarResultadosBusqueda(resultados, document.getElementById('resultados-producto-venta'), 'producto-venta'); }); }
+            const buscadorInventario = document.getElementById('buscador-inventario'); if (buscadorInventario) { buscadorInventario.addEventListener('input', function() { const query = this.value.toLowerCase().trim(); if (query.length < 2) { document.getElementById('resultados-inventario').style.display = 'none'; return; } const resultados = inventario.filter(item => item.nombre.toLowerCase().includes(query)); mostrarResultadosBusqueda(resultados, document.getElementById('resultados-inventario'), 'inventario'); }); }
+            const buscadorProveedores = document.getElementById('buscador-proveedores'); if (buscadorProveedores) { buscadorProveedores.addEventListener('input', function() { const query = this.value.toLowerCase().trim(); if (query.length < 2) { document.getElementById('resultados-proveedores').style.display = 'none'; return; } const resultados = proveedores.filter(item => item.nombre.toLowerCase().includes(query)); mostrarResultadosBusqueda(resultados, document.getElementById('resultados-proveedores'), 'proveedores'); }); }
+            const buscadorEmpleados = document.getElementById('buscador-empleados'); if (buscadorEmpleados) { buscadorEmpleados.addEventListener('input', function() { const query = this.value.toLowerCase().trim(); if (query.length < 2) { document.getElementById('resultados-empleados').style.display = 'none'; return; } const resultados = empleados.filter(item => item.nombre.toLowerCase().includes(query)); mostrarResultadosBusqueda(resultados, document.getElementById('resultados-empleados'), 'empleados'); }); }
         }
 
         function mostrarResultadosBusquedaGlobal(resultados, contenedor) {
-            if (!contenedor) return;
-            contenedor.innerHTML = '';
-            if (resultados.length === 0) {
-                contenedor.innerHTML = '<div class="search-result-item">No se encontraron resultados</div>';
-                contenedor.style.display = 'block';
-                return;
-            }
-            resultados.forEach(item => {
-                const elemento = document.createElement('div');
-                elemento.className = 'search-result-item';
-                elemento.innerHTML = `<div>${item.nombre} (${item.tipo})</div> <div class="result-actions"> <button class="result-btn btn-add" onclick="venderDesdeBusqueda('${item.tipo}', ${item.id})">Vender</button> <button class="result-btn btn-edit" onclick="editarDesdeBusqueda('${item.tipo}', ${item.id})">Editar</button> </div>`;
-                contenedor.appendChild(elemento);
-            });
+            if (!contenedor) return; contenedor.innerHTML = '';
+            if (resultados.length === 0) { contenedor.innerHTML = '<div class="search-result-item">No se encontraron resultados</div>'; contenedor.style.display = 'block'; return; }
+            resultados.forEach(item => { const elemento = document.createElement('div'); elemento.className = 'search-result-item'; elemento.innerHTML = `<div>${item.nombre} (${item.tipo})</div><div class="result-actions"><button class="result-btn btn-add" onclick="venderDesdeBusqueda('${item.tipo}', ${item.id})">Vender</button><button class="result-btn btn-edit" onclick="editarDesdeBusqueda('${item.tipo}', ${item.id})">Editar</button></div>`; contenedor.appendChild(elemento); });
             contenedor.style.display = 'block';
         }
 
         function mostrarResultadosBusqueda(resultados, contenedor, contexto = 'global') {
-            if (!contenedor) return;
-            contenedor.innerHTML = '';
-            if (resultados.length === 0) {
-                contenedor.innerHTML = '<div class="search-result-item">No se encontraron resultados</div>';
-                contenedor.style.display = 'block';
-                return;
-            }
-            resultados.forEach(item => {
-                const elemento = document.createElement('div');
-                elemento.className = 'search-result-item';
-                let acciones = '';
-                
-                if (contexto === 'cliente-venta') {
-                    elemento.onclick = () => seleccionarCliente(item.id);
-                    acciones = `<div class="result-actions"><button class="result-btn btn-add">Seleccionar</button></div>`;
-                } else if (contexto === 'producto-venta') {
-                    elemento.onclick = () => agregarProductoVenta(item.id);
-                    acciones = `<div class="result-actions"><button class="result-btn btn-add">Agregar</button></div>`;
-                }
-                
-                elemento.innerHTML = `<div>${item.nombre}</div>${acciones}`;
-                contenedor.appendChild(elemento);
-            });
+            if (!contenedor) return; contenedor.innerHTML = '';
+            if (resultados.length === 0) { contenedor.innerHTML = '<div class="search-result-item">No se encontraron resultados</div>'; contenedor.style.display = 'block'; return; }
+            resultados.forEach(item => { const elemento = document.createElement('div'); elemento.className = 'search-result-item'; let acciones = ''; if (contexto === 'cliente-venta') { elemento.onclick = () => seleccionarCliente(item.id); acciones = `<div class="result-actions"><button class="result-btn btn-add">Seleccionar</button></div>`; } else if (contexto === 'producto-venta') { elemento.onclick = () => agregarProductoVenta(item.id); acciones = `<div class="result-actions"><button class="result-btn btn-add">Agregar</button></div>`; } elemento.innerHTML = `<div>${item.nombre}</div>${acciones}`; contenedor.appendChild(elemento); });
             contenedor.style.display = 'block';
         }
 
-        function venderDesdeBusqueda(tipo, id) {
-            abrirPagina('ventas');
-            setTimeout(() => {
-                if (tipo === 'producto') agregarProductoVenta(id);
-                else if (tipo === 'cliente') seleccionarCliente(id);
-            }, 100);
-            document.getElementById('resultados-busqueda').style.display = 'none';
-            document.getElementById('buscador-global').value = '';
-        }
+        function venderDesdeBusqueda(tipo, id) { abrirPagina('ventas'); setTimeout(() => { if (tipo === 'producto') agregarProductoVenta(id); else if (tipo === 'cliente') seleccionarCliente(id); }, 100); document.getElementById('resultados-busqueda').style.display = 'none'; document.getElementById('buscador-global').value = ''; }
+        function editarDesdeBusqueda(tipo, id) { if (tipo === 'producto') { abrirPagina('inventario'); setTimeout(() => editarProducto(id), 100); } else if (tipo === 'cliente') { abrirPagina('clientes'); setTimeout(() => editarCliente(id), 100); } else if (tipo === 'proveedor') { abrirPagina('proveedores'); setTimeout(() => editarProveedor(id), 100); } document.getElementById('resultados-busqueda').style.display = 'none'; document.getElementById('buscador-global').value = ''; }
 
-        function editarDesdeBusqueda(tipo, id) {
-            if (tipo === 'producto') { 
-                abrirPagina('inventario'); 
-                setTimeout(() => editarProducto(id), 100); 
-            }
-            else if (tipo === 'cliente') { 
-                abrirPagina('clientes'); 
-                setTimeout(() => editarCliente(id), 100); 
-            }
-            else if (tipo === 'proveedor') { 
-                abrirPagina('proveedores'); 
-                setTimeout(() => editarProveedor(id), 100); 
-            }
-            document.getElementById('resultados-busqueda').style.display = 'none';
-            document.getElementById('buscador-global').value = '';
-        }
+        // ============================================
+        // CONFIGURACIÓN Y TEMAS
+        // ============================================
+        const TEMA_COLORS = { claro: '#3498db', oscuro: '#2980b9', negro: '#343a40', verde: '#27ae60', amarillo: '#f39c12', naranja: '#e67e22', rosado: '#e84393' };
+        function aplicarTema() { const tema = configuracion.tema || 'claro'; document.body.className = ''; if (tema !== 'claro') document.body.classList.add('tema-' + tema); document.querySelector('meta[name="theme-color"]').setAttribute('content', TEMA_COLORS[tema]); }
+        function cambiarTema(nuevoTema) { configuracion.tema = nuevoTema; putInStore(STORES.CONFIGURACION, { id: 'config', config: configuracion }); aplicarTema(); mostrarNotificacion(`Tema cambiado a ${nuevoTema}`); }
+        function cargarConfiguracion() { const nombreEmpresa = document.getElementById('nombre-empresa'); if (nombreEmpresa) nombreEmpresa.value = configuracion.empresa.nombre; const rifEmpresa = document.getElementById('rif-empresa'); if (rifEmpresa) rifEmpresa.value = configuracion.empresa.rif; const telefonoEmpresa = document.getElementById('telefono-empresa'); if (telefonoEmpresa) telefonoEmpresa.value = configuracion.empresa.telefono; const direccionEmpresa = document.getElementById('direccion-empresa'); if (direccionEmpresa) direccionEmpresa.value = configuracion.empresa.direccion; const temaSelect = document.getElementById('tema-select'); if (temaSelect) temaSelect.value = configuracion.tema || 'claro'; aplicarTema(); }
+        async function guardarConfiguracionEmpresa() { try { configuracion.empresa = { nombre: document.getElementById('nombre-empresa').value, rif: document.getElementById('rif-empresa').value, telefono: document.getElementById('telefono-empresa').value, direccion: document.getElementById('direccion-empresa').value }; await putInStore(STORES.CONFIGURACION, { id: 'config', config: configuracion }); mostrarNotificacion('✅ Configuración de empresa guardada'); } catch(e) { mostrarNotificacion('❌ Error al guardar configuración', 'error'); } }
 
-        // ===== FUNCIONES PARA CONFIGURACIÓN Y TEMAS =====
-        const TEMA_COLORS = {
-            claro: '#3498db',
-            oscuro: '#2980b9',
-            negro: '#343a40',
-            verde: '#27ae60',
-            amarillo: '#f39c12',
-            naranja: '#e67e22',
-            rosado: '#e84393'
-        };
+        // ============================================
+        // PREVENCIÓN DE CIERRE
+        // ============================================
+        function activarPrevencionCierre() { prevencionCierreActiva = true; document.getElementById('estado-prevencion').textContent = 'Estado: Activo'; mostrarNotificacion('Prevención de cierre activada'); }
+        function desactivarPrevencionCierre() { prevencionCierreActiva = false; document.getElementById('estado-prevencion').textContent = 'Estado: Inactivo'; mostrarNotificacion('Prevención de cierre desactivada'); }
 
-        function aplicarTema() {
-            const tema = configuracion.tema || 'claro';
-            document.body.className = '';
-            if (tema !== 'claro') document.body.classList.add('tema-' + tema);
-            document.querySelector('meta[name="theme-color"]').setAttribute('content', TEMA_COLORS[tema]);
-        }
+        // ============================================
+        // BACKUP Y RESTAURACIÓN DE DATOS
+        // ============================================
+        async function respaldarDatos() { try { const datos = { inventario, clientes, proveedores, gastos, empleados, chatHistory, tipoCambio, historialTipoCambio, configuracion, ventas }; const blob = new Blob([JSON.stringify(datos, null, 2)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `respaldo_gestor_${new Date().toISOString().split('T')[0]}.json`; a.click(); URL.revokeObjectURL(a.href); mostrarNotificacion('✅ Respaldo JSON generado'); } catch(e) { mostrarNotificacion('❌ Error al generar respaldo', 'error'); } }
         
-        function cambiarTema(nuevoTema) {
-            configuracion.tema = nuevoTema;
-            putInStore(STORES.CONFIGURACION, { id: 'config', config: configuracion });
-            aplicarTema();
-            mostrarNotificacion(`Tema cambiado a ${nuevoTema}`);
-        }
+        async function restaurarDatos() { const input = document.createElement('input'); input.type = 'file'; input.accept = '.json'; input.onchange = e => { const reader = new FileReader(); reader.onload = async res => { try { const datos = JSON.parse(res.target.result); if (confirm("¿Restaurar desde JSON? Se sobrescribirán los datos actuales.")) { await clearStore(STORES.INVENTARIO); await clearStore(STORES.CLIENTES); await clearStore(STORES.PROVEEDORES); await clearStore(STORES.GASTOS); await clearStore(STORES.EMPLEADOS); await clearStore(STORES.VENTAS); await clearStore(STORES.CHAT); await clearStore(STORES.TIPO_CAMBIO); await clearStore(STORES.CONFIGURACION); inventario = datos.inventario || []; clientes = datos.clientes || []; proveedores = datos.proveedores || []; gastos = datos.gastos || []; empleados = datos.empleados || []; ventas = datos.ventas || []; chatHistory = datos.chatHistory || []; tipoCambio = datos.tipoCambio || 170; ultimoTipoCambioRegistrado = tipoCambio; historialTipoCambio = datos.historialTipoCambio || [{ id: Date.now(), fecha: new Date().toISOString(), tasa: tipoCambio, fuente: 'Restaurado' }]; configuracion = datos.configuracion || configuracion; await saveAllData(); mostrarNotificacion('✅ Datos restaurados. Recargando...'); setTimeout(() => location.reload(), 1500); } } catch(err) { mostrarNotificacion('❌ Error: El archivo JSON no es válido', 'error'); } }; reader.readAsText(e.target.files[0]); }; input.click(); }
+
+        async function saveAllData() { try { for (const item of inventario) await putInStore(STORES.INVENTARIO, item); for (const item of clientes) await putInStore(STORES.CLIENTES, item); for (const item of proveedores) await putInStore(STORES.PROVEEDORES, item); for (const item of gastos) await putInStore(STORES.GASTOS, item); for (const item of empleados) await putInStore(STORES.EMPLEADOS, item); for (const item of ventas) await putInStore(STORES.VENTAS, item); for (const item of chatHistory) await putInStore(STORES.CHAT, item); await saveTipoCambio(); await putInStore(STORES.CONFIGURACION, { id: 'config', config: configuracion }); } catch(e) { console.error(e); throw e; } }
         
-        function cargarConfiguracion() {
-            document.getElementById('nombre-empresa').value = configuracion.empresa.nombre;
-            document.getElementById('rif-empresa').value = configuracion.empresa.rif;
-            document.getElementById('telefono-empresa').value = configuracion.empresa.telefono;
-            document.getElementById('direccion-empresa').value = configuracion.empresa.direccion;
-            document.getElementById('tema-select').value = configuracion.tema || 'claro';
-            aplicarTema();
-        }
+        async function exportarDatosExcel() { try { const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(inventario), "Inventario"); XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(clientes), "Clientes"); XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(proveedores), "Proveedores"); XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(gastos), "Gastos"); XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(empleados), "Empleados"); XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(ventas), "Ventas"); XLSX.writeFile(wb, `Respaldo_Gestor_${new Date().toISOString().split('T')[0]}.xlsx`); mostrarNotificacion('✅ Respaldo Excel generado'); } catch(e) { mostrarNotificacion('❌ Error al generar Excel', 'error'); } }
         
-        async function guardarConfiguracionEmpresa() {
-            try {
-                configuracion.empresa = {
-                    nombre: document.getElementById('nombre-empresa').value,
-                    rif: document.getElementById('rif-empresa').value,
-                    telefono: document.getElementById('telefono-empresa').value,
-                    direccion: document.getElementById('direccion-empresa').value
-                };
-                await putInStore(STORES.CONFIGURACION, { id: 'config', config: configuracion });
-                mostrarNotificacion('✅ Configuración de empresa guardada');
-            } catch (error) {
-                console.error('Error guardando configuración:', error);
-                mostrarNotificacion('❌ Error al guardar configuración', 'error');
-            }
-        }
-
-        // ===== PREVENCIÓN DE CIERRE =====
-        let prevencionCierreActiva = false;
+        async function importarDatosExcel() { const input = document.createElement('input'); input.type = 'file'; input.accept = '.xlsx, .xls'; input.onchange = e => { const reader = new FileReader(); reader.onload = async res => { try { if (confirm("¿Restaurar desde Excel? Se sobrescribirán los datos actuales.")) { const workbook = XLSX.read(new Uint8Array(res.target.result), { type: 'array' }); const leer = hoja => { try { return XLSX.utils.sheet_to_json(workbook.Sheets[hoja]) || []; } catch { return []; } }; await clearStore(STORES.INVENTARIO); await clearStore(STORES.CLIENTES); await clearStore(STORES.PROVEEDORES); await clearStore(STORES.GASTOS); await clearStore(STORES.EMPLEADOS); await clearStore(STORES.VENTAS); inventario = leer("Inventario") || []; clientes = leer("Clientes") || []; proveedores = leer("Proveedores") || []; gastos = leer("Gastos") || []; empleados = leer("Empleados") || []; ventas = leer("Ventas") || []; for (const item of inventario) await putInStore(STORES.INVENTARIO, item); for (const item of clientes) await putInStore(STORES.CLIENTES, item); for (const item of proveedores) await putInStore(STORES.PROVEEDORES, item); for (const item of gastos) await putInStore(STORES.GASTOS, item); for (const item of empleados) await putInStore(STORES.EMPLEADOS, item); for (const item of ventas) await putInStore(STORES.VENTAS, item); mostrarNotificacion('✅ Datos restaurados desde Excel. Recargando...'); setTimeout(() => location.reload(), 1500); } } catch(err) { mostrarNotificacion('❌ Error al procesar el archivo Excel', 'error'); } }; reader.readAsArrayBuffer(e.target.files[0]); }; input.click(); }
         
-        function activarPrevencionCierre() {
-            prevencionCierreActiva = true;
-            document.getElementById('estado-prevencion').textContent = 'Estado: Activo';
-            window.history.pushState(null, null, window.location.href);
-            window.addEventListener('popstate', function() {
-                window.history.pushState(null, null, window.location.href);
-                mostrarNotificacion('La prevención de cierre está activada', 'warning');
-            });
-            window.addEventListener('beforeunload', function(e) {
-                if (prevencionCierreActiva) {
-                    e.preventDefault();
-                    e.returnValue = '';
-                    return '';
-                }
-            });
-            mostrarNotificacion('Prevención de cierre activada');
-        }
+        async function eliminarTodosDatos() { if (confirm("¿ESTÁ ABSOLUTAMENTE SEGURO? Esta acción eliminará TODOS los datos y no se puede deshacer.")) { try { await clearStore(STORES.INVENTARIO); await clearStore(STORES.CLIENTES); await clearStore(STORES.PROVEEDORES); await clearStore(STORES.GASTOS); await clearStore(STORES.EMPLEADOS); await clearStore(STORES.VENTAS); await clearStore(STORES.CHAT); await clearStore(STORES.TIPO_CAMBIO); await clearStore(STORES.CONFIGURACION); mostrarNotificacion('✅ Todos los datos eliminados. Recargando...'); setTimeout(() => location.reload(), 1500); } catch(e) { mostrarNotificacion('❌ Error al eliminar datos', 'error'); } } }
 
-        function desactivarPrevencionCierre() {
-            prevencionCierreActiva = false;
-            document.getElementById('estado-prevencion').textContent = 'Estado: Inactivo';
-            mostrarNotificacion('Prevención de cierre desactivada');
-        }
+        // ============================================
+        // FUNCIONES DE MENSAJERÍA (SIMULACIÓN LOCAL)
+        // ============================================
+        let miDispositivo = 'desconocido'; let mediaRecorder; let audioChunks = [];
 
-        // ===== FUNCIONES DE DATOS (BACKUP/RESTORE) =====
-        async function respaldarDatos() {
-            try {
-                const datos = { 
-                    inventario, 
-                    clientes, 
-                    proveedores, 
-                    gastos, 
-                    empleados, 
-                    chatHistory, 
-                    tipoCambio, 
-                    historialTipoCambio,
-                    configuracion, 
-                    ventas 
-                };
-                const blob = new Blob([JSON.stringify(datos, null, 2)], { type: 'application/json' });
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(blob);
-                a.download = `respaldo_gestor_${new Date().toISOString().split('T')[0]}.json`;
-                a.click();
-                URL.revokeObjectURL(a.href);
-                mostrarNotificacion('✅ Respaldo JSON generado');
-            } catch (error) {
-                console.error('Error generando respaldo:', error);
-                mostrarNotificacion('❌ Error al generar respaldo', 'error');
-            }
-        }
+        function configurarUsuarioMensajeria() { const telefono = document.getElementById('usuario-telefono').value.trim(); const tipo = document.getElementById('tipo-usuario').value; const codigo = document.getElementById('codigo-conexion').value.trim(); if (!telefono || !/^\d{10,11}$/.test(telefono)) { mostrarNotificacion('Por favor, ingresa un número de teléfono válido', 'error'); return; } if (tipo === 'empleado' && !codigo) { mostrarNotificacion('Como empleado, debes ingresar el código de conexión', 'error'); return; } configuracion.mensajeria = { usuario: telefono, tipo: tipo, codigo: tipo === 'dueño' ? `tienda${Date.now()}` : codigo }; putInStore(STORES.CONFIGURACION, { id: 'config', config: configuracion }); iniciarInterfazMensajeria(); mostrarNotificacion('✅ Configuración de mensajería guardada'); }
         
-        async function restaurarDatos() {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = '.json';
-            input.onchange = e => {
-                const reader = new FileReader();
-                reader.onload = async res => {
-                    try {
-                        const datos = JSON.parse(res.target.result);
-                        if (confirm("¿Restaurar desde JSON? Se sobrescribirán los datos actuales.")) {
-                            await clearStore(STORES.INVENTARIO);
-                            await clearStore(STORES.CLIENTES);
-                            await clearStore(STORES.PROVEEDORES);
-                            await clearStore(STORES.GASTOS);
-                            await clearStore(STORES.EMPLEADOS);
-                            await clearStore(STORES.VENTAS);
-                            await clearStore(STORES.CHAT);
-                            await clearStore(STORES.TIPO_CAMBIO);
-                            await clearStore(STORES.CONFIGURACION);
-                            
-                            inventario = datos.inventario || [];
-                            clientes = datos.clientes || [];
-                            proveedores = datos.proveedores || [];
-                            gastos = datos.gastos || [];
-                            empleados = datos.empleados || [];
-                            ventas = datos.ventas || [];
-                            chatHistory = datos.chatHistory || [];
-                            tipoCambio = datos.tipoCambio || 170;
-                            ultimoTipoCambioRegistrado = tipoCambio;
-                            historialTipoCambio = datos.historialTipoCambio || [{ id: Date.now(), fecha: new Date().toISOString(), tasa: tipoCambio, fuente: 'Restaurado' }];
-                            configuracion = datos.configuracion || configuracion;
-                            
-                            await saveAllData();
-                            
-                            mostrarNotificacion('✅ Datos restaurados. Recargando...');
-                            setTimeout(() => location.reload(), 1500);
-                        }
-                    } catch (err) { 
-                        console.error(err);
-                        mostrarNotificacion('❌ Error: El archivo JSON no es válido', 'error'); 
-                    }
-                };
-                reader.readAsText(e.target.files[0]);
-            };
-            input.click();
-        }
+        function iniciarInterfazMensajeria() { const setupDiv = document.getElementById('setup-mensajeria'); const chatDiv = document.getElementById('chat-container'); if (!configuracion.mensajeria) { setupDiv.style.display = 'block'; chatDiv.style.display = 'none'; const tipoUsuario = document.getElementById('tipo-usuario'); if (tipoUsuario) { tipoUsuario.addEventListener('change', (e) => { document.getElementById('campo-codigo-empleado').style.display = e.target.value === 'empleado' ? 'block' : 'none'; }); } } else { setupDiv.style.display = 'none'; chatDiv.style.display = 'block'; document.getElementById('display-usuario').textContent = `${configuracion.mensajeria.usuario} (${configuracion.mensajeria.tipo})`; if (configuracion.mensajeria.tipo === 'dueño') { document.getElementById('info-codigo-dueño').style.display = 'block'; document.getElementById('display-codigo').textContent = configuracion.mensajeria.codigo; } cargarHistorialChat(); } }
 
-        async function saveAllData() {
-            try {
-                for (const item of inventario) await putInStore(STORES.INVENTARIO, item);
-                for (const item of clientes) await putInStore(STORES.CLIENTES, item);
-                for (const item of proveedores) await putInStore(STORES.PROVEEDORES, item);
-                for (const item of gastos) await putInStore(STORES.GASTOS, item);
-                for (const item of empleados) await putInStore(STORES.EMPLEADOS, item);
-                for (const item of ventas) await putInStore(STORES.VENTAS, item);
-                for (const item of chatHistory) await putInStore(STORES.CHAT, item);
-                await saveTipoCambio();
-                await putInStore(STORES.CONFIGURACION, { id: 'config', config: configuracion });
-            } catch (error) {
-                console.error('Error guardando todos los datos:', error);
-                throw error;
-            }
-        }
+        function enviarMensajeTexto() { const textoInput = document.getElementById('mensaje-texto'); if (!textoInput || textoInput.value.trim() === '') { mostrarNotificacion('Escribe un mensaje', 'warning'); return; } const mensaje = { id: Date.now(), remitente: configuracion.mensajeria?.usuario || 'Usuario', tipo: 'texto', contenido: textoInput.value, dispositivo: miDispositivo, timestamp: Date.now() }; mostrarMensaje(mensaje, true); guardarMensajeEnHistorial(mensaje); textoInput.value = ''; mostrarNotificacion('Mensaje enviado (modo simulación)', 'success'); }
+
+        function enviarImagen(file) { if (!file) { mostrarNotificacion('Selecciona una imagen', 'warning'); return; } const reader = new FileReader(); reader.onload = (e) => { const mensaje = { id: Date.now(), remitente: configuracion.mensajeria?.usuario || 'Usuario', tipo: 'imagen', contenido: e.target.result, nombreArchivo: file.name, dispositivo: miDispositivo, timestamp: Date.now() }; mostrarMensaje(mensaje, true); guardarMensajeEnHistorial(mensaje); mostrarNotificacion('Imagen enviada', 'success'); }; reader.readAsDataURL(file); }
+
+        function manejarGrabacion() { if (mediaRecorder && mediaRecorder.state === "recording") { mediaRecorder.stop(); document.getElementById('btn-grabar-voz').textContent = "Grabar Voz 🎤"; document.getElementById('grabando-indicator').style.display = 'none'; } else { navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => { mediaRecorder = new MediaRecorder(stream); mediaRecorder.start(); audioChunks = []; mediaRecorder.addEventListener("dataavailable", e => audioChunks.push(e.data)); mediaRecorder.addEventListener("stop", () => { const audioBlob = new Blob(audioChunks); const reader = new FileReader(); reader.onload = (e) => { const mensaje = { id: Date.now(), remitente: configuracion.mensajeria?.usuario || 'Usuario', tipo: 'audio', contenido: e.target.result, dispositivo: miDispositivo, timestamp: Date.now() }; mostrarMensaje(mensaje, true); guardarMensajeEnHistorial(mensaje); mostrarNotificacion('Audio enviado', 'success'); }; reader.readAsDataURL(audioBlob); }); document.getElementById('btn-grabar-voz').textContent = "Detener 🛑"; document.getElementById('grabando-indicator').style.display = 'block'; }).catch(err => { console.error(err); mostrarNotificacion('Error al acceder al micrófono', 'error'); }); } }
+
+        function mostrarMensaje(msg, esMio) { const chatBox = document.getElementById('chat-box'); if (!chatBox) return; const divMensaje = document.createElement('div'); divMensaje.className = `chat-message ${esMio ? 'message-sent' : 'message-received'}`; let contenidoHtml = ''; switch(msg.tipo) { case 'texto': contenidoHtml = `<p>${msg.contenido}</p>`; break; case 'imagen': contenidoHtml = `<img src="${msg.contenido}" alt="${msg.nombreArchivo || 'imagen'}" style="max-width:100%">`; break; case 'audio': contenidoHtml = `<audio controls src="${msg.contenido}"></audio>`; break; } divMensaje.innerHTML = `<div class="message-meta">${esMio ? 'Yo' : msg.remitente} • ${msg.dispositivo}</div><div class="message-content">${contenidoHtml}</div>`; chatBox.insertBefore(divMensaje, chatBox.firstChild); }
         
-        async function exportarDatosExcel() {
-            try {
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(inventario), "Inventario");
-                XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(clientes), "Clientes");
-                XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(proveedores), "Proveedores");
-                XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(gastos), "Gastos");
-                XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(empleados), "Empleados");
-                XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(ventas), "Ventas");
-                XLSX.writeFile(wb, `Respaldo_Gestor_${new Date().toISOString().split('T')[0]}.xlsx`);
-                mostrarNotificacion('✅ Respaldo Excel generado');
-            } catch (error) {
-                console.error('Error exportando a Excel:', error);
-                mostrarNotificacion('❌ Error al generar Excel', 'error');
-            }
-        }
+        async function guardarMensajeEnHistorial(msg) { chatHistory.push(msg); await putInStore(STORES.CHAT, msg); }
         
-        async function importarDatosExcel() {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = '.xlsx, .xls';
-            input.onchange = e => {
-                const reader = new FileReader();
-                reader.onload = async res => {
-                    try {
-                        if (confirm("¿Restaurar desde Excel? Se sobrescribirán los datos actuales.")) {
-                            const workbook = XLSX.read(new Uint8Array(res.target.result), { type: 'array' });
-                            const leer = hoja => {
-                                try {
-                                    return XLSX.utils.sheet_to_json(workbook.Sheets[hoja]) || [];
-                                } catch {
-                                    return [];
-                                }
-                            };
-                            
-                            await clearStore(STORES.INVENTARIO);
-                            await clearStore(STORES.CLIENTES);
-                            await clearStore(STORES.PROVEEDORES);
-                            await clearStore(STORES.GASTOS);
-                            await clearStore(STORES.EMPLEADOS);
-                            await clearStore(STORES.VENTAS);
-                            
-                            inventario = leer("Inventario") || [];
-                            clientes = leer("Clientes") || [];
-                            proveedores = leer("Proveedores") || [];
-                            gastos = leer("Gastos") || [];
-                            empleados = leer("Empleados") || [];
-                            ventas = leer("Ventas") || [];
-                            
-                            for (const item of inventario) await putInStore(STORES.INVENTARIO, item);
-                            for (const item of clientes) await putInStore(STORES.CLIENTES, item);
-                            for (const item of proveedores) await putInStore(STORES.PROVEEDORES, item);
-                            for (const item of gastos) await putInStore(STORES.GASTOS, item);
-                            for (const item of empleados) await putInStore(STORES.EMPLEADOS, item);
-                            for (const item of ventas) await putInStore(STORES.VENTAS, item);
-                            
-                            mostrarNotificacion('✅ Datos restaurados desde Excel. Recargando...');
-                            setTimeout(() => location.reload(), 1500);
-                        }
-                    } catch (err) { 
-                        console.error(err);
-                        mostrarNotificacion('❌ Error al procesar el archivo Excel', 'error'); 
-                    }
-                };
-                reader.readAsArrayBuffer(e.target.files[0]);
-            };
-            input.click();
-        }
-        
-        async function eliminarTodosDatos() {
-            if (confirm("¿ESTÁ ABSOLUTAMENTE SEGURO? Esta acción eliminará TODOS los datos y no se puede deshacer.")) {
-                try {
-                    await clearStore(STORES.INVENTARIO);
-                    await clearStore(STORES.CLIENTES);
-                    await clearStore(STORES.PROVEEDORES);
-                    await clearStore(STORES.GASTOS);
-                    await clearStore(STORES.EMPLEADOS);
-                    await clearStore(STORES.VENTAS);
-                    await clearStore(STORES.CHAT);
-                    await clearStore(STORES.TIPO_CAMBIO);
-                    await clearStore(STORES.CONFIGURACION);
-                    
-                    mostrarNotificacion('✅ Todos los datos eliminados. Recargando...');
-                    setTimeout(() => location.reload(), 1500);
-                } catch (error) {
-                    console.error('Error eliminando datos:', error);
-                    mostrarNotificacion('❌ Error al eliminar datos', 'error');
-                }
-            }
-        }
+        function cargarHistorialChat() { const chatBox = document.getElementById('chat-box'); if (!chatBox) return; chatBox.innerHTML = ''; [...chatHistory].reverse().forEach(msg => mostrarMensaje(msg, msg.remitente === configuracion.mensajeria?.usuario)); }
 
-        // ===== FUNCIONES DE MENSAJERÍA =====
-        let miDispositivo = 'desconocido';
-        let mediaRecorder;
-        let audioChunks = [];
-
-        function configurarUsuarioMensajeria() {
-            const telefono = document.getElementById('usuario-telefono').value.trim();
-            const tipo = document.getElementById('tipo-usuario').value;
-            const codigo = document.getElementById('codigo-conexion').value.trim();
-
-            if (!telefono || !/^\d{10,11}$/.test(telefono)) {
-                mostrarNotificacion('Por favor, ingresa un número de teléfono válido', 'error');
-                return;
-            }
-            if (tipo === 'empleado' && !codigo) {
-                mostrarNotificacion('Como empleado, debes ingresar el código de conexión', 'error');
-                return;
-            }
-
-            configuracion.mensajeria = {
-                usuario: telefono,
-                tipo: tipo,
-                codigo: tipo === 'dueño' ? `tienda${Date.now()}` : codigo
-            };
-            putInStore(STORES.CONFIGURACION, { id: 'config', config: configuracion });
-            iniciarInterfazMensajeria();
-            mostrarNotificacion('✅ Configuración de mensajería guardada');
-        }
-        
-        function iniciarInterfazMensajeria() {
-            const setupDiv = document.getElementById('setup-mensajeria');
-            const chatDiv = document.getElementById('chat-container');
-            if (!configuracion.mensajeria) {
-                setupDiv.style.display = 'block';
-                chatDiv.style.display = 'none';
-                document.getElementById('tipo-usuario').addEventListener('change', (e) => {
-                    document.getElementById('campo-codigo-empleado').style.display = e.target.value === 'empleado' ? 'block' : 'none';
-                });
-            } else {
-                setupDiv.style.display = 'none';
-                chatDiv.style.display = 'block';
-                document.getElementById('display-usuario').textContent = `${configuracion.mensajeria.usuario} (${configuracion.mensajeria.tipo})`;
-                
-                if (configuracion.mensajeria.tipo === 'dueño') {
-                    document.getElementById('info-codigo-dueño').style.display = 'block';
-                    document.getElementById('display-codigo').textContent = configuracion.mensajeria.codigo;
-                }
-                
-                cargarHistorialChat();
-            }
-        }
-
-        function enviarMensajeTexto() {
-            const textoInput = document.getElementById('mensaje-texto');
-            if (!textoInput || textoInput.value.trim() === '') {
-                mostrarNotificacion('Escribe un mensaje', 'warning');
-                return;
-            }
-            
-            const mensaje = {
-                id: Date.now(),
-                remitente: configuracion.mensajeria?.usuario || 'Usuario',
-                tipo: 'texto',
-                contenido: textoInput.value,
-                dispositivo: miDispositivo,
-                timestamp: Date.now()
-            };
-            
-            mostrarMensaje(mensaje, true);
-            guardarMensajeEnHistorial(mensaje);
-            textoInput.value = '';
-            mostrarNotificacion('Mensaje enviado (modo simulación)', 'success');
-        }
-
-        function enviarImagen(file) {
-            if (!file) {
-                mostrarNotificacion('Selecciona una imagen', 'warning');
-                return;
-            }
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const mensaje = {
-                    id: Date.now(),
-                    remitente: configuracion.mensajeria?.usuario || 'Usuario',
-                    tipo: 'imagen',
-                    contenido: e.target.result,
-                    nombreArchivo: file.name,
-                    dispositivo: miDispositivo,
-                    timestamp: Date.now()
-                };
-                mostrarMensaje(mensaje, true);
-                guardarMensajeEnHistorial(mensaje);
-                mostrarNotificacion('Imagen enviada', 'success');
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function manejarGrabacion() {
-            if (mediaRecorder && mediaRecorder.state === "recording") {
-                mediaRecorder.stop();
-                document.getElementById('btn-grabar-voz').textContent = "Grabar Voz 🎤";
-                document.getElementById('grabando-indicator').style.display = 'none';
-            } else {
-                navigator.mediaDevices.getUserMedia({ audio: true })
-                    .then(stream => {
-                        mediaRecorder = new MediaRecorder(stream);
-                        mediaRecorder.start();
-                        audioChunks = [];
-                        mediaRecorder.addEventListener("dataavailable", e => audioChunks.push(e.data));
-                        mediaRecorder.addEventListener("stop", () => {
-                            const audioBlob = new Blob(audioChunks);
-                            const reader = new FileReader();
-                            reader.onload = (e) => {
-                                 const mensaje = {
-                                    id: Date.now(),
-                                    remitente: configuracion.mensajeria?.usuario || 'Usuario',
-                                    tipo: 'audio',
-                                    contenido: e.target.result,
-                                    dispositivo: miDispositivo,
-                                    timestamp: Date.now()
-                                };
-                                mostrarMensaje(mensaje, true);
-                                guardarMensajeEnHistorial(mensaje);
-                                mostrarNotificacion('Audio enviado', 'success');
-                            };
-                            reader.readAsDataURL(audioBlob);
-                        });
-                        document.getElementById('btn-grabar-voz').textContent = "Detener 🛑";
-                        document.getElementById('grabando-indicator').style.display = 'block';
-                    })
-                    .catch(err => {
-                        console.error('Error al acceder al micrófono:', err);
-                        mostrarNotificacion('Error al acceder al micrófono', 'error');
-                    });
-            }
-        }
-
-        function mostrarMensaje(msg, esMio) {
-            const chatBox = document.getElementById('chat-box');
-            if (!chatBox) return;
-            const divMensaje = document.createElement('div');
-            divMensaje.className = `chat-message ${esMio ? 'message-sent' : 'message-received'}`;
-            let contenidoHtml = '';
-            switch(msg.tipo) {
-                case 'texto': contenidoHtml = `<p>${msg.contenido}</p>`; break;
-                case 'imagen': contenidoHtml = `<img src="${msg.contenido}" alt="${msg.nombreArchivo || 'imagen'}" style="max-width:100%">`; break;
-                case 'audio': contenidoHtml = `<audio controls src="${msg.contenido}"></audio>`; break;
-            }
-            divMensaje.innerHTML = `<div class="message-meta">${esMio ? 'Yo' : msg.remitente} • ${msg.dispositivo}</div><div class="message-content">${contenidoHtml}</div>`;
-            chatBox.insertBefore(divMensaje, chatBox.firstChild);
-        }
-        
-        async function guardarMensajeEnHistorial(msg) {
-            chatHistory.push(msg);
-            await putInStore(STORES.CHAT, msg);
-        }
-        
-        function cargarHistorialChat() {
-            const chatBox = document.getElementById('chat-box');
-            if (!chatBox) return;
-            chatBox.innerHTML = '';
-            chatHistory.forEach(msg => mostrarMensaje(msg, msg.remitente === configuracion.mensajeria?.usuario));
-        }
-
-        // Funciones placeholder para exportación
-        function imprimirFactura() { mostrarNotificacion('Función de impresión en desarrollo', 'warning'); }
-        function exportarFacturaComo(formato) { mostrarNotificacion(`Exportando como ${formato}...`, 'success'); }
+        // Funciones para formularios de envío
         function mostrarFormularioEmail() { document.getElementById('formulario-email').style.display = 'block'; }
         function mostrarFormularioSMS() { document.getElementById('formulario-sms').style.display = 'block'; }
-        function ocultarFormularios() { 
-            document.getElementById('formulario-email').style.display = 'none'; 
-            document.getElementById('formulario-sms').style.display = 'none'; 
-            cerrarModal('modal-exportar');
-        }
+        function ocultarFormularios() { document.getElementById('formulario-email').style.display = 'none'; document.getElementById('formulario-sms').style.display = 'none'; cerrarModal('modal-exportar'); }
         function enviarFacturaEmail() { mostrarNotificacion('Enviando factura por email...', 'success'); ocultarFormularios(); }
         function enviarFacturaSMS() { mostrarNotificacion('Enviando factura por SMS...', 'success'); ocultarFormularios(); }
 
-        // ===== INICIALIZACIÓN PRINCIPAL =====
+        // ============================================
+        // INICIALIZACIÓN PRINCIPAL
+        // ============================================
         document.addEventListener('DOMContentLoaded', async function() {
-            // Mostrar loader solo durante la primera carga
-            const loader = document.getElementById('loader');
-            loader.classList.add('active');
-            
             try {
-                // Inicializar IndexedDB
-                await initDB();
-                
-                // Cargar datos
-                await loadInitialData();
-                
-                // Inicializar aplicación
                 aplicarTema();
-                detectarDispositivo();
+                miDispositivo = detectarDispositivo();
                 configurarBuscadorGlobal();
                 configurarBuscadoresModulos();
-                
-                // ACTUALIZAR EL CAMPO DE TIPO DE CAMBIO CON EL VALOR GUARDADO
+                await initDB();
+                await loadInitialData();
                 actualizarCampoTipoCambio();
                 actualizarTipoCambioVisual();
-                
-                // Configurar event listeners
-                document.getElementById('form-nuevo-cliente').addEventListener('submit', e => { 
-                    e.preventDefault(); 
-                    guardarNuevoClienteDesdeModal(); 
-                });
-                
-                document.getElementById('form-agregar-producto').addEventListener('submit', e => { 
-                    e.preventDefault(); 
-                    guardarNuevoProducto(); 
-                });
-                
-                document.getElementById('form-agregar-proveedor').addEventListener('submit', e => { 
-                    e.preventDefault(); 
-                    guardarNuevoProveedor(); 
-                });
-                
-                document.getElementById('form-agregar-gasto').addEventListener('submit', e => { 
-                    e.preventDefault(); 
-                    guardarNuevoGasto(); 
-                });
-                
-                document.getElementById('form-agregar-empleado').addEventListener('submit', e => { 
-                    e.preventDefault(); 
-                    guardarNuevoEmpleado(); 
-                });
-                
+
+                // Event listeners de formularios
+                document.getElementById('form-nuevo-cliente').addEventListener('submit', e => { e.preventDefault(); guardarNuevoClienteDesdeModal(); });
+                document.getElementById('form-agregar-producto').addEventListener('submit', e => { e.preventDefault(); guardarNuevoProducto(); });
+                document.getElementById('form-agregar-proveedor').addEventListener('submit', e => { e.preventDefault(); guardarNuevoProveedor(); });
+                document.getElementById('form-agregar-gasto').addEventListener('submit', e => { e.preventDefault(); guardarNuevoGasto(); });
+                document.getElementById('form-agregar-empleado').addEventListener('submit', e => { e.preventDefault(); guardarNuevoEmpleado(); });
                 document.getElementById('btn-grabar-voz').addEventListener('click', manejarGrabacion);
-                
-                document.querySelectorAll('input[type="text"], textarea').forEach(input => {
-                    input.addEventListener('input', function() { 
-                        if (this.value.length === 1) {
-                            this.value = this.value.charAt(0).toUpperCase() + this.value.slice(1); 
-                        }
-                    });
-                });
-                
+
+                // Capitalizar inputs
+                document.querySelectorAll('input[type="text"], textarea').forEach(input => { input.addEventListener('input', function() { if (this.value.length === 1) this.value = this.value.charAt(0).toUpperCase() + this.value.slice(1); }); });
+
                 const hoy = new Date().toISOString().split('T')[0];
-                ['fecha-gasto', 'fecha-contracto', 'fecha-inicio', 'fecha-fin'].forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el) el.value = hoy;
-                });
+                ['fecha-gasto', 'fecha-contracto', 'fecha-inicio', 'fecha-fin'].forEach(id => { const el = document.getElementById(id); if (el) el.value = hoy; });
 
-                const btnAnterior = document.getElementById('mes-anterior-btn');
-                const btnSiguiente = document.getElementById('mes-siguiente-btn');
-                
-                if (btnAnterior) {
-                    btnAnterior.addEventListener('click', () => {
-                        fechaCalendario.setMonth(fechaCalendario.getMonth() - 1);
-                        generarCalendario(fechaCalendario.getFullYear(), fechaCalendario.getMonth());
-                    });
-                }
-                
-                if (btnSiguiente) {
-                    btnSiguiente.addEventListener('click', () => {
-                        fechaCalendario.setMonth(fechaCalendario.getMonth() + 1);
-                        generarCalendario(fechaCalendario.getFullYear(), fechaCalendario.getMonth());
-                    });
-                }
+                const btnAnterior = document.getElementById('mes-anterior-btn'); const btnSiguiente = document.getElementById('mes-siguiente-btn');
+                if (btnAnterior) btnAnterior.addEventListener('click', () => { fechaCalendario.setMonth(fechaCalendario.getMonth() - 1); generarCalendario(fechaCalendario.getFullYear(), fechaCalendario.getMonth()); });
+                if (btnSiguiente) btnSiguiente.addEventListener('click', () => { fechaCalendario.setMonth(fechaCalendario.getMonth() + 1); generarCalendario(fechaCalendario.getFullYear(), fechaCalendario.getMonth()); });
 
-                // Obtener tipo de cambio REAL (sin mostrar loader)
-                await obtenerTipoCambioReal();
-                
-                // Programar actualización automática cada 6 horas
-                setInterval(obtenerTipoCambioReal, 6 * 60 * 60 * 1000);
-                
-                // Ocultar loader
-                setTimeout(() => {
-                    loader.classList.remove('active');
-                }, 500);
-                
+                setTimeout(() => { obtenerTipoCambioReal().catch(console.error); }, 100);
+                setInterval(() => { obtenerTipoCambioReal().catch(console.error); }, 6 * 60 * 60 * 1000);
                 console.log('✅ Aplicación inicializada correctamente');
-                
-            } catch (error) {
-                console.error('❌ Error en inicialización:', error);
-                loader.classList.remove('active');
-                mostrarNotificacion('Error al cargar la aplicación', 'error');
-            }
+            } catch(e) { console.error('❌ Error en inicialización:', e); mostrarNotificacion('Error al cargar la aplicación', 'error'); }
         });
 
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('✅ ServiceWorker registrado', reg))
-                    .catch(err => console.log('❌ ServiceWorker error:', err));
-            });
-        }
+        if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').then(reg => console.log('✅ ServiceWorker registrado', reg)).catch(err => console.log('❌ ServiceWorker error:', err)); }); }
     </script>
 </body>
 </html>
