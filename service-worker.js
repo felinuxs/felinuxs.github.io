@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gestor-pro-v1';
+const CACHE_NAME = 'GestorPro';
 const urlsToCache = [
   '/',
   '/index.html',
