@@ -1,4 +1,3 @@
-
 const CACHE_NAME = 'GestorPro';
 const urlsToCache = [
   '/',
