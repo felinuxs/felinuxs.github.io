@@ -1,52 +1,34 @@
 {
-  "name": "POS Total - Tienda Profesional",
-  "short_name": "POS Total",
-  "description": "Sistema de punto de venta completo para tiendas",
-  "start_url": ".",
+  "name": "POS Total",
+  "short_name": "POS",
+  "description": "Sistema de Punto de Venta",
+  "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",
   "theme_color": "#3b82f6",
   "background_color": "#ffffff",
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "categories": ["business", "productivity"],
+  "screenshots": [],
   "icons": [
     {
-      "src": "icons/icon-72.png",
+      "src": "https://tu-app.netlify.app/icon-72.png",
       "sizes": "72x72",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      "src": "icons/icon-96.png",
-      "sizes": "96x96",
-      "type": "image/png"
-    },
-    {
-      "src": "icons/icon-128.png",
-      "sizes": "128x128",
-      "type": "image/png"
-    },
-    {
-      "src": "icons/icon-144.png",
-      "sizes": "144x144",
-      "type": "image/png"
-    },
-    {
-      "src": "icons/icon-152.png",
-      "sizes": "152x152",
-      "type": "image/png"
-    },
-    {
-      "src": "icons/icon-192.png",
+      "src": "https://tu-app.netlify.app/icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      "src": "icons/icon-256.png",
-      "sizes": "256x256",
-      "type": "image/png"
-    },
-    {
-      "src": "icons/icon-512.png",
+      "src": "https://tu-app.netlify.app/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
