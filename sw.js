@@ -1,42 +1,68 @@
-const CACHE_NAME = 'GestorPro';
+const CACHE_NAME = 'pos-total-v2';
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css',
-  'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js',
-  'https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css',
-  'https://cdn.jsdelivr.net/npm/flatpickr',
-  'https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js',
-  'https://unpkg.com/dexie@3.2.4/dist/dexie.js',
-  'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js',
-  'https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js'
+  './',
+  './index.html',
+  './manifest.json',
+  'https://cdn.tailwindcss.com',
+  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'
 ];
 
+// Instalación - cachear recursos esenciales
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(urlsToCache))
+      .then(cache => {
+        console.log('Cache abierto');
+        return cache.addAll(urlsToCache);
+      })
+      .catch(err => console.log('Error caching:', err))
   );
+  self.skipWaiting();
 });
 
+// Fetch - responder desde caché primero, luego red
 self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request)
-      .then(response => response || fetch(event.request))
+      .then(response => {
+        // Si está en caché, devolverlo
+        if (response) {
+          return response;
+        }
+        // Si no, hacer fetch y guardar en caché
+        return fetch(event.request).then(response => {
+          // No cachear respuestas no exitosas
+          if (!response || response.status !== 200) {
+            return response;
+          }
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME)
+            .then(cache => {
+              cache.put(event.request, responseToCache);
+            });
+          return response;
+        });
+      })
+      .catch(() => {
+        // Si no hay internet y no está en caché, mostrar página offline personalizada
+        return caches.match('./index.html');
+      })
   );
 });
 
+// Activación - limpiar cachés viejos
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName);
+        cacheNames.map(cache => {
+          if (cache !== CACHE_NAME) {
+            console.log('Eliminando caché viejo:', cache);
+            return caches.delete(cache);
           }
         })
       );
     })
   );
+  self.clients.claim();
 });
