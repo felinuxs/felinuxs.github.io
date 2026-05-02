@@ -4,10 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" id="themeColorMeta" content="#ffffff">
-    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="data:application/manifest+json,{}" id="manifestLink">
     <title>JAM POS · Tienda Profesional</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <style>
         *{transition:all .2s ease;user-select:none;-webkit-tap-highlight-color:transparent;box-sizing:border-box}
         body{font-family:'Inter',system-ui,sans-serif;margin:0;padding:0;min-height:100vh}
@@ -17,7 +18,7 @@
         .btn-redondeado{border-radius:40px!important;padding:8px 16px!important;font-weight:600!important;cursor:pointer!important;border:none!important}
         .btn-redondeado:active{transform:scale(.96)}
         
-        /* Botones pequeños y compactos para editar/eliminar/vender */
+        /* Botones compactos */
         .btn-editar-redondeado, .btn-eliminar-redondeado, .btn-verde-redondeado {
             padding: 4px 10px !important;
             font-size: 0.7rem !important;
@@ -30,11 +31,29 @@
         .btn-editar-redondeado i, .btn-eliminar-redondeado i, .btn-verde-redondeado i {
             font-size: 0.65rem !important;
         }
-        
         .btn-editar-redondeado{background:#f97316!important;color:#fff!important}
         .btn-eliminar-redondeado{background:#ef4444!important;color:#fff!important}
         .btn-verde-redondeado{background:#10b981!important;color:#fff!important}
         .btn-azul-redondeado{background:var(--accent)!important;color:#fff!important;padding:8px 16px!important;font-weight:600!important}
+        
+        /* Botón finalizar venta - más grande y centrado */
+        .btn-finalizar-venta {
+            background: #10b981 !important;
+            color: white !important;
+            padding: 14px 24px !important;
+            font-size: 1.1rem !important;
+            font-weight: 700 !important;
+            border-radius: 50px !important;
+            width: 100% !important;
+            max-width: 300px !important;
+            display: block !important;
+            margin: 20px auto 0 auto !important;
+            cursor: pointer !important;
+            border: none !important;
+            transition: transform 0.08s linear !important;
+            text-align: center !important;
+        }
+        .btn-finalizar-venta:active { transform: scale(0.97); }
         
         .main-module-btn{display:flex;align-items:center;justify-content:center;gap:12px;height:60px;border-radius:20px;font-weight:700;font-size:1rem;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.1);border:none;width:100%}
         .main-module-btn:active{transform:scale(.97);filter:brightness(.92)}
@@ -46,7 +65,6 @@
         .module-title{font-size:1.5rem;font-weight:800;color:var(--accent);cursor:pointer;padding:4px 8px;border-radius:16px}
         .module-title-bloqueado{text-decoration:underline wavy #dc2626;text-underline-offset:8px}
         .product-card,.client-card{border-radius:20px;padding:14px;margin-bottom:12px;border:2px solid var(--accent);word-break:break-word}
-        .product-card .flex.gap-3, .client-card .flex.gap-3 { gap: 8px !important; }
         input,select,textarea{border-radius:20px;padding:10px 14px;width:100%;outline:none}
         .modal-form{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:1000;padding:16px}
         .modal-form-content{max-width:460px;width:100%;border-radius:28px;padding:20px;max-height:85vh;overflow:auto}
@@ -59,6 +77,33 @@
         .module-header{display:flex;justify-content:space-between;align-items:center}
         .install-btn{position:fixed;bottom:20px;right:20px;z-index:9999;border-radius:50px;padding:10px 20px;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,.2);cursor:pointer}
         .home-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:4px}
+        
+        /* Ticket virtual estilo térmico */
+        .ticket-virtual {
+            font-family: 'Courier New', 'Courier', monospace;
+            font-size: 12px;
+            line-height: 1.4;
+            width: 280px;
+            background: white;
+            color: black;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 0 auto;
+        }
+        .ticket-virtual .header { text-align: center; border-bottom: 1px dashed #000; padding-bottom: 8px; margin-bottom: 8px; }
+        .ticket-virtual .header h3 { margin: 0; font-size: 16px; }
+        .ticket-virtual .header p { margin: 2px 0; font-size: 10px; }
+        .ticket-virtual .items { border-bottom: 1px dashed #000; padding-bottom: 8px; margin-bottom: 8px; }
+        .ticket-virtual .item { display: flex; justify-content: space-between; margin-bottom: 4px; }
+        .ticket-virtual .total { font-weight: bold; border-top: 1px dashed #000; padding-top: 8px; margin-top: 8px; }
+        .ticket-virtual .footer { text-align: center; border-top: 1px dashed #000; padding-top: 8px; margin-top: 8px; font-size: 9px; }
+        
+        /* Botones ticket */
+        .ticket-buttons { display: flex; gap: 10px; justify-content: center; margin-top: 15px; flex-wrap: wrap; }
+        .ticket-btn { padding: 8px 16px; border-radius: 30px; border: none; font-weight: bold; cursor: pointer; font-size: 12px; display: inline-flex; align-items: center; gap: 6px; }
+        .btn-wa { background: #25D366; color: white; }
+        .btn-img { background: #3b82f6; color: white; }
+        .btn-copy { background: #6b7280; color: white; }
         
         /* Temas */
         body.light-mode{background:#fff}
@@ -96,11 +141,11 @@
     // ==================== UTILIDADES ====================
     const escapeHtml = s => s ? s.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])) : '';
     const fmtPrecio = v => Number(v).toLocaleString('es-VE', {minimumFractionDigits:2, maximumFractionDigits:2});
-    const esOscuro = c => { let r=parseInt(c.slice(1,3),16), g=parseInt(c.slice(3,5),16), b=parseInt(c.slice(5,7),16); return (.299*r + .587*g + .114*b) < 128; };
+    const esOscuro = c => { let r=parseInt(c.slice(1,3),16), g=parseInt(c.slice(3,5),16), b=parseInt(c.slice(5,7),16); return(.299*r + .587*g + .114*b) < 128; };
     
     // ==================== INDEXEDDB ====================
     let db = null;
-    const DB_NAME = 'PosTiendaDB', DB_VERSION = 27;
+    const DB_NAME = 'PosTiendaDB', DB_VERSION = 30;
     const initDB = () => new Promise((res,rej) => { let r = indexedDB.open(DB_NAME, DB_VERSION); r.onerror = () => rej(r.error); r.onsuccess = () => { db = r.result; res(db); }; r.onupgradeneeded = e => { let d = e.target.result; ['productos','clientes','proveedores','gastos','empleados','ventas','config'].forEach(s => { if(!d.objectStoreNames.contains(s)) d.createObjectStore(s, {keyPath:'id'}); }); }; });
     const getStore = (s, m='readonly') => db.transaction(s, m).objectStore(s);
     const getAll = async s => new Promise(res => { getStore(s).getAll().onsuccess = e => res(e.target.result || []); });
@@ -113,7 +158,7 @@
         config: { key:'mainConfig', theme:'#3b82f6', dolarRate:67.85, lastUpdate:new Date().toLocaleDateString(), ivaActivo:true, usarMargen:false, backgroundMode:'light' }
     };
     let exitAttempts = 0, currentModule = 'home', volverBloqueado = false, timeoutTitulo = null;
-    let carrito = [], totalVenta = 0, tipoPago = 'efectivo_bs';
+    let carrito = [], totalVenta = 0, tipoPago = 'pago_movil';
     
     async function loadAllData(){
         for(let s of ['productos','clientes','proveedores','gastos','empleados','ventas']) D[s] = await getAll(s);
@@ -155,6 +200,118 @@
         let span = document.getElementById('tasaDolarMostrar');
         if(span) span.innerText = fmtPrecio(D.config.dolarRate);
     }
+    
+    // ==================== TICKET VIRTUAL ====================
+    function mostrarTicket(venta) {
+        const itemsHtml = venta.items.map(item => 
+            `<div class="item"><span>${item.cantidad}x ${escapeHtml(item.nombre)}</span><span>${fmtPrecio(item.subtotal)} Bs</span></div>`
+        ).join('');
+        
+        const formasPago = {
+            'efectivo_bs': 'EFECTIVO Bs',
+            'pago_movil': 'PAGO MÓVIL',
+            'transferencia': 'TRANSFERENCIA',
+            'tarjeta_debito': 'TARJETA DÉBITO',
+            'dolares': 'DÓLARES'
+        };
+        
+        const ticketHtml = `
+            <div class="ticket-virtual" id="ticketParaImprimir">
+                <div class="header">
+                    <h3>JAM POS</h3>
+                    <p>${new Date(venta.fecha).toLocaleString()}</p>
+                    <p>Ticket: ${venta.id}</p>
+                    <p>Cliente: ${escapeHtml(venta.cliente)}</p>
+                </div>
+                <div class="items">
+                    ${itemsHtml}
+                </div>
+                <div class="ticket-line"><span>SUBTOTAL</span><span>${fmtPrecio(venta.subtotal)} Bs</span></div>
+                ${venta.iva ? `<div class="ticket-line"><span>IVA (16%)</span><span>${fmtPrecio(venta.iva)} Bs</span></div>` : ''}
+                <div class="ticket-line total"><span>TOTAL</span><span>${fmtPrecio(venta.total)} Bs</span></div>
+                <div class="ticket-line"><span>PAGO</span><span>${fmtPrecio(venta.pago)} Bs</span></div>
+                <div class="ticket-line"><span>CAMBIO</span><span>${fmtPrecio(venta.cambio)} Bs</span></div>
+                <div class="ticket-line"><span>FORMA DE PAGO</span><span>${formasPago[venta.tipoPago] || venta.tipoPago}</span></div>
+                <div class="footer">
+                    <p>¡Gracias por su compra!</p>
+                    <p>JAM POS - Sistema Profesional</p>
+                </div>
+            </div>
+            <div class="ticket-buttons">
+                <button class="ticket-btn btn-wa" onclick="window.enviarTicketPorWhatsApp('${venta.id}')"><i class="fab fa-whatsapp"></i> WhatsApp</button>
+                <button class="ticket-btn btn-img" onclick="window.descargarTicketImagen()"><i class="fas fa-download"></i> Imagen</button>
+                <button class="ticket-btn btn-copy" onclick="window.copiarTicketTexto()"><i class="fas fa-copy"></i> Copiar</button>
+            </div>
+        `;
+        
+        const modal = document.createElement('div'); modal.className = 'modal-form';
+        modal.innerHTML = `<div class="modal-form-content" style="max-width: 350px; text-align: center;">${ticketHtml}</div>`;
+        document.body.appendChild(modal);
+        
+        window.ticketActual = venta;
+        window.modalTicketActual = modal;
+        modal.onclick = e => { if(e.target === modal) modal.remove(); };
+    }
+    
+    window.enviarTicketPorWhatsApp = (ventaId) => {
+        const venta = D.ventas.find(v => v.id === ventaId);
+        if(!venta) return;
+        
+        const formasPago = {
+            'efectivo_bs': 'EFECTIVO Bs',
+            'pago_movil': 'PAGO MÓVIL',
+            'transferencia': 'TRANSFERENCIA',
+            'tarjeta_debito': 'TARJETA DÉBITO',
+            'dolares': 'DÓLARES'
+        };
+        
+        let mensaje = `🏪 *JAM POS - TICKET DE COMPRA* 🏪\n`;
+        mensaje += `📅 ${new Date(venta.fecha).toLocaleString()}\n`;
+        mensaje += `🧾 *${venta.id}*\n`;
+        mensaje += `👤 Cliente: ${venta.cliente}\n`;
+        mensaje += `━━━━━━━━━━━━━━━━━━━━\n`;
+        venta.items.forEach(item => {
+            mensaje += `${item.cantidad}x ${item.nombre} → ${fmtPrecio(item.subtotal)} Bs\n`;
+        });
+        mensaje += `━━━━━━━━━━━━━━━━━━━━\n`;
+        mensaje += `💰 *SUBTOTAL:* ${fmtPrecio(venta.subtotal)} Bs\n`;
+        if(venta.iva) mensaje += `📊 *IVA:* ${fmtPrecio(venta.iva)} Bs\n`;
+        mensaje += `💵 *TOTAL:* ${fmtPrecio(venta.total)} Bs\n`;
+        mensaje += `💸 *PAGO:* ${fmtPrecio(venta.pago)} Bs\n`;
+        mensaje += `🔄 *CAMBIO:* ${fmtPrecio(venta.cambio)} Bs\n`;
+        mensaje += `💳 *FORMA DE PAGO:* ${formasPago[venta.tipoPago] || venta.tipoPago}\n`;
+        mensaje += `━━━━━━━━━━━━━━━━━━━━\n`;
+        mensaje += `🙏 ¡Gracias por su compra!\n`;
+        mensaje += `🏪 JAM POS - Tu tienda profesional`;
+        
+        const telefono = prompt("📱 Ingrese el número de teléfono (ej: 584121234567 o 04121234567):");
+        if(telefono) {
+            let numeroLimpio = telefono.replace(/[^0-9]/g, '');
+            if(numeroLimpio.startsWith('0')) numeroLimpio = '58' + numeroLimpio.substring(1);
+            if(!numeroLimpio.startsWith('58')) numeroLimpio = '58' + numeroLimpio;
+            const url = `https://wa.me/${numeroLimpio}?text=${encodeURIComponent(mensaje)}`;
+            window.open(url, '_blank');
+        }
+    };
+    
+    window.descargarTicketImagen = async () => {
+        const ticket = document.getElementById('ticketParaImprimir');
+        if(!ticket) return;
+        try {
+            const canvas = await html2canvas(ticket, { scale: 2, backgroundColor: '#ffffff' });
+            const link = document.createElement('a');
+            link.download = `ticket_${Date.now()}.png`;
+            link.href = canvas.toDataURL();
+            link.click();
+        } catch(e) { alert('Error al generar imagen'); }
+    };
+    
+    window.copiarTicketTexto = () => {
+        const ticket = document.getElementById('ticketParaImprimir');
+        if(!ticket) return;
+        const texto = ticket.innerText;
+        navigator.clipboard.writeText(texto).then(() => alert('✓ Ticket copiado al portapapeles')).catch(() => alert('Error al copiar'));
+    };
     
     // ==================== NAVEGACIÓN Y BLOQUEO ====================
     window.navigateTo = m => {
@@ -273,7 +430,9 @@
     // ==================== VENTAS ====================
     function renderVentas(){
         let bloqueado = volverBloqueado, accent = D.config.theme;
-        document.getElementById('appRoot').innerHTML = `
+        tipoPago = 'pago_movil'; // Por defecto Pago Móvil
+        
+        const html = `
             <div class="page-header-fixed">
                 <div class="module-header">
                     <h2 id="tituloModule" class="module-title ${bloqueado?'module-title-bloqueado':''}" style="color:${accent}" onmousedown="iniciarBloqueo(this,'Ventas')" onmouseup="cancelarBloqueo()" onmouseleave="cancelarBloqueo()">Ventas</h2>
@@ -284,17 +443,37 @@
                 <div class="mb-3"><label>Cliente</label><select id="clienteSelect" class="border rounded-xl p-2 w-full"><option value="">-- Sin cliente --</option>${D.clientes.map(c => `<option value="${c.id}">${escapeHtml(c.nombre)}</option>`).join('')}</select></div>
                 <div class="mb-3"><input type="text" id="buscarProducto" placeholder="Buscar producto..." class="border-2 rounded-xl w-full p-2" style="border-color:${accent}"><div id="sugerencias" class="mt-1 border rounded-xl hidden divide-y max-h-48 overflow-auto"></div></div>
                 <div class="p-3 rounded-xl mb-3" style="background:rgba(0,0,0,0.05)"><div class="font-bold mb-2">🛒 Carrito</div><div id="carritoLista" class="max-h-52 overflow-auto"></div><div class="border-t pt-2 mt-2"><div class="ticket-line"><span>SUBTOTAL</span><span id="subtotal">0,00 Bs</span></div>${D.config.ivaActivo?'<div class="ticket-line"><span>IVA (16%)</span><span id="iva">0,00 Bs</span></div>':''}<div class="ticket-line font-bold"><span>TOTAL</span><span id="total">0,00 Bs</span></div></div></div>
-                <div class="mb-3"><label>Tipo de pago</label><select id="tipoPago" class="border rounded-xl p-2 w-full"><option value="efectivo_bs">💵 Efectivo (Bs)</option><option value="dolares">💵 Dólares (USD)</option><option value="tarjeta_debito">💳 Tarjeta Débito</option><option value="transferencia">🏦 Transferencia</option><option value="pago_movil">📱 Pago Móvil</option></select></div>
-                <div class="grid grid-cols-2 gap-2 mb-3"><input type="number" id="montoPagado" placeholder="Monto recibido (Bs)" class="border rounded-xl p-2"><button id="calcularCambio" class="btn-azul-redondeado btn-redondeado py-2">Calcular cambio</button></div>
-                <div id="cambioMensaje" class="text-green-600 text-sm mb-3"></div>
-                <button id="finalizarVenta" class="btn-verde-redondeado w-full py-2 font-bold">✅ Finalizar Venta</button>
+                <div class="mb-3"><label>Tipo de pago</label><select id="tipoPago" class="border rounded-xl p-2 w-full">
+                    <option value="efectivo_bs">💵 Efectivo (Bs)</option>
+                    <option value="dolares">💵 Dólares (USD)</option>
+                    <option value="tarjeta_debito">💳 Tarjeta Débito</option>
+                    <option value="transferencia">🏦 Transferencia</option>
+                    <option value="pago_movil" selected>📱 Pago Móvil</option>
+                </select></div>
+                <div id="cambioContainer" style="display: none;">
+                    <div class="grid grid-cols-2 gap-2 mb-3"><input type="number" id="montoPagado" placeholder="Monto recibido (Bs)" class="border rounded-xl p-2"><button id="calcularCambio" class="btn-azul-redondeado btn-redondeado py-2">Calcular cambio</button></div>
+                    <div id="cambioMensaje" class="text-green-600 text-sm mb-3"></div>
+                </div>
+                <button id="finalizarVenta" class="btn-finalizar-venta">✅ Finalizar Venta</button>
             </div>
         `;
+        document.getElementById('appRoot').innerHTML = html;
         carrito = []; totalVenta = 0;
         document.getElementById('buscarProducto').addEventListener('input', e => buscarProductos(e.target.value));
-        document.getElementById('calcularCambio').onclick = () => calcularCambio();
         document.getElementById('finalizarVenta').onclick = () => finalizarVenta();
-        document.getElementById('tipoPago').onchange = e => tipoPago = e.target.value;
+        
+        const tipoPagoSelect = document.getElementById('tipoPago');
+        const cambioContainer = document.getElementById('cambioContainer');
+        
+        tipoPagoSelect.onchange = () => {
+            tipoPago = tipoPagoSelect.value;
+            cambioContainer.style.display = tipoPago === 'efectivo_bs' ? 'block' : 'none';
+        };
+        
+        if(document.getElementById('calcularCambio')) {
+            document.getElementById('calcularCambio').onclick = () => calcularCambio();
+        }
+        
         actualizarCarritoUI();
         if(volverBloqueado) document.getElementById('btnVolverModule').onclick = () => {};
     }
@@ -347,13 +526,28 @@
         else cambio.innerHTML = 'Monto insuficiente';
     }
     async function finalizarVenta(){
-        if(carrito.length === 0) return;
-        let pagado = parseFloat(document.getElementById('montoPagado').value);
-        if(isNaN(pagado) || pagado < totalVenta) return;
+        if(carrito.length === 0) {
+            alert("Carrito vacío");
+            return;
+        }
+        
+        let pagado = totalVenta;
+        if(tipoPago === 'efectivo_bs') {
+            pagado = parseFloat(document.getElementById('montoPagado')?.value);
+            if(isNaN(pagado) || pagado < totalVenta) {
+                alert("Monto insuficiente");
+                return;
+            }
+        }
+        
         for(let it of carrito){
             let prod = D.productos.find(p => p.id === it.id);
-            if(!prod || prod.stock < it.cantidad) return;
+            if(!prod || prod.stock < it.cantidad) {
+                alert(`Stock insuficiente para ${it.nombre}`);
+                return;
+            }
         }
+        
         for(let it of carrito){
             let prod = D.productos.find(p => p.id === it.id);
             prod.stock -= it.cantidad;
@@ -361,6 +555,7 @@
             let idx = D.productos.findIndex(p => p.id === it.id);
             if(idx !== -1) D.productos[idx].stock = prod.stock;
         }
+        
         let ahora = new Date();
         let codigo = `${ahora.getFullYear()}${(ahora.getMonth()+1).toString().padStart(2,'0')}${ahora.getDate().toString().padStart(2,'0')}-${ahora.getHours().toString().padStart(2,'0')}${ahora.getMinutes().toString().padStart(2,'0')}${ahora.getSeconds().toString().padStart(2,'0')}`;
         let clienteId = document.getElementById('clienteSelect').value;
@@ -380,6 +575,9 @@
         };
         await saveItem('ventas', nuevaVenta);
         D.ventas.push(nuevaVenta);
+        
+        // Mostrar ticket
+        mostrarTicket(nuevaVenta);
         renderHome();
     }
     
@@ -536,10 +734,15 @@
         let bloqueado = volverBloqueado, accent = D.config.theme;
         document.getElementById('appRoot').innerHTML = `
             <div class="page-header-fixed"><div class="module-header"><h2 id="tituloModule" class="module-title ${bloqueado?'module-title-bloqueado':''}" style="color:${accent}" onmousedown="iniciarBloqueo(this,'Reportes')" onmouseup="cancelarBloqueo()" onmouseleave="cancelarBloqueo()">Reportes</h2><div id="btnVolverModule" class="btn-back ${bloqueado?'btn-back-bloqueado':''}" onclick="${bloqueado?'':'backToHome()'}">${bloqueado?'<i class="fas fa-lock"></i> Bloqueado':'<i class="fas fa-arrow-left"></i> Volver'}</div></div></div>
-            <div class="page-container"><div class="p-3 rounded-xl mb-3" style="background:rgba(0,0,0,0.05)"><p>💰 Ventas totales: ${fmtPrecio(totalVentas)} Bs</p><p>📈 Ganancia bruta: ${fmtPrecio(totalGanancia)} Bs</p><p>💸 Gastos totales: ${fmtPrecio(totalGastos)} Bs</p><p>📊 Utilidad neta: ${fmtPrecio(totalGanancia - totalGastos)} Bs</p></div><h3 class="font-bold mb-2">Últimas ventas</h3><div class="max-h-64 overflow-auto">${ventas.slice().reverse().map(v => `<div class="border-b py-2 text-sm"><b>${escapeHtml(v.id)}</b> - ${escapeHtml(v.fecha)}<br>Cliente: ${escapeHtml(v.cliente)} | Total: ${fmtPrecio(v.total)} Bs<br>Tipo pago: ${escapeHtml(v.tipoPago||'efectivo_bs')}<br>Items: ${v.items.map(i=>`${escapeHtml(i.nombre)} x${i.cantidad}`).join(', ')}</div>`).join('')}</div></div>
+            <div class="page-container"><div class="p-3 rounded-xl mb-3" style="background:rgba(0,0,0,0.05)"><p>💰 Ventas totales: ${fmtPrecio(totalVentas)} Bs</p><p>📈 Ganancia bruta: ${fmtPrecio(totalGanancia)} Bs</p><p>💸 Gastos totales: ${fmtPrecio(totalGastos)} Bs</p><p>📊 Utilidad neta: ${fmtPrecio(totalGanancia - totalGastos)} Bs</p></div><h3 class="font-bold mb-2">Últimas ventas</h3><div class="max-h-64 overflow-auto">${ventas.slice().reverse().map(v => `<div class="border-b py-2 text-sm cursor-pointer hover:bg-gray-100 hover:opacity-80" onclick="window.mostrarTicketDesdeReporte('${v.id}')"><b>${escapeHtml(v.id)}</b> - ${escapeHtml(v.fecha)}<br>Cliente: ${escapeHtml(v.cliente)} | Total: ${fmtPrecio(v.total)} Bs<br>Tipo pago: ${escapeHtml(v.tipoPago||'efectivo_bs')}<br>Items: ${v.items.map(i=>`${escapeHtml(i.nombre)} x${i.cantidad}`).join(', ')}</div>`).join('')}</div></div>
         `;
         if(volverBloqueado) document.getElementById('btnVolverModule').onclick = () => {};
     }
+    
+    window.mostrarTicketDesdeReporte = (ventaId) => {
+        const venta = D.ventas.find(v => v.id === ventaId);
+        if(venta) mostrarTicket(venta);
+    };
     
     // ==================== CONFIGURACIÓN ====================
     async function renderConfig(){
@@ -569,26 +772,30 @@
     }
     
     // ==================== PWA ====================
-    (function(){
-        if('serviceWorker' in navigator){
-            let swCode = `const CACHE_NAME='jampos-v19';self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(['/'])));self.skipWaiting();});self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('/'))));});`;
-            let blob = new Blob([swCode], {type:'application/javascript'});
-            navigator.serviceWorker.register(URL.createObjectURL(blob));
-        }
+    (function setupPWA() {
+        const generarIcono = (size, bgColor = D.config.theme, textColor = '#ffffff') => {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = bgColor;
+            ctx.fillRect(0, 0, size, size);
+            ctx.fillStyle = textColor;
+            ctx.font = `bold ${size * 0.45}px "Inter", system-ui, sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('JAM', size/2, size/2);
+            return canvas.toDataURL('image/png');
+        };
+        const iconSizes = [72, 96, 128, 144, 152, 192, 384, 512];
+        const icons = iconSizes.map(size => ({ src: generarIcono(size, D.config.theme, '#ffffff'), sizes: `${size}x${size}`, type: 'image/png' }));
+        const manifest = { name: "JAM POS - Tienda Profesional", short_name: "JAM POS", description: "Sistema de punto de venta profesional", start_url: ".", display: "standalone", theme_color: D.config.theme, background_color: "#ffffff", icons: icons };
+        const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
+        document.querySelector('link[rel="manifest"]').setAttribute('href', URL.createObjectURL(manifestBlob));
+        const swCode = `const CACHE_NAME='jampos-v23';const iconUrls=${JSON.stringify(icons.map(i=>i.src))};self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(['/','https://cdn.tailwindcss.com','https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css','https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js',...iconUrls])));self.skipWaiting();});self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('/'))));});`;
+        navigator.serviceWorker.register(URL.createObjectURL(new Blob([swCode],{type:'application/javascript'})));
         let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', e => {
-            e.preventDefault();
-            deferredPrompt = e;
-            if(!document.querySelector('.install-btn')){
-                let btn = document.createElement('button');
-                btn.innerText = '📲 Instalar App';
-                btn.className = 'install-btn';
-                btn.style.background = D.config.theme;
-                btn.style.color = 'white';
-                btn.onclick = () => { if(deferredPrompt){ deferredPrompt.prompt(); deferredPrompt.userChoice.then(()=>btn.remove()); } else btn.remove(); };
-                document.body.appendChild(btn);
-            }
-        });
+        window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredPrompt = e; if(!document.querySelector('.install-btn')){ let btn = document.createElement('button'); btn.innerText = '📲 Instalar App'; btn.className = 'install-btn'; btn.style.background = D.config.theme; btn.style.color = '#ffffff'; btn.onclick = () => { if(deferredPrompt){ deferredPrompt.prompt(); deferredPrompt.userChoice.then(()=>btn.remove()); } else btn.remove(); }; document.body.appendChild(btn); } });
     })();
     
     (async () => { await initDB(); await loadAllData(); await actualizarTasa(); renderHome(); })();
