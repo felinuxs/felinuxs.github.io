@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <style>
-        /* (estilos idénticos al original, no se modifican) */
+        /* ========== ESTILOS (sin cambios relevantes) ========== */
         *{transition:all .2s ease;user-select:none;-webkit-tap-highlight-color:transparent;box-sizing:border-box}
         body{font-family:'Inter',system-ui,sans-serif;margin:0;padding:0;min-height:100vh;overscroll-behavior:none}
         .main-container{max-width:100%;margin:0 auto;padding:0;min-height:100vh}
@@ -296,7 +296,7 @@
         }
     }
     
-    // ==================== TICKET CON DATOS DE EMPRESA ====================
+    // ==================== TICKET (sin cambios relevantes) ====================
     function imprimirTicket(venta) { /* igual que antes */ 
         const formasPago = {
             'efectivo_bs': 'EFECTIVO Bs',
@@ -313,7 +313,7 @@
         ventana.document.close();
     }
     
-    function mostrarTicket(venta) { /* igual que antes, pero con botón cerrar */ 
+    function mostrarTicket(venta) {
         const formasPago = {
             'efectivo_bs': 'EFECTIVO Bs',
             'pago_movil': 'PAGO MÓVIL',
@@ -360,7 +360,7 @@
     window.descargarTicketImagen = async () => { const ticket = document.getElementById('ticketParaImprimir'); if(!ticket) return; try { const canvas = await html2canvas(ticket, { scale: 2, backgroundColor: '#ffffff' }); const link = document.createElement('a'); link.download = `ticket_${Date.now()}.png`; link.href = canvas.toDataURL(); link.click(); } catch(e) { alert('Error al generar imagen'); } };
     window.copiarTicketTexto = () => { const ticket = document.getElementById('ticketParaImprimir'); if(!ticket) return; const texto = ticket.innerText; navigator.clipboard.writeText(texto).then(() => alert('✓ Ticket copiado')).catch(() => alert('Error al copiar')); };
     
-    // ==================== NAVEGACIÓN Y BLOQUEO ====================
+    // ==================== NAVEGACIÓN Y BLOQUEO (sin cambios) ====================
     window.navigateTo = m => {
         if(volverBloqueado && currentModule !== 'home') { mostrarOverlayBloqueo(); return; }
         if(currentModule !== m) guardarSesion(m, { carrito, tipoPago });
@@ -404,7 +404,7 @@
     };
     window.cancelarBloqueo = () => { if(timeoutTitulo){ clearTimeout(timeoutTitulo); timeoutTitulo = null; } };
     
-    // ==================== PANTALLA PRINCIPAL ====================
+    // ==================== PANTALLA PRINCIPAL (sin cambios) ====================
     function renderHome(){
         if(fechaHoraInterval) { clearInterval(fechaHoraInterval); fechaHoraInterval = null; }
         currentModule = 'home'; volverBloqueado = false;
@@ -456,7 +456,7 @@
                 }
             };
             actualizarFechaSolamente();
-            fechaHoraInterval = setInterval(actualizarFechaSolamente, 60000); // actualiza cada minuto por si cambia de día
+            fechaHoraInterval = setInterval(actualizarFechaSolamente, 60000);
         }
     }
     async function globalSearch(term){
@@ -501,7 +501,7 @@
         m.onclick = e => { if(e.target === m) { m.remove(); convertidorModalActual = null; } };
     };
     
-    // ==================== VENTAS ====================
+    // ==================== VENTAS (sin cambios) ====================
     function renderVentas(){
         let bloqueado = volverBloqueado, accent = D.config.theme;
         tipoPago = 'pago_movil';
@@ -602,7 +602,7 @@
         mostrarTicket(nuevaVenta);
     }
     
-    // ==================== INVENTARIO ====================
+    // ==================== INVENTARIO (sin cambios) ====================
     function renderInventario(){
         let bloqueado = volverBloqueado, accent = D.config.theme;
         document.getElementById('appRoot').innerHTML = `<div class="page-header-fixed"><div class="module-header"><h2 id="tituloModule" class="module-title ${bloqueado?'module-title-bloqueado':''}" style="color:${accent}" onmousedown="iniciarBloqueo(this,'Inventario')" onmouseup="cancelarBloqueo()" onmouseleave="cancelarBloqueo()" title="${bloqueado?'🔒 Bloqueado - Mantén presionado para desbloquear':'🔓 Mantén presionado para bloquear'}">Inventario</h2><div id="btnVolverModule" class="btn-back ${bloqueado?'btn-back-bloqueado':''}" onclick="${bloqueado?'':'backToHome()'}">${bloqueado?'<i class="fas fa-lock"></i> Bloqueado':'<i class="fas fa-arrow-left"></i> Volver'}</div></div></div><div class="page-container"><div class="mb-3 relative"><i class="fas fa-search absolute left-3 top-3 text-gray-400"></i><input type="text" id="searchInv" placeholder="Buscar producto..." class="pl-9 pr-3 py-2 border rounded-xl w-full"></div><button id="nuevoProducto" class="btn-azul-redondeado btn-redondeado mb-4 py-2 px-4">+ Nuevo producto</button><div id="listaProductos" class="scroll-area"></div></div>`;
@@ -643,7 +643,7 @@
     }
     window.eliminarProducto = async id => { if(confirm('¿Eliminar producto?')){ await deleteItem('productos', id); D.productos = D.productos.filter(p => p.id !== id); renderInventario(); } };
     
-    // ==================== CRUD GENÉRICO ====================
+    // ==================== CRUD GENÉRICO (sin cambios) ====================
     async function renderCrud(store, titulo, campos){
         let bloqueado = volverBloqueado, accent = D.config.theme;
         let items = await getAll(store); D[store] = items;
@@ -710,7 +710,7 @@
         }
     }
     
-    // ==================== REPORTES ====================
+    // ==================== REPORTES (sin cambios) ====================
     async function renderReportes(){
         let ventas = await getAll('ventas');
         let totalVentas = ventas.reduce((a,b)=>a+(b.total||0),0);
@@ -723,26 +723,120 @@
     }
     window.mostrarTicketDesdeReporte = (ventaId) => { const venta = D.ventas.find(v => v.id === ventaId); if(venta) mostrarTicket(venta); };
     
-    // ==================== CONFIGURACIÓN MEJORADA ====================
+    // ==================== CONFIGURACIÓN MEJORADA (CON BOTONES DESPLEGABLES) ====================
     async function renderConfig(){
         let colores = ['#3b82f6','#8b5cf6','#10b981','#f59e0b','#ef4444','#ec4899','#000000','#22c55e','#a855f7','#f97316','#ff69b4','#00ced1'];
         let fondos = [{id:'light',nombre:'Blanco'},{id:'gray',nombre:'Grisáceo'},{id:'dark',nombre:'Negro'}];
         let bloqueado = volverBloqueado, accent = D.config.theme;
-        document.getElementById('appRoot').innerHTML = `<div class="page-header-fixed"><div class="module-header"><h2 id="tituloModule" class="module-title ${bloqueado?'module-title-bloqueado':''}" style="color:${accent}" onmousedown="iniciarBloqueo(this,'Configuración')" onmouseup="cancelarBloqueo()" onmouseleave="cancelarBloqueo()" title="${bloqueado?'🔒 Bloqueado - Mantén presionado para desbloquear':'🔓 Mantén presionado para bloquear'}">Configuración</h2><div id="btnVolverModule" class="btn-back ${bloqueado?'btn-back-bloqueado':''}" onclick="${bloqueado?'':'backToHome()'}">${bloqueado?'<i class="fas fa-lock"></i> Bloqueado':'<i class="fas fa-arrow-left"></i> Volver'}</div></div></div>
-        <div class="page-container"><div class="config-section"><h3 class="font-bold mb-3 text-center">🏢 Datos de la Empresa</h3><div class="mb-2"><label>Nombre de la tienda</label><input type="text" id="empresaNombre" value="${escapeHtml(D.config.empresa.nombre)}" class="border rounded-xl p-2 w-full"></div><div class="mb-2"><label>Dirección</label><input type="text" id="empresaDireccion" value="${escapeHtml(D.config.empresa.direccion)}" class="border rounded-xl p-2 w-full"></div><div class="mb-2"><label>Teléfono</label><input type="text" id="empresaTelefono" value="${escapeHtml(D.config.empresa.telefono)}" class="border rounded-xl p-2 w-full"></div><div class="mb-2"><label>RIF</label><input type="text" id="empresaRif" value="${escapeHtml(D.config.empresa.rif)}" class="border rounded-xl p-2 w-full"></div><div class="mb-2"><label>Logo (URL o emoji)</label><input type="text" id="empresaLogo" value="${escapeHtml(D.config.empresa.logo)}" placeholder="🛍️ o URL de imagen" class="border rounded-xl p-2 w-full"></div><button id="guardarEmpresa" class="btn-azul-redondeado btn-redondeado w-full mt-2 py-2">💾 Guardar datos empresa</button></div><div class="config-section"><h3 class="font-bold mb-3 text-center">⚙️ Opciones generales</h3><div class="flex flex-wrap justify-center gap-4"><label class="flex items-center gap-2"><span class="font-semibold">IVA 16%</span><input type="checkbox" id="toggleIVA" ${D.config.ivaActivo?'checked':''}></label><label class="flex items-center gap-2"><span class="font-semibold">Margen ganancia</span><input type="checkbox" id="toggleMargen" ${D.config.usarMargen?'checked':''}></label><label class="flex items-center gap-2"><span class="font-semibold">Prevenir cierre</span><input type="checkbox" id="togglePrevenirCierre" ${D.config.prevenirCierre?'checked':''}></label><label class="flex items-center gap-2"><span class="font-semibold">Mostrar Dólar</span><input type="checkbox" id="toggleMostrarDolar" ${D.config.mostrarDolar?'checked':''}></label></div></div><div class="config-section"><h3 class="font-bold mb-3 text-center">🎨 Temas de color</h3><div class="flex flex-wrap justify-center gap-2" id="paletaColores"></div></div><div class="config-section"><h3 class="font-bold mb-3 text-center">🖌️ Fondos de contraste</h3><div class="flex justify-center gap-4 flex-wrap">${fondos.map(f => `<div class="bg-option ${D.config.backgroundMode===f.id?'selected':''}" style="background:${f.id==='light'?'#ffffff':f.id==='gray'?'#2c2c2c':'#000000'}; border:2px solid var(--accent);" data-mode="${f.id}"><div class="text-center text-xs" style="color:${f.id==='light'?'#000':'#fff'}">${f.nombre}</div></div>`).join('')}</div></div><div class="mt-4 text-xs text-center">💰 POS Profesional - Datos locales</div></div>`;
+        
+        // HTML principal con botones desplegables (data-target contiene el id del panel a mostrar/ocultar)
+        let html = `
+            <div class="page-header-fixed"><div class="module-header"><h2 id="tituloModule" class="module-title ${bloqueado?'module-title-bloqueado':''}" style="color:${accent}" onmousedown="iniciarBloqueo(this,'Configuración')" onmouseup="cancelarBloqueo()" onmouseleave="cancelarBloqueo()" title="${bloqueado?'🔒 Bloqueado - Mantén presionado para desbloquear':'🔓 Mantén presionado para bloquear'}">Configuración</h2><div id="btnVolverModule" class="btn-back ${bloqueado?'btn-back-bloqueado':''}" onclick="${bloqueado?'':'backToHome()'}">${bloqueado?'<i class="fas fa-lock"></i> Bloqueado':'<i class="fas fa-arrow-left"></i> Volver'}</div></div></div>
+            <div class="page-container">
+                <div class="config-section">
+                    <button id="btnToggleEmpresa" class="btn-azul-redondeado btn-redondeado w-full mb-2 py-2">🏢 Datos de la Empresa</button>
+                    <div id="panelEmpresa" style="display:none;" class="mt-2">
+                        <div class="mb-2"><label>Nombre de la tienda</label><input type="text" id="empresaNombre" value="${escapeHtml(D.config.empresa.nombre)}" class="border rounded-xl p-2 w-full"></div>
+                        <div class="mb-2"><label>Dirección</label><input type="text" id="empresaDireccion" value="${escapeHtml(D.config.empresa.direccion)}" class="border rounded-xl p-2 w-full"></div>
+                        <div class="mb-2"><label>Teléfono</label><input type="text" id="empresaTelefono" value="${escapeHtml(D.config.empresa.telefono)}" class="border rounded-xl p-2 w-full"></div>
+                        <div class="mb-2"><label>RIF</label><input type="text" id="empresaRif" value="${escapeHtml(D.config.empresa.rif)}" class="border rounded-xl p-2 w-full"></div>
+                        <div class="mb-2"><label>Logo (URL o emoji)</label><input type="text" id="empresaLogo" value="${escapeHtml(D.config.empresa.logo)}" placeholder="🛍️ o URL de imagen" class="border rounded-xl p-2 w-full"></div>
+                        <button id="guardarEmpresa" class="btn-azul-redondeado btn-redondeado w-full mt-2 py-2">💾 Guardar datos empresa</button>
+                    </div>
+                </div>
+                <div class="config-section">
+                    <button id="btnToggleOpciones" class="btn-azul-redondeado btn-redondeado w-full mb-2 py-2">⚙️ Opciones generales</button>
+                    <div id="panelOpciones" style="display:none;" class="mt-2">
+                        <div class="flex flex-wrap justify-center gap-4">
+                            <label class="flex items-center gap-2"><span class="font-semibold">IVA 16%</span><input type="checkbox" id="toggleIVA" ${D.config.ivaActivo?'checked':''}></label>
+                            <label class="flex items-center gap-2"><span class="font-semibold">Margen ganancia</span><input type="checkbox" id="toggleMargen" ${D.config.usarMargen?'checked':''}></label>
+                            <label class="flex items-center gap-2"><span class="font-semibold">Prevenir cierre</span><input type="checkbox" id="togglePrevenirCierre" ${D.config.prevenirCierre?'checked':''}></label>
+                            <label class="flex items-center gap-2"><span class="font-semibold">Mostrar Dólar</span><input type="checkbox" id="toggleMostrarDolar" ${D.config.mostrarDolar?'checked':''}></label>
+                        </div>
+                    </div>
+                </div>
+                <div class="config-section">
+                    <button id="btnToggleColores" class="btn-azul-redondeado btn-redondeado w-full mb-2 py-2">🎨 Temas de color</button>
+                    <div id="panelColores" style="display:none;" class="mt-2">
+                        <div class="flex flex-wrap justify-center gap-2" id="paletaColores"></div>
+                    </div>
+                </div>
+                <div class="config-section">
+                    <button id="btnToggleFondos" class="btn-azul-redondeado btn-redondeado w-full mb-2 py-2">🖌️ Fondos de contraste</button>
+                    <div id="panelFondos" style="display:none;" class="mt-2">
+                        <div class="flex justify-center gap-4 flex-wrap">${fondos.map(f => `<div class="bg-option ${D.config.backgroundMode===f.id?'selected':''}" style="background:${f.id==='light'?'#ffffff':f.id==='gray'?'#2c2c2c':'#000000'}; border:2px solid var(--accent);" data-mode="${f.id}"><div class="text-center text-xs" style="color:${f.id==='light'?'#000':'#fff'}">${f.nombre}</div></div>`).join('')}</div>
+                    </div>
+                </div>
+                <div class="mt-4 text-xs text-center">💰 POS Profesional - Datos locales</div>
+            </div>
+        `;
+        document.getElementById('appRoot').innerHTML = html;
         if(volverBloqueado) document.getElementById('btnVolverModule').onclick = () => mostrarOverlayBloqueo();
+        
+        // Función para alternar visibilidad
+        const crearToggle = (btnId, panelId) => {
+            const btn = document.getElementById(btnId);
+            const panel = document.getElementById(panelId);
+            if(btn && panel) {
+                btn.onclick = () => {
+                    if(panel.style.display === 'none') {
+                        panel.style.display = 'block';
+                    } else {
+                        panel.style.display = 'none';
+                    }
+                };
+            }
+        };
+        crearToggle('btnToggleEmpresa', 'panelEmpresa');
+        crearToggle('btnToggleOpciones', 'panelOpciones');
+        crearToggle('btnToggleColores', 'panelColores');
+        crearToggle('btnToggleFondos', 'panelFondos');
+        
+        // Guardar empresa
         document.getElementById('guardarEmpresa').onclick = async () => {
-            D.config.empresa = { nombre: document.getElementById('empresaNombre').value, direccion: document.getElementById('empresaDireccion').value, telefono: document.getElementById('empresaTelefono').value, rif: document.getElementById('empresaRif').value, logo: document.getElementById('empresaLogo').value };
+            D.config.empresa = {
+                nombre: document.getElementById('empresaNombre').value,
+                direccion: document.getElementById('empresaDireccion').value,
+                telefono: document.getElementById('empresaTelefono').value,
+                rif: document.getElementById('empresaRif').value,
+                logo: document.getElementById('empresaLogo').value
+            };
             await saveConfig();
             alert('✓ Datos de empresa guardados');
+            // Opcional: cerrar el panel después de guardar
+            document.getElementById('panelEmpresa').style.display = 'none';
         };
+        
+        // Paleta de colores
         let paleta = document.getElementById('paletaColores');
-        colores.forEach(c => { let circle = document.createElement('div'); circle.className = 'color-circle'; circle.style.backgroundColor = c; circle.onclick = async () => { D.config.theme = c; if(esOscuro(c)) D.config.backgroundMode = 'light'; await saveConfig(); renderConfig(); }; paleta.appendChild(circle); });
-        document.querySelectorAll('.bg-option').forEach(opt => { opt.onclick = async () => { let nuevo = opt.getAttribute('data-mode'); if(esOscuro(D.config.theme) && nuevo === 'dark') return; D.config.backgroundMode = nuevo; await saveConfig(); renderConfig(); }; });
+        colores.forEach(c => {
+            let circle = document.createElement('div'); circle.className = 'color-circle'; circle.style.backgroundColor = c;
+            circle.onclick = async () => {
+                D.config.theme = c;
+                if(esOscuro(c)) D.config.backgroundMode = 'light';
+                await saveConfig();
+                renderConfig(); // refrescar la configuración para actualizar botones y vista
+            };
+            paleta.appendChild(circle);
+        });
+        
+        // Opciones de fondo
+        document.querySelectorAll('.bg-option').forEach(opt => {
+            opt.onclick = async () => {
+                let nuevo = opt.getAttribute('data-mode');
+                if(esOscuro(D.config.theme) && nuevo === 'dark') return;
+                D.config.backgroundMode = nuevo;
+                await saveConfig();
+                renderConfig(); // refrescar
+            };
+        });
+        
+        // Checkboxes de opciones generales
         document.getElementById('toggleIVA').onchange = async e => { D.config.ivaActivo = e.target.checked; await saveConfig(); };
         document.getElementById('toggleMargen').onchange = async e => { D.config.usarMargen = e.target.checked; await saveConfig(); renderConfig(); };
         document.getElementById('togglePrevenirCierre').onchange = async e => { D.config.prevenirCierre = e.target.checked; await saveConfig(); };
         document.getElementById('toggleMostrarDolar').onchange = async e => { D.config.mostrarDolar = e.target.checked; await saveConfig(); renderHome(); };
+        
         guardarSesion('config', null);
     }
     
@@ -762,7 +856,7 @@
         const manifest = { name: "JAM POS - Tienda Profesional", short_name: "JAM POS", description: "Sistema de punto de venta profesional", start_url: ".", display: "standalone", theme_color: D.config.theme, background_color: "#ffffff", icons: icons };
         const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
         document.querySelector('link[rel="manifest"]').setAttribute('href', URL.createObjectURL(manifestBlob));
-        const swCode = `const CACHE_NAME='jampos-v26';const iconUrls=${JSON.stringify(icons.map(i=>i.src))};self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(['/','https://cdn.tailwindcss.com','https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css','https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js',...iconUrls])));self.skipWaiting();});self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('/'))));});`;
+        const swCode = `const CACHE_NAME='jampos-v27';const iconUrls=${JSON.stringify(icons.map(i=>i.src))};self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(['/','https://cdn.tailwindcss.com','https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css','https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js',...iconUrls])));self.skipWaiting();});self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('/'))));});`;
         navigator.serviceWorker.register(URL.createObjectURL(new Blob([swCode],{type:'application/javascript'})));
         let deferredPrompt;
         window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredPrompt = e; if(!document.querySelector('.install-btn')){ let btn = document.createElement('button'); btn.innerText = '📲 Instalar App'; btn.className = 'install-btn'; btn.style.background = D.config.theme; btn.style.color = '#ffffff'; btn.onclick = () => { if(deferredPrompt){ deferredPrompt.prompt(); deferredPrompt.userChoice.then(()=>btn.remove()); } else btn.remove(); }; document.body.appendChild(btn); } });
