@@ -10,12 +10,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <style>
-        /* ========== ESTILOS (sin cambios relevantes) ========== */
         *{transition:all .2s ease;user-select:none;-webkit-tap-highlight-color:transparent;box-sizing:border-box}
-        body{font-family:'Inter',system-ui,sans-serif;margin:0;padding:0;min-height:100vh;overscroll-behavior:none}
+        body{font-family:'Inter',system-ui,sans-serif;margin:0;padding:0;min-height:100vh;overflow-x:hidden}
         .main-container{max-width:100%;margin:0 auto;padding:0;min-height:100vh}
         .page-header-fixed{position:sticky;top:0;z-index:100;background:inherit;padding:12px 8px;margin-bottom:16px}
-        .page-container,.home-container{padding:0 12px 20px 12px}
+        .page-container,.home-container{padding:0 12px 20px 12px;min-height:auto}
         .btn-redondeado{border-radius:40px!important;padding:8px 16px!important;font-weight:600!important;cursor:pointer!important;border:none!important}
         .btn-redondeado:active{transform:scale(.96)}
         .btn-editar-redondeado, .btn-eliminar-redondeado, .btn-verde-redondeado {
@@ -66,7 +65,7 @@
         .modal-form-content{max-width:460px;width:100%;border-radius:28px;padding:20px;max-height:85vh;overflow:auto}
         .color-circle{width:40px;height:40px;border-radius:50%;cursor:pointer;box-shadow:0 2px 5px rgba(0,0,0,.2)}
         .ticket-line{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed #ddd}
-        .scroll-area{max-height:60vh;overflow:auto}
+        .scroll-area{overflow-y:auto;max-height:none}
         .config-section{border:2px solid var(--accent);border-radius:20px;padding:12px;margin-bottom:20px}
         .bg-option{width:80px;height:80px;border-radius:16px;cursor:pointer;border:2px solid transparent;text-align:center;padding-top:25px;font-weight:bold}
         .bg-option.selected{border-color:var(--accent);transform:scale(1.02)}
@@ -145,17 +144,14 @@
     const fmtPrecio = v => Number(v).toLocaleString('es-VE', {minimumFractionDigits:2, maximumFractionDigits:2});
     const esOscuro = c => { let r=parseInt(c.slice(1,3),16), g=parseInt(c.slice(3,5),16), b=parseInt(c.slice(5,7),16); return(.299*r + .587*g + .114*b) < 128; };
     
-    // ==================== PREVENIR CIERRES ACCIDENTALES ====================
+    // ==================== PREVENIR CIERRES ====================
     document.addEventListener('contextmenu', e => e.preventDefault());
     document.body.addEventListener('touchmove', function(e) {
-        if (e.touches.length === 1 && window.scrollY === 0 && e.touches[0].clientY > 50) {
-            e.preventDefault();
-        }
+        if (e.touches.length === 1 && window.scrollY === 0 && e.touches[0].clientY > 50) e.preventDefault();
     }, { passive: false });
     document.addEventListener('copy', e => e.preventDefault());
     document.addEventListener('cut', e => e.preventDefault());
     document.addEventListener('paste', e => e.preventDefault());
-    
     window.addEventListener('beforeunload', function(e) {
         if (D.config?.prevenirCierre !== false) {
             e.preventDefault();
@@ -163,19 +159,15 @@
             return '¿Estás seguro de salir? La venta en curso se perderá.';
         }
     });
-    
     history.pushState(null, null, location.href);
     window.addEventListener('popstate', function(e) {
         if (D.config?.prevenirCierre !== false) {
             history.pushState(null, null, location.href);
-            if (confirm('¿Deseas salir de la aplicación?')) {
-                window.close();
-            }
+            if (confirm('¿Deseas salir de la aplicación?')) window.close();
         }
     });
     
     // ==================== MEMORIA DE SESIÓN ====================
-    let sesionGuardada = null;
     let fechaHoraInterval = null;
     function guardarSesion(module, data) {
         sessionStorage.setItem('jamPosModule', module);
@@ -238,7 +230,6 @@
         if(!D.config.empresa) D.config.empresa = { nombre:'JAM POS', direccion:'', telefono:'', rif:'', logo:'' };
         if(D.config.mostrarDolar === undefined) D.config.mostrarDolar = true;
         if(D.config.prevenirCierre === undefined) D.config.prevenirCierre = true;
-        
         if(D.productos.length === 0){
             let init = [
                 {id:"p1", nombre:"Café Gourmet 500g", categoria:"Alimentos", precioVentaBs:58.5, precioVentaUsd:.86, stock:24, codigo:"CAF001", proveedor:"Distribuidora Central", costoRealBs:38},
@@ -262,7 +253,6 @@
         document.getElementById('themeColorMeta')?.setAttribute('content', D.config.backgroundMode === 'light' ? '#ffffff' : (D.config.backgroundMode === 'gray' ? '#2c2c2c' : '#000000'));
         actualizarInfoCard();
     }
-    
     function actualizarInfoCard() {
         const container = document.querySelector('.card-bcv .info-dinamica');
         if (!container) return;
@@ -270,16 +260,13 @@
             container.innerHTML = `<span id="tasaDolarMostrar" class="text-5xl font-black" style="color:${D.config.theme}">${fmtPrecio(D.config.dolarRate)}</span><span class="text-2xl font-bold" style="color:${D.config.theme}">Bs/USD</span>`;
         } else {
             const ahora = new Date();
-            const optionsDia = { weekday: 'long' };
-            let diaSemana = ahora.toLocaleDateString('es-ES', optionsDia).toUpperCase();
+            let diaSemana = ahora.toLocaleDateString('es-ES', { weekday: 'long' }).toUpperCase();
             const diaNumero = ahora.getDate();
             const mes = ahora.toLocaleDateString('es-ES', { month: 'long' });
             const año = ahora.getFullYear();
-            const fechaFormateada = `${diaNumero} de ${mes} del ${año}`;
-            container.innerHTML = `<div class="text-4xl font-black" style="color:${D.config.theme}">${diaSemana}</div><div class="text-base" style="color:${D.config.theme}">${fechaFormateada}</div>`;
+            container.innerHTML = `<div class="text-4xl font-black" style="color:${D.config.theme}">${diaSemana}</div><div class="text-base" style="color:${D.config.theme}">${diaNumero} de ${mes} del ${año}</div>`;
         }
     }
-    
     async function actualizarTasa(){
         try{
             let r = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
@@ -296,8 +283,8 @@
         }
     }
     
-    // ==================== TICKET (sin cambios relevantes) ====================
-    function imprimirTicket(venta) { /* igual que antes */ 
+    // ==================== TICKET ====================
+    function imprimirTicket(venta) {
         const formasPago = {
             'efectivo_bs': 'EFECTIVO Bs',
             'pago_movil': 'PAGO MÓVIL',
@@ -312,7 +299,6 @@
         ventana.document.write(ticketHTML);
         ventana.document.close();
     }
-    
     function mostrarTicket(venta) {
         const formasPago = {
             'efectivo_bs': 'EFECTIVO Bs',
@@ -331,7 +317,6 @@
         window.modalTicketActual = modal;
         modal.onclick = e => { if(e.target === modal) window.cerrarTicketModalYVolverInicio(); };
     }
-    
     window.cerrarTicketModalYVolverInicio = () => {
         if(window.modalTicketActual) { window.modalTicketActual.remove(); window.modalTicketActual = null; }
         renderHome();
@@ -360,7 +345,7 @@
     window.descargarTicketImagen = async () => { const ticket = document.getElementById('ticketParaImprimir'); if(!ticket) return; try { const canvas = await html2canvas(ticket, { scale: 2, backgroundColor: '#ffffff' }); const link = document.createElement('a'); link.download = `ticket_${Date.now()}.png`; link.href = canvas.toDataURL(); link.click(); } catch(e) { alert('Error al generar imagen'); } };
     window.copiarTicketTexto = () => { const ticket = document.getElementById('ticketParaImprimir'); if(!ticket) return; const texto = ticket.innerText; navigator.clipboard.writeText(texto).then(() => alert('✓ Ticket copiado')).catch(() => alert('Error al copiar')); };
     
-    // ==================== NAVEGACIÓN Y BLOQUEO (sin cambios) ====================
+    // ==================== NAVEGACIÓN Y BLOQUEO ====================
     window.navigateTo = m => {
         if(volverBloqueado && currentModule !== 'home') { mostrarOverlayBloqueo(); return; }
         if(currentModule !== m) guardarSesion(m, { carrito, tipoPago });
@@ -404,7 +389,7 @@
     };
     window.cancelarBloqueo = () => { if(timeoutTitulo){ clearTimeout(timeoutTitulo); timeoutTitulo = null; } };
     
-    // ==================== PANTALLA PRINCIPAL (sin cambios) ====================
+    // ==================== PANTALLA PRINCIPAL ====================
     function renderHome(){
         if(fechaHoraInterval) { clearInterval(fechaHoraInterval); fechaHoraInterval = null; }
         currentModule = 'home'; volverBloqueado = false;
@@ -446,13 +431,11 @@
                 const infoDiv = document.querySelector('.card-bcv .info-dinamica');
                 if(infoDiv) {
                     const ahora = new Date();
-                    const optionsDia = { weekday: 'long' };
-                    let diaSemana = ahora.toLocaleDateString('es-ES', optionsDia).toUpperCase();
+                    let diaSemana = ahora.toLocaleDateString('es-ES', { weekday: 'long' }).toUpperCase();
                     const diaNumero = ahora.getDate();
                     const mes = ahora.toLocaleDateString('es-ES', { month: 'long' });
                     const año = ahora.getFullYear();
-                    const fechaFormateada = `${diaNumero} de ${mes} del ${año}`;
-                    infoDiv.innerHTML = `<div class="text-4xl font-black" style="color:${accent}">${diaSemana}</div><div class="text-base" style="color:${accent}">${fechaFormateada}</div>`;
+                    infoDiv.innerHTML = `<div class="text-4xl font-black" style="color:${accent}">${diaSemana}</div><div class="text-base" style="color:${accent}">${diaNumero} de ${mes} del ${año}</div>`;
                 }
             };
             actualizarFechaSolamente();
@@ -501,7 +484,7 @@
         m.onclick = e => { if(e.target === m) { m.remove(); convertidorModalActual = null; } };
     };
     
-    // ==================== VENTAS (sin cambios) ====================
+    // ==================== VENTAS ====================
     function renderVentas(){
         let bloqueado = volverBloqueado, accent = D.config.theme;
         tipoPago = 'pago_movil';
@@ -602,7 +585,7 @@
         mostrarTicket(nuevaVenta);
     }
     
-    // ==================== INVENTARIO (sin cambios) ====================
+    // ==================== INVENTARIO ====================
     function renderInventario(){
         let bloqueado = volverBloqueado, accent = D.config.theme;
         document.getElementById('appRoot').innerHTML = `<div class="page-header-fixed"><div class="module-header"><h2 id="tituloModule" class="module-title ${bloqueado?'module-title-bloqueado':''}" style="color:${accent}" onmousedown="iniciarBloqueo(this,'Inventario')" onmouseup="cancelarBloqueo()" onmouseleave="cancelarBloqueo()" title="${bloqueado?'🔒 Bloqueado - Mantén presionado para desbloquear':'🔓 Mantén presionado para bloquear'}">Inventario</h2><div id="btnVolverModule" class="btn-back ${bloqueado?'btn-back-bloqueado':''}" onclick="${bloqueado?'':'backToHome()'}">${bloqueado?'<i class="fas fa-lock"></i> Bloqueado':'<i class="fas fa-arrow-left"></i> Volver'}</div></div></div><div class="page-container"><div class="mb-3 relative"><i class="fas fa-search absolute left-3 top-3 text-gray-400"></i><input type="text" id="searchInv" placeholder="Buscar producto..." class="pl-9 pr-3 py-2 border rounded-xl w-full"></div><button id="nuevoProducto" class="btn-azul-redondeado btn-redondeado mb-4 py-2 px-4">+ Nuevo producto</button><div id="listaProductos" class="scroll-area"></div></div>`;
@@ -643,7 +626,7 @@
     }
     window.eliminarProducto = async id => { if(confirm('¿Eliminar producto?')){ await deleteItem('productos', id); D.productos = D.productos.filter(p => p.id !== id); renderInventario(); } };
     
-    // ==================== CRUD GENÉRICO (sin cambios) ====================
+    // ==================== CRUD GENÉRICO ====================
     async function renderCrud(store, titulo, campos){
         let bloqueado = volverBloqueado, accent = D.config.theme;
         let items = await getAll(store); D[store] = items;
@@ -710,7 +693,7 @@
         }
     }
     
-    // ==================== REPORTES (sin cambios) ====================
+    // ==================== REPORTES ====================
     async function renderReportes(){
         let ventas = await getAll('ventas');
         let totalVentas = ventas.reduce((a,b)=>a+(b.total||0),0);
@@ -723,13 +706,11 @@
     }
     window.mostrarTicketDesdeReporte = (ventaId) => { const venta = D.ventas.find(v => v.id === ventaId); if(venta) mostrarTicket(venta); };
     
-    // ==================== CONFIGURACIÓN MEJORADA (CON BOTONES DESPLEGABLES) ====================
+    // ==================== CONFIGURACIÓN MEJORADA ====================
     async function renderConfig(){
         let colores = ['#3b82f6','#8b5cf6','#10b981','#f59e0b','#ef4444','#ec4899','#000000','#22c55e','#a855f7','#f97316','#ff69b4','#00ced1'];
         let fondos = [{id:'light',nombre:'Blanco'},{id:'gray',nombre:'Grisáceo'},{id:'dark',nombre:'Negro'}];
         let bloqueado = volverBloqueado, accent = D.config.theme;
-        
-        // HTML principal con botones desplegables (data-target contiene el id del panel a mostrar/ocultar)
         let html = `
             <div class="page-header-fixed"><div class="module-header"><h2 id="tituloModule" class="module-title ${bloqueado?'module-title-bloqueado':''}" style="color:${accent}" onmousedown="iniciarBloqueo(this,'Configuración')" onmouseup="cancelarBloqueo()" onmouseleave="cancelarBloqueo()" title="${bloqueado?'🔒 Bloqueado - Mantén presionado para desbloquear':'🔓 Mantén presionado para bloquear'}">Configuración</h2><div id="btnVolverModule" class="btn-back ${bloqueado?'btn-back-bloqueado':''}" onclick="${bloqueado?'':'backToHome()'}">${bloqueado?'<i class="fas fa-lock"></i> Bloqueado':'<i class="fas fa-arrow-left"></i> Volver'}</div></div></div>
             <div class="page-container">
@@ -757,15 +738,11 @@
                 </div>
                 <div class="config-section">
                     <button id="btnToggleColores" class="btn-azul-redondeado btn-redondeado w-full mb-2 py-2">🎨 Temas de color</button>
-                    <div id="panelColores" style="display:none;" class="mt-2">
-                        <div class="flex flex-wrap justify-center gap-2" id="paletaColores"></div>
-                    </div>
+                    <div id="panelColores" style="display:none;" class="mt-2"><div class="flex flex-wrap justify-center gap-2" id="paletaColores"></div></div>
                 </div>
                 <div class="config-section">
                     <button id="btnToggleFondos" class="btn-azul-redondeado btn-redondeado w-full mb-2 py-2">🖌️ Fondos de contraste</button>
-                    <div id="panelFondos" style="display:none;" class="mt-2">
-                        <div class="flex justify-center gap-4 flex-wrap">${fondos.map(f => `<div class="bg-option ${D.config.backgroundMode===f.id?'selected':''}" style="background:${f.id==='light'?'#ffffff':f.id==='gray'?'#2c2c2c':'#000000'}; border:2px solid var(--accent);" data-mode="${f.id}"><div class="text-center text-xs" style="color:${f.id==='light'?'#000':'#fff'}">${f.nombre}</div></div>`).join('')}</div>
-                    </div>
+                    <div id="panelFondos" style="display:none;" class="mt-2"><div class="flex justify-center gap-4 flex-wrap">${fondos.map(f => `<div class="bg-option ${D.config.backgroundMode===f.id?'selected':''}" style="background:${f.id==='light'?'#ffffff':f.id==='gray'?'#2c2c2c':'#000000'}; border:2px solid var(--accent);" data-mode="${f.id}"><div class="text-center text-xs" style="color:${f.id==='light'?'#000':'#fff'}">${f.nombre}</div></div>`).join('')}</div></div>
                 </div>
                 <div class="mt-4 text-xs text-center">💰 POS Profesional - Datos locales</div>
             </div>
@@ -773,26 +750,17 @@
         document.getElementById('appRoot').innerHTML = html;
         if(volverBloqueado) document.getElementById('btnVolverModule').onclick = () => mostrarOverlayBloqueo();
         
-        // Función para alternar visibilidad
-        const crearToggle = (btnId, panelId) => {
-            const btn = document.getElementById(btnId);
-            const panel = document.getElementById(panelId);
-            if(btn && panel) {
-                btn.onclick = () => {
-                    if(panel.style.display === 'none') {
-                        panel.style.display = 'block';
-                    } else {
-                        panel.style.display = 'none';
-                    }
-                };
-            }
+        const toggle = (btnId, panelId) => {
+            document.getElementById(btnId).onclick = () => {
+                let p = document.getElementById(panelId);
+                p.style.display = p.style.display === 'none' ? 'block' : 'none';
+            };
         };
-        crearToggle('btnToggleEmpresa', 'panelEmpresa');
-        crearToggle('btnToggleOpciones', 'panelOpciones');
-        crearToggle('btnToggleColores', 'panelColores');
-        crearToggle('btnToggleFondos', 'panelFondos');
+        toggle('btnToggleEmpresa', 'panelEmpresa');
+        toggle('btnToggleOpciones', 'panelOpciones');
+        toggle('btnToggleColores', 'panelColores');
+        toggle('btnToggleFondos', 'panelFondos');
         
-        // Guardar empresa
         document.getElementById('guardarEmpresa').onclick = async () => {
             D.config.empresa = {
                 nombre: document.getElementById('empresaNombre').value,
@@ -803,11 +771,9 @@
             };
             await saveConfig();
             alert('✓ Datos de empresa guardados');
-            // Opcional: cerrar el panel después de guardar
             document.getElementById('panelEmpresa').style.display = 'none';
         };
         
-        // Paleta de colores
         let paleta = document.getElementById('paletaColores');
         colores.forEach(c => {
             let circle = document.createElement('div'); circle.className = 'color-circle'; circle.style.backgroundColor = c;
@@ -815,28 +781,23 @@
                 D.config.theme = c;
                 if(esOscuro(c)) D.config.backgroundMode = 'light';
                 await saveConfig();
-                renderConfig(); // refrescar la configuración para actualizar botones y vista
+                renderConfig();
             };
             paleta.appendChild(circle);
         });
-        
-        // Opciones de fondo
         document.querySelectorAll('.bg-option').forEach(opt => {
             opt.onclick = async () => {
                 let nuevo = opt.getAttribute('data-mode');
                 if(esOscuro(D.config.theme) && nuevo === 'dark') return;
                 D.config.backgroundMode = nuevo;
                 await saveConfig();
-                renderConfig(); // refrescar
+                renderConfig();
             };
         });
-        
-        // Checkboxes de opciones generales
         document.getElementById('toggleIVA').onchange = async e => { D.config.ivaActivo = e.target.checked; await saveConfig(); };
         document.getElementById('toggleMargen').onchange = async e => { D.config.usarMargen = e.target.checked; await saveConfig(); renderConfig(); };
         document.getElementById('togglePrevenirCierre').onchange = async e => { D.config.prevenirCierre = e.target.checked; await saveConfig(); };
         document.getElementById('toggleMostrarDolar').onchange = async e => { D.config.mostrarDolar = e.target.checked; await saveConfig(); renderHome(); };
-        
         guardarSesion('config', null);
     }
     
@@ -856,7 +817,7 @@
         const manifest = { name: "JAM POS - Tienda Profesional", short_name: "JAM POS", description: "Sistema de punto de venta profesional", start_url: ".", display: "standalone", theme_color: D.config.theme, background_color: "#ffffff", icons: icons };
         const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
         document.querySelector('link[rel="manifest"]').setAttribute('href', URL.createObjectURL(manifestBlob));
-        const swCode = `const CACHE_NAME='jampos-v27';const iconUrls=${JSON.stringify(icons.map(i=>i.src))};self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(['/','https://cdn.tailwindcss.com','https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css','https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js',...iconUrls])));self.skipWaiting();});self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('/'))));});`;
+        const swCode = `const CACHE_NAME='jampos-v28';const iconUrls=${JSON.stringify(icons.map(i=>i.src))};self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(['/','https://cdn.tailwindcss.com','https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css','https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js',...iconUrls])));self.skipWaiting();});self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('/'))));});`;
         navigator.serviceWorker.register(URL.createObjectURL(new Blob([swCode],{type:'application/javascript'})));
         let deferredPrompt;
         window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredPrompt = e; if(!document.querySelector('.install-btn')){ let btn = document.createElement('button'); btn.innerText = '📲 Instalar App'; btn.className = 'install-btn'; btn.style.background = D.config.theme; btn.style.color = '#ffffff'; btn.onclick = () => { if(deferredPrompt){ deferredPrompt.prompt(); deferredPrompt.userChoice.then(()=>btn.remove()); } else btn.remove(); }; document.body.appendChild(btn); } });
