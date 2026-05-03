@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <style>
+        /* (estilos idénticos al original, no se modifican) */
         *{transition:all .2s ease;user-select:none;-webkit-tap-highlight-color:transparent;box-sizing:border-box}
         body{font-family:'Inter',system-ui,sans-serif;margin:0;padding:0;min-height:100vh;overscroll-behavior:none}
         .main-container{max-width:100%;margin:0 auto;padding:0;min-height:100vh}
@@ -17,8 +18,6 @@
         .page-container,.home-container{padding:0 12px 20px 12px}
         .btn-redondeado{border-radius:40px!important;padding:8px 16px!important;font-weight:600!important;cursor:pointer!important;border:none!important}
         .btn-redondeado:active{transform:scale(.96)}
-        
-        /* Botones compactos */
         .btn-editar-redondeado, .btn-eliminar-redondeado, .btn-verde-redondeado {
             padding: 4px 10px !important;
             font-size: 0.7rem !important;
@@ -35,8 +34,6 @@
         .btn-eliminar-redondeado{background:#ef4444!important;color:#fff!important}
         .btn-verde-redondeado{background:#10b981!important;color:#fff!important}
         .btn-azul-redondeado{background:var(--accent)!important;color:#fff!important;padding:8px 16px!important;font-weight:600!important}
-        
-        /* Botón finalizar venta */
         .btn-finalizar-venta {
             background: #10b981 !important;
             color: white !important;
@@ -54,7 +51,6 @@
             text-align: center !important;
         }
         .btn-finalizar-venta:active { transform: scale(0.97); }
-        
         .main-module-btn{display:flex;align-items:center;justify-content:center;gap:12px;height:60px;border-radius:20px;font-weight:700;font-size:1rem;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.1);border:none;width:100%}
         .main-module-btn:active{transform:scale(.97);filter:brightness(.92)}
         .main-module-btn i{font-size:1.3rem}
@@ -77,8 +73,6 @@
         .module-header{display:flex;justify-content:space-between;align-items:center}
         .install-btn{position:fixed;bottom:20px;right:20px;z-index:9999;border-radius:50px;padding:10px 20px;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,.2);cursor:pointer}
         .home-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:4px}
-        
-        /* Ticket virtual */
         .ticket-virtual {
             font-family: 'Courier New', monospace;
             font-size: 12px;
@@ -99,22 +93,18 @@
         .ticket-virtual .item { display: flex; justify-content: space-between; margin-bottom: 4px; }
         .ticket-virtual .total { font-weight: bold; border-top: 1px dashed #000; padding-top: 8px; margin-top: 8px; }
         .ticket-virtual .footer { text-align: center; border-top: 1px dashed #000; padding-top: 8px; margin-top: 8px; font-size: 9px; }
-        
         .ticket-buttons { display: flex; gap: 10px; justify-content: center; margin-top: 15px; flex-wrap: wrap; }
         .ticket-btn { padding: 8px 16px; border-radius: 30px; border: none; font-weight: bold; cursor: pointer; font-size: 12px; display: inline-flex; align-items: center; gap: 6px; }
         .btn-wa { background: #25D366; color: white; }
         .btn-img { background: #3b82f6; color: white; }
         .btn-copy { background: #6b7280; color: white; }
         .btn-print { background: #1e293b; color: white; }
-        
-        /* Bloqueo de módulo - interfaz profesional */
+        .btn-cerrar { background: #6c757d; color: white; }
         .modulo-bloqueado-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; backdrop-filter: blur(8px); }
         .modulo-bloqueado-mensaje { background: white; padding: 30px; border-radius: 30px; text-align: center; max-width: 280px; }
         .modulo-bloqueado-mensaje i { font-size: 50px; color: #dc2626; margin-bottom: 15px; }
         .modulo-bloqueado-mensaje p { margin: 10px 0; font-size: 14px; }
         .modulo-bloqueado-mensaje small { font-size: 11px; color: gray; }
-        
-        /* Temas */
         body.light-mode{background:#fff}
         body.light-mode .main-container, body.light-mode .page-container, body.light-mode .card-bcv, body.light-mode .product-card, body.light-mode .client-card, body.light-mode .modal-form-content, body.light-mode .home-container{background:#fff!important;color:#1e1e1e!important}
         body.light-mode input, body.light-mode select, body.light-mode textarea, body.light-mode .btn-back{background:#fff;color:#1e1e1e;border-color:#e2e8f0}
@@ -123,7 +113,6 @@
         body.light-mode .led-converter{background:var(--accent)}
         body.light-mode .led-converter i{color:#fff!important}
         body.light-mode #globalResults, body.light-mode .global-result{background:#fff!important;color:#1e1e1e!important;border-color:#e2e8f0!important}
-        
         body.gray-mode{background:#2c2c2c}
         body.gray-mode .main-container, body.gray-mode .page-container, body.gray-mode .card-bcv, body.gray-mode .product-card, body.gray-mode .client-card, body.gray-mode .modal-form-content, body.gray-mode .home-container{background:#3a3a3a!important;color:#f0f0f0!important}
         body.gray-mode input, body.gray-mode select, body.gray-mode textarea, body.gray-mode .btn-back{background:#4a4a4a!important;color:#f0f0f0!important;border-color:#6a6a6a!important}
@@ -132,7 +121,6 @@
         body.gray-mode .led-converter{background:var(--accent)}
         body.gray-mode .led-converter i{color:#fff!important}
         body.gray-mode #globalResults, body.gray-mode .global-result{background:#4a4a4a!important;color:#f0f0f0!important;border-color:#6a6a6a!important}
-        
         body.dark-mode{background:#000!important}
         body.dark-mode .main-container, body.dark-mode .page-container, body.dark-mode .card-bcv, body.dark-mode .product-card, body.dark-mode .client-card, body.dark-mode .modal-form-content, body.dark-mode .home-container{background:#0a0a0a!important;color:#e0e0e0!important}
         body.dark-mode input, body.dark-mode select, body.dark-mode textarea, body.dark-mode .btn-back{background:#1a1a1a!important;color:#e0e0e0!important;border-color:#3a3a3a!important}
@@ -141,14 +129,12 @@
         body.dark-mode .led-converter{background:var(--accent)}
         body.dark-mode .led-converter i{color:#000!important}
         body.dark-mode #globalResults, body.dark-mode .global-result{background:#1a1a1a!important;color:#e0e0e0!important;border-color:#3a3a3a!important}
-        
         @media print {
             body * { visibility: hidden; }
             #ticketParaImprimir, #ticketParaImprimir * { visibility: visible; }
             #ticketParaImprimir { position: absolute; top: 0; left: 0; width: 280px; margin: 0; padding: 10px; box-shadow: none; }
             .ticket-buttons { display: none; }
         }
-        
         ::-webkit-scrollbar{width:6px}
     </style>
 </head>
@@ -160,19 +146,16 @@
     const esOscuro = c => { let r=parseInt(c.slice(1,3),16), g=parseInt(c.slice(3,5),16), b=parseInt(c.slice(5,7),16); return(.299*r + .587*g + .114*b) < 128; };
     
     // ==================== PREVENIR CIERRES ACCIDENTALES ====================
-    // Evitar gesto de actualizar página (pull-to-refresh)
+    document.addEventListener('contextmenu', e => e.preventDefault());
     document.body.addEventListener('touchmove', function(e) {
         if (e.touches.length === 1 && window.scrollY === 0 && e.touches[0].clientY > 50) {
             e.preventDefault();
         }
     }, { passive: false });
-    
-    // Evitar copiar/pegar/seleccionar
     document.addEventListener('copy', e => e.preventDefault());
     document.addEventListener('cut', e => e.preventDefault());
     document.addEventListener('paste', e => e.preventDefault());
     
-    // Alerta al intentar cerrar/recargar
     window.addEventListener('beforeunload', function(e) {
         if (D.config?.prevenirCierre !== false) {
             e.preventDefault();
@@ -181,7 +164,6 @@
         }
     });
     
-    // Prevenir cierre con botón atrás del navegador
     history.pushState(null, null, location.href);
     window.addEventListener('popstate', function(e) {
         if (D.config?.prevenirCierre !== false) {
@@ -194,6 +176,7 @@
     
     // ==================== MEMORIA DE SESIÓN ====================
     let sesionGuardada = null;
+    let fechaHoraInterval = null;
     function guardarSesion(module, data) {
         sessionStorage.setItem('jamPosModule', module);
         if (data) sessionStorage.setItem('jamPosData', JSON.stringify(data));
@@ -202,32 +185,31 @@
         const module = sessionStorage.getItem('jamPosModule');
         const data = sessionStorage.getItem('jamPosData');
         if (module && module !== 'home') {
-            setTimeout(() => {
-                if (module === 'ventas') renderVentas();
-                else if (module === 'inventario') renderInventario();
-                else if (module === 'clientes') renderCrud('clientes', 'Clientes', ['cedula','nombre','telefono','direccion','email']);
-                else if (module === 'proveedores') renderCrud('proveedores', 'Proveedores', ['rif','nombre','telefono','contacto','direccion']);
-                else if (module === 'gastos') renderCrud('gastos', 'Gastos', ['concepto','montoBs','categoria','fecha']);
-                else if (module === 'empleados') renderCrud('empleados', 'Empleados', ['cedula','nombre','cargo','salarioBs','fechaContrato']);
-                else if (module === 'reportes') renderReportes();
-                else if (module === 'config') renderConfig();
-                if (data) {
-                    try {
-                        const datos = JSON.parse(data);
-                        if (datos.carrito) carrito = datos.carrito;
-                        if (datos.tipoPago) tipoPago = datos.tipoPago;
-                        if (typeof actualizarCarritoUI === 'function') actualizarCarritoUI();
-                    } catch(e) {}
-                }
-            }, 100);
+            if (module === 'ventas') renderVentas();
+            else if (module === 'inventario') renderInventario();
+            else if (module === 'clientes') renderCrud('clientes', 'Clientes', ['cedula','nombre','telefono','direccion','email']);
+            else if (module === 'proveedores') renderCrud('proveedores', 'Proveedores', ['rif','nombre','telefono','contacto','direccion']);
+            else if (module === 'gastos') renderCrud('gastos', 'Gastos', ['concepto','montoBs','categoria','fecha']);
+            else if (module === 'empleados') renderCrud('empleados', 'Empleados', ['cedula','nombre','cargo','salarioBs','fechaContrato']);
+            else if (module === 'reportes') renderReportes();
+            else if (module === 'config') renderConfig();
+            if (data) {
+                try {
+                    const datos = JSON.parse(data);
+                    if (datos.carrito) carrito = datos.carrito;
+                    if (datos.tipoPago) tipoPago = datos.tipoPago;
+                } catch(e) {}
+            }
         }
-        sessionStorage.removeItem('jamPosModule');
-        sessionStorage.removeItem('jamPosData');
+        setTimeout(() => {
+            sessionStorage.removeItem('jamPosModule');
+            sessionStorage.removeItem('jamPosData');
+        }, 500);
     }
     
     // ==================== INDEXEDDB ====================
     let db = null;
-    const DB_NAME = 'PosTiendaDB', DB_VERSION = 32;
+    const DB_NAME = 'PosTiendaDB', DB_VERSION = 33;
     const initDB = () => new Promise((res,rej) => { let r = indexedDB.open(DB_NAME, DB_VERSION); r.onerror = () => rej(r.error); r.onsuccess = () => { db = r.result; res(db); }; r.onupgradeneeded = e => { let d = e.target.result; ['productos','clientes','proveedores','gastos','empleados','ventas','config'].forEach(s => { if(!d.objectStoreNames.contains(s)) d.createObjectStore(s, {keyPath:'id'}); }); }; });
     const getStore = (s, m='readonly') => db.transaction(s, m).objectStore(s);
     const getAll = async s => new Promise(res => { getStore(s).getAll().onsuccess = e => res(e.target.result || []); });
@@ -240,12 +222,13 @@
         config: { 
             key:'mainConfig', theme:'#3b82f6', dolarRate:67.85, lastUpdate:new Date().toLocaleDateString(), 
             ivaActivo:true, usarMargen:false, backgroundMode:'light', prevenirCierre:true,
-            mostrarDolar: true, // true: mostrar dólar, false: mostrar fecha/hora
+            mostrarDolar: true,
             empresa: { nombre:'JAM POS', direccion:'', telefono:'', rif:'', logo:'' }
         }
     };
     let exitAttempts = 0, currentModule = 'home', volverBloqueado = false, timeoutTitulo = null;
     let carrito = [], totalVenta = 0, tipoPago = 'pago_movil';
+    let convertidorModalActual = null;
     
     async function loadAllData(){
         for(let s of ['productos','clientes','proveedores','gastos','empleados','ventas']) D[s] = await getAll(s);
@@ -287,10 +270,13 @@
             container.innerHTML = `<span id="tasaDolarMostrar" class="text-5xl font-black" style="color:${D.config.theme}">${fmtPrecio(D.config.dolarRate)}</span><span class="text-2xl font-bold" style="color:${D.config.theme}">Bs/USD</span>`;
         } else {
             const ahora = new Date();
-            const fecha = ahora.toLocaleDateString('es-VE');
-            const hora = ahora.toLocaleTimeString('es-VE');
-            container.innerHTML = `<span class="text-2xl font-black" style="color:${D.config.theme}">${fecha}</span><span class="text-xl font-bold" style="color:${D.config.theme}">${hora}</span>`;
-            setTimeout(() => actualizarInfoCard(), 1000);
+            const optionsDia = { weekday: 'long' };
+            let diaSemana = ahora.toLocaleDateString('es-ES', optionsDia).toUpperCase();
+            const diaNumero = ahora.getDate();
+            const mes = ahora.toLocaleDateString('es-ES', { month: 'long' });
+            const año = ahora.getFullYear();
+            const fechaFormateada = `${diaNumero} de ${mes} del ${año}`;
+            container.innerHTML = `<div class="text-4xl font-black" style="color:${D.config.theme}">${diaSemana}</div><div class="text-base" style="color:${D.config.theme}">${fechaFormateada}</div>`;
         }
     }
     
@@ -311,7 +297,7 @@
     }
     
     // ==================== TICKET CON DATOS DE EMPRESA ====================
-    function imprimirTicket(venta) {
+    function imprimirTicket(venta) { /* igual que antes */ 
         const formasPago = {
             'efectivo_bs': 'EFECTIVO Bs',
             'pago_movil': 'PAGO MÓVIL',
@@ -319,80 +305,15 @@
             'tarjeta_debito': 'TARJETA DÉBITO',
             'dolares': 'DÓLARES'
         };
-        
-        const itemsHtml = venta.items.map(item => 
-            `<div class="item"><span>${item.cantidad}x ${escapeHtml(item.nombre)}</span><span>${fmtPrecio(item.subtotal)} Bs</span></div>`
-        ).join('');
-        
+        const itemsHtml = venta.items.map(item => `<div class="item"><span>${item.cantidad}x ${escapeHtml(item.nombre)}</span><span>${fmtPrecio(item.subtotal)} Bs</span></div>`).join('');
         const logoHtml = D.config.empresa.logo ? `<img src="${D.config.empresa.logo}" style="max-width:80px; max-height:80px; margin:0 auto;">` : '';
-        
-        const ticketHTML = `
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <title>Ticket ${D.config.empresa.nombre}</title>
-                <style>
-                    * { margin: 0; padding: 0; box-sizing: border-box; }
-                    body { font-family: 'Courier New', monospace; background: white; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
-                    .ticket { width: 280px; background: white; color: black; padding: 15px; border: 1px solid #ccc; }
-                    .logo { text-align: center; margin-bottom: 8px; }
-                    .logo img { max-width: 80px; max-height: 80px; }
-                    .header { text-align: center; border-bottom: 1px dashed #000; padding-bottom: 8px; margin-bottom: 8px; }
-                    .header h3 { margin: 0; font-size: 14px; font-weight: bold; }
-                    .header p { margin: 2px 0; font-size: 9px; }
-                    .items { border-bottom: 1px dashed #000; padding-bottom: 8px; margin-bottom: 8px; }
-                    .item { display: flex; justify-content: space-between; margin-bottom: 4px; }
-                    .line { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px dashed #ddd; }
-                    .total { font-weight: bold; border-top: 1px dashed #000; padding-top: 8px; margin-top: 8px; }
-                    .footer { text-align: center; border-top: 1px dashed #000; padding-top: 8px; margin-top: 8px; font-size: 9px; }
-                    @media print { body { padding: 0; margin: 0; } .ticket { margin: 0; padding: 10px; box-shadow: none; border: none; } }
-                </style>
-            </head>
-            <body>
-                <div class="ticket">
-                    <div class="logo">${logoHtml}</div>
-                    <div class="header">
-                        <h3>${escapeHtml(D.config.empresa.nombre)}</h3>
-                        ${D.config.empresa.direccion ? `<p>${escapeHtml(D.config.empresa.direccion)}</p>` : ''}
-                        ${D.config.empresa.telefono ? `<p>📞 ${escapeHtml(D.config.empresa.telefono)}</p>` : ''}
-                        ${D.config.empresa.rif ? `<p>RIF: ${escapeHtml(D.config.empresa.rif)}</p>` : ''}
-                        <p>${new Date(venta.fecha).toLocaleString()}</p>
-                        <p>Ticket: ${venta.id}</p>
-                        <p>Cliente: ${escapeHtml(venta.cliente)}</p>
-                    </div>
-                    <div class="items">
-                        ${itemsHtml}
-                    </div>
-                    <div class="line"><span>SUBTOTAL</span><span>${fmtPrecio(venta.subtotal)} Bs</span></div>
-                    ${venta.iva ? `<div class="line"><span>IVA (16%)</span><span>${fmtPrecio(venta.iva)} Bs</span></div>` : ''}
-                    <div class="line total"><span>TOTAL</span><span>${fmtPrecio(venta.total)} Bs</span></div>
-                    <div class="line"><span>PAGO</span><span>${fmtPrecio(venta.pago)} Bs</span></div>
-                    <div class="line"><span>CAMBIO</span><span>${fmtPrecio(venta.cambio)} Bs</span></div>
-                    <div class="line"><span>FORMA DE PAGO</span><span>${formasPago[venta.tipoPago] || venta.tipoPago}</span></div>
-                    <div class="footer">
-                        <p>¡Gracias por su compra!</p>
-                        <p>${D.config.empresa.nombre}</p>
-                    </div>
-                </div>
-                <script>
-                    window.onload = function() {
-                        setTimeout(function() {
-                            window.print();
-                            setTimeout(function() { window.close(); }, 500);
-                        }, 200);
-                    };
-                <\/script>
-            </body>
-            </html>
-        `;
-        
+        const ticketHTML = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Ticket ${D.config.empresa.nombre}</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Courier New',monospace;background:#fff;display:flex;justify-content:center;align-items:center;min-height:100vh;padding:20px}.ticket{width:280px;background:#fff;color:#000;padding:15px;border:1px solid #ccc}.logo{text-align:center;margin-bottom:8px}.logo img{max-width:80px;max-height:80px}.header{text-align:center;border-bottom:1px dashed #000;padding-bottom:8px;margin-bottom:8px}.header h3{margin:0;font-size:14px;font-weight:bold}.header p{margin:2px 0;font-size:9px}.items{border-bottom:1px dashed #000;padding-bottom:8px;margin-bottom:8px}.item{display:flex;justify-content:space-between;margin-bottom:4px}.line{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed #ddd}.total{font-weight:bold;border-top:1px dashed #000;padding-top:8px;margin-top:8px}.footer{text-align:center;border-top:1px dashed #000;padding-top:8px;margin-top:8px;font-size:9px}@media print{body{padding:0;margin:0}.ticket{margin:0;padding:10px;box-shadow:none;border:none}}</style></head><body><div class="ticket"><div class="logo">${logoHtml}</div><div class="header"><h3>${escapeHtml(D.config.empresa.nombre)}</h3>${D.config.empresa.direccion ? `<p>${escapeHtml(D.config.empresa.direccion)}</p>` : ''}${D.config.empresa.telefono ? `<p>📞 ${escapeHtml(D.config.empresa.telefono)}</p>` : ''}${D.config.empresa.rif ? `<p>RIF: ${escapeHtml(D.config.empresa.rif)}</p>` : ''}<p>${new Date(venta.fecha).toLocaleString()}</p><p>Ticket: ${venta.id}</p><p>Cliente: ${escapeHtml(venta.cliente)}</p></div><div class="items">${itemsHtml}</div><div class="line"><span>SUBTOTAL</span><span>${fmtPrecio(venta.subtotal)} Bs</span></div>${venta.iva ? `<div class="line"><span>IVA (16%)</span><span>${fmtPrecio(venta.iva)} Bs</span></div>` : ''}<div class="line total"><span>TOTAL</span><span>${fmtPrecio(venta.total)} Bs</span></div><div class="line"><span>PAGO</span><span>${fmtPrecio(venta.pago)} Bs</span></div><div class="line"><span>CAMBIO</span><span>${fmtPrecio(venta.cambio)} Bs</span></div><div class="line"><span>FORMA DE PAGO</span><span>${formasPago[venta.tipoPago] || venta.tipoPago}</span></div><div class="footer"><p>¡Gracias por su compra!</p><p>${D.config.empresa.nombre}</p></div></div><script>window.onload=function(){setTimeout(function(){window.print();setTimeout(function(){window.close()},500)},200)}<\/script></body></html>`;
         const ventana = window.open();
         ventana.document.write(ticketHTML);
         ventana.document.close();
     }
     
-    function mostrarTicket(venta) {
+    function mostrarTicket(venta) { /* igual que antes, pero con botón cerrar */ 
         const formasPago = {
             'efectivo_bs': 'EFECTIVO Bs',
             'pago_movil': 'PAGO MÓVIL',
@@ -400,207 +321,84 @@
             'tarjeta_debito': 'TARJETA DÉBITO',
             'dolares': 'DÓLARES'
         };
-        
-        const itemsHtml = venta.items.map(item => 
-            `<div class="item"><span>${item.cantidad}x ${escapeHtml(item.nombre)}</span><span>${fmtPrecio(item.subtotal)} Bs</span></div>`
-        ).join('');
-        
+        const itemsHtml = venta.items.map(item => `<div class="item"><span>${item.cantidad}x ${escapeHtml(item.nombre)}</span><span>${fmtPrecio(item.subtotal)} Bs</span></div>`).join('');
         const logoHtml = D.config.empresa.logo ? `<div class="logo"><img src="${D.config.empresa.logo}" style="max-width:60px; max-height:60px;"></div>` : '';
-        
-        const ticketHtml = `
-            <div class="ticket-virtual" id="ticketParaImprimir">
-                ${logoHtml}
-                <div class="header">
-                    <h3>${escapeHtml(D.config.empresa.nombre)}</h3>
-                    ${D.config.empresa.direccion ? `<p>${escapeHtml(D.config.empresa.direccion)}</p>` : ''}
-                    ${D.config.empresa.telefono ? `<p>📞 ${escapeHtml(D.config.empresa.telefono)}</p>` : ''}
-                    ${D.config.empresa.rif ? `<p>RIF: ${escapeHtml(D.config.empresa.rif)}</p>` : ''}
-                    <p>${new Date(venta.fecha).toLocaleString()}</p>
-                    <p>Ticket: ${venta.id}</p>
-                    <p>Cliente: ${escapeHtml(venta.cliente)}</p>
-                </div>
-                <div class="items">
-                    ${itemsHtml}
-                </div>
-                <div class="ticket-line"><span>SUBTOTAL</span><span>${fmtPrecio(venta.subtotal)} Bs</span></div>
-                ${venta.iva ? `<div class="ticket-line"><span>IVA (16%)</span><span>${fmtPrecio(venta.iva)} Bs</span></div>` : ''}
-                <div class="ticket-line total"><span>TOTAL</span><span>${fmtPrecio(venta.total)} Bs</span></div>
-                <div class="ticket-line"><span>PAGO</span><span>${fmtPrecio(venta.pago)} Bs</span></div>
-                <div class="ticket-line"><span>CAMBIO</span><span>${fmtPrecio(venta.cambio)} Bs</span></div>
-                <div class="ticket-line"><span>FORMA DE PAGO</span><span>${formasPago[venta.tipoPago] || venta.tipoPago}</span></div>
-                <div class="footer">
-                    <p>¡Gracias por su compra!</p>
-                    <p>${D.config.empresa.nombre}</p>
-                </div>
-            </div>
-            <div class="ticket-buttons">
-                <button class="ticket-btn btn-print" onclick="window.imprimirTicketDirecto('${venta.id}')"><i class="fas fa-print"></i> Imprimir</button>
-                <button class="ticket-btn btn-wa" onclick="window.enviarTicketPorWhatsApp('${venta.id}')"><i class="fab fa-whatsapp"></i> WhatsApp</button>
-                <button class="ticket-btn btn-img" onclick="window.descargarTicketImagen()"><i class="fas fa-download"></i> Imagen</button>
-                <button class="ticket-btn btn-copy" onclick="window.copiarTicketTexto()"><i class="fas fa-copy"></i> Copiar</button>
-            </div>
-        `;
-        
+        const ticketHtml = `<div class="ticket-virtual" id="ticketParaImprimir">${logoHtml}<div class="header"><h3>${escapeHtml(D.config.empresa.nombre)}</h3>${D.config.empresa.direccion ? `<p>${escapeHtml(D.config.empresa.direccion)}</p>` : ''}${D.config.empresa.telefono ? `<p>📞 ${escapeHtml(D.config.empresa.telefono)}</p>` : ''}${D.config.empresa.rif ? `<p>RIF: ${escapeHtml(D.config.empresa.rif)}</p>` : ''}<p>${new Date(venta.fecha).toLocaleString()}</p><p>Ticket: ${venta.id}</p><p>Cliente: ${escapeHtml(venta.cliente)}</p></div><div class="items">${itemsHtml}</div><div class="ticket-line"><span>SUBTOTAL</span><span>${fmtPrecio(venta.subtotal)} Bs</span></div>${venta.iva ? `<div class="ticket-line"><span>IVA (16%)</span><span>${fmtPrecio(venta.iva)} Bs</span></div>` : ''}<div class="ticket-line total"><span>TOTAL</span><span>${fmtPrecio(venta.total)} Bs</span></div><div class="ticket-line"><span>PAGO</span><span>${fmtPrecio(venta.pago)} Bs</span></div><div class="ticket-line"><span>CAMBIO</span><span>${fmtPrecio(venta.cambio)} Bs</span></div><div class="ticket-line"><span>FORMA DE PAGO</span><span>${formasPago[venta.tipoPago] || venta.tipoPago}</span></div><div class="footer"><p>¡Gracias por su compra!</p><p>${D.config.empresa.nombre}</p></div></div><div class="ticket-buttons"><button class="ticket-btn btn-print" onclick="window.imprimirTicketDirecto('${venta.id}')"><i class="fas fa-print"></i> Imprimir</button><button class="ticket-btn btn-wa" onclick="window.enviarTicketPorWhatsApp('${venta.id}')"><i class="fab fa-whatsapp"></i> WhatsApp</button><button class="ticket-btn btn-img" onclick="window.descargarTicketImagen()"><i class="fas fa-download"></i> Imagen</button><button class="ticket-btn btn-copy" onclick="window.copiarTicketTexto()"><i class="fas fa-copy"></i> Copiar</button><button class="ticket-btn btn-cerrar" onclick="window.cerrarTicketModalYVolverInicio()"><i class="fas fa-times"></i> Cerrar</button></div>`;
         const modal = document.createElement('div'); modal.className = 'modal-form';
-        modal.innerHTML = `<div class="modal-form-content" style="max-width: 350px; text-align: center;">${ticketHtml}</div>`;
+        modal.innerHTML = `<div class="modal-form-content" style="max-width:350px; text-align:center;">${ticketHtml}</div>`;
         document.body.appendChild(modal);
-        
         window.ticketActual = venta;
         window.modalTicketActual = modal;
-        modal.onclick = e => { if(e.target === modal) modal.remove(); };
+        modal.onclick = e => { if(e.target === modal) window.cerrarTicketModalYVolverInicio(); };
     }
     
-    window.imprimirTicketDirecto = (ventaId) => {
-        const venta = D.ventas.find(v => v.id === ventaId);
-        if(venta) imprimirTicket(venta);
+    window.cerrarTicketModalYVolverInicio = () => {
+        if(window.modalTicketActual) { window.modalTicketActual.remove(); window.modalTicketActual = null; }
+        renderHome();
     };
-    
+    window.imprimirTicketDirecto = (ventaId) => { const venta = D.ventas.find(v => v.id === ventaId); if(venta) imprimirTicket(venta); };
     window.enviarTicketPorWhatsApp = (ventaId) => {
         const venta = D.ventas.find(v => v.id === ventaId);
         if(!venta) return;
-        
-        const formasPago = {
-            'efectivo_bs': 'EFECTIVO Bs',
-            'pago_movil': 'PAGO MÓVIL',
-            'transferencia': 'TRANSFERENCIA',
-            'tarjeta_debito': 'TARJETA DÉBITO',
-            'dolares': 'DÓLARES'
-        };
-        
+        const formasPago = { 'efectivo_bs':'EFECTIVO Bs', 'pago_movil':'PAGO MÓVIL', 'transferencia':'TRANSFERENCIA', 'tarjeta_debito':'TARJETA DÉBITO', 'dolares':'DÓLARES' };
         let mensaje = `🏪 *${D.config.empresa.nombre}* 🏪\n`;
         if(D.config.empresa.direccion) mensaje += `📍 ${D.config.empresa.direccion}\n`;
         if(D.config.empresa.telefono) mensaje += `📞 ${D.config.empresa.telefono}\n`;
-        mensaje += `━━━━━━━━━━━━━━━━━━━━\n`;
-        mensaje += `📅 ${new Date(venta.fecha).toLocaleString()}\n`;
-        mensaje += `🧾 *${venta.id}*\n`;
-        mensaje += `👤 Cliente: ${venta.cliente}\n`;
-        mensaje += `━━━━━━━━━━━━━━━━━━━━\n`;
-        venta.items.forEach(item => {
-            mensaje += `${item.cantidad}x ${item.nombre} → ${fmtPrecio(item.subtotal)} Bs\n`;
-        });
-        mensaje += `━━━━━━━━━━━━━━━━━━━━\n`;
-        mensaje += `💰 *SUBTOTAL:* ${fmtPrecio(venta.subtotal)} Bs\n`;
+        mensaje += `━━━━━━━━━━━━━━━━━━━━\n📅 ${new Date(venta.fecha).toLocaleString()}\n🧾 *${venta.id}*\n👤 Cliente: ${venta.cliente}\n━━━━━━━━━━━━━━━━━━━━\n`;
+        venta.items.forEach(item => { mensaje += `${item.cantidad}x ${item.nombre} → ${fmtPrecio(item.subtotal)} Bs\n`; });
+        mensaje += `━━━━━━━━━━━━━━━━━━━━\n💰 *SUBTOTAL:* ${fmtPrecio(venta.subtotal)} Bs\n`;
         if(venta.iva) mensaje += `📊 *IVA:* ${fmtPrecio(venta.iva)} Bs\n`;
-        mensaje += `💵 *TOTAL:* ${fmtPrecio(venta.total)} Bs\n`;
-        mensaje += `💸 *PAGO:* ${fmtPrecio(venta.pago)} Bs\n`;
-        mensaje += `🔄 *CAMBIO:* ${fmtPrecio(venta.cambio)} Bs\n`;
-        mensaje += `💳 *FORMA DE PAGO:* ${formasPago[venta.tipoPago] || venta.tipoPago}\n`;
-        mensaje += `━━━━━━━━━━━━━━━━━━━━\n`;
-        mensaje += `🙏 ¡Gracias por su compra!\n`;
-        mensaje += `${D.config.empresa.nombre}`;
-        
+        mensaje += `💵 *TOTAL:* ${fmtPrecio(venta.total)} Bs\n💸 *PAGO:* ${fmtPrecio(venta.pago)} Bs\n🔄 *CAMBIO:* ${fmtPrecio(venta.cambio)} Bs\n💳 *FORMA DE PAGO:* ${formasPago[venta.tipoPago] || venta.tipoPago}\n━━━━━━━━━━━━━━━━━━━━\n🙏 ¡Gracias por su compra!\n${D.config.empresa.nombre}`;
         const telefono = prompt("📱 Ingrese el número de teléfono (ej: 584121234567):");
         if(telefono) {
             let numeroLimpio = telefono.replace(/[^0-9]/g, '');
             if(numeroLimpio.startsWith('0')) numeroLimpio = '58' + numeroLimpio.substring(1);
             if(!numeroLimpio.startsWith('58')) numeroLimpio = '58' + numeroLimpio;
-            const url = `https://wa.me/${numeroLimpio}?text=${encodeURIComponent(mensaje)}`;
-            window.open(url, '_blank');
+            window.open(`https://wa.me/${numeroLimpio}?text=${encodeURIComponent(mensaje)}`, '_blank');
         }
     };
+    window.descargarTicketImagen = async () => { const ticket = document.getElementById('ticketParaImprimir'); if(!ticket) return; try { const canvas = await html2canvas(ticket, { scale: 2, backgroundColor: '#ffffff' }); const link = document.createElement('a'); link.download = `ticket_${Date.now()}.png`; link.href = canvas.toDataURL(); link.click(); } catch(e) { alert('Error al generar imagen'); } };
+    window.copiarTicketTexto = () => { const ticket = document.getElementById('ticketParaImprimir'); if(!ticket) return; const texto = ticket.innerText; navigator.clipboard.writeText(texto).then(() => alert('✓ Ticket copiado')).catch(() => alert('Error al copiar')); };
     
-    window.descargarTicketImagen = async () => {
-        const ticket = document.getElementById('ticketParaImprimir');
-        if(!ticket) return;
-        try {
-            const canvas = await html2canvas(ticket, { scale: 2, backgroundColor: '#ffffff' });
-            const link = document.createElement('a');
-            link.download = `ticket_${Date.now()}.png`;
-            link.href = canvas.toDataURL();
-            link.click();
-        } catch(e) { alert('Error al generar imagen'); }
-    };
-    
-    window.copiarTicketTexto = () => {
-        const ticket = document.getElementById('ticketParaImprimir');
-        if(!ticket) return;
-        const texto = ticket.innerText;
-        navigator.clipboard.writeText(texto).then(() => alert('✓ Ticket copiado')).catch(() => alert('Error al copiar'));
-    };
-    
-    // ==================== NAVEGACIÓN Y BLOQUEO MEJORADO ====================
+    // ==================== NAVEGACIÓN Y BLOQUEO ====================
     window.navigateTo = m => {
-        if(volverBloqueado && currentModule !== 'home') {
-            mostrarOverlayBloqueo();
-            return;
-        }
+        if(volverBloqueado && currentModule !== 'home') { mostrarOverlayBloqueo(); return; }
         if(currentModule !== m) guardarSesion(m, { carrito, tipoPago });
         exitAttempts = 0; volverBloqueado = false;
         if(timeoutTitulo) clearTimeout(timeoutTitulo);
         currentModule = m;
         if(m === 'ventas') renderVentas();
         else if(m === 'inventario') renderInventario();
-        else if(m === 'clientes') renderCrud('clientes', 'Clientes', ['cedula','nombre','telefono','direccion','email']);
-        else if(m === 'proveedores') renderCrud('proveedores', 'Proveedores', ['rif','nombre','telefono','contacto','direccion']);
-        else if(m === 'gastos') renderCrud('gastos', 'Gastos', ['concepto','montoBs','categoria','fecha']);
-        else if(m === 'empleados') renderCrud('empleados', 'Empleados', ['cedula','nombre','cargo','salarioBs','fechaContrato']);
+        else if(m === 'clientes') renderCrud('clientes','Clientes',['cedula','nombre','telefono','direccion','email']);
+        else if(m === 'proveedores') renderCrud('proveedores','Proveedores',['rif','nombre','telefono','contacto','direccion']);
+        else if(m === 'gastos') renderCrud('gastos','Gastos',['concepto','montoBs','categoria','fecha']);
+        else if(m === 'empleados') renderCrud('empleados','Empleados',['cedula','nombre','cargo','salarioBs','fechaContrato']);
         else if(m === 'reportes') renderReportes();
         else if(m === 'config') renderConfig();
     };
-    
     function mostrarOverlayBloqueo() {
-        const overlay = document.createElement('div');
-        overlay.className = 'modulo-bloqueado-overlay';
-        overlay.innerHTML = `
-            <div class="modulo-bloqueado-mensaje">
-                <i class="fas fa-lock"></i>
-                <p><strong>Módulo Bloqueado</strong></p>
-                <p>Para desbloquear, mantén presionado el título del módulo por 2 segundos.</p>
-                <small>Modo profesional activado</small>
-            </div>
-        `;
+        const overlay = document.createElement('div'); overlay.className = 'modulo-bloqueado-overlay';
+        overlay.innerHTML = `<div class="modulo-bloqueado-mensaje"><i class="fas fa-lock"></i><p><strong>Módulo Bloqueado</strong></p><p>Para desbloquear, mantén presionado el título del módulo por 2 segundos.</p><small>Modo profesional activado</small></div>`;
         document.body.appendChild(overlay);
         setTimeout(() => overlay.remove(), 2000);
     }
-    
-    window.backToHome = () => { 
-        if(!volverBloqueado){ 
-            guardarSesion('home', null);
-            exitAttempts = 0; 
-            renderHome(); 
-        } else {
-            mostrarOverlayBloqueo();
-        }
-    };
-    
+    window.backToHome = () => { if(!volverBloqueado){ guardarSesion('home',null); exitAttempts=0; renderHome(); } else mostrarOverlayBloqueo(); };
     window.iniciarBloqueo = (el, nombre) => {
         if(timeoutTitulo) clearTimeout(timeoutTitulo);
         timeoutTitulo = setTimeout(() => {
             volverBloqueado = !volverBloqueado;
-            if(el) {
-                el.classList.toggle('module-title-bloqueado', volverBloqueado);
-                if(volverBloqueado) {
-                    el.title = '🔒 Mantén presionado para desbloquear';
-                    el.style.transition = 'all 0.3s';
-                } else {
-                    el.title = '🔓 Mantén presionado para bloquear';
-                }
-            }
+            if(el) { el.classList.toggle('module-title-bloqueado', volverBloqueado); if(volverBloqueado) el.title = '🔒 Mantén presionado para desbloquear'; else el.title = '🔓 Mantén presionado para bloquear'; }
             let btn = document.getElementById('btnVolverModule');
             if(btn){
-                if(volverBloqueado){
-                    btn.classList.add('btn-back-bloqueado');
-                    btn.innerHTML = '<i class="fas fa-lock"></i> Bloqueado';
-                    btn.onclick = () => mostrarOverlayBloqueo();
-                } else {
-                    btn.classList.remove('btn-back-bloqueado');
-                    btn.innerHTML = '<i class="fas fa-arrow-left"></i> Volver';
-                    btn.onclick = () => window.backToHome();
-                }
+                if(volverBloqueado){ btn.classList.add('btn-back-bloqueado'); btn.innerHTML = '<i class="fas fa-lock"></i> Bloqueado'; btn.onclick = () => mostrarOverlayBloqueo(); }
+                else{ btn.classList.remove('btn-back-bloqueado'); btn.innerHTML = '<i class="fas fa-arrow-left"></i> Volver'; btn.onclick = () => window.backToHome(); }
             }
-            if(volverBloqueado) {
-                const toast = document.createElement('div');
-                toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#dc2626;color:white;padding:10px 20px;border-radius:50px;z-index:10000;font-size:12px;';
-                toast.innerHTML = '🔒 Módulo BLOQUEADO - Modo profesional activado';
-                document.body.appendChild(toast);
-                setTimeout(() => toast.remove(), 2000);
-            } else {
-                const toast = document.createElement('div');
-                toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#10b981;color:white;padding:10px 20px;border-radius:50px;z-index:10000;font-size:12px;';
-                toast.innerHTML = '🔓 Módulo DESBLOQUEADO';
-                document.body.appendChild(toast);
-                setTimeout(() => toast.remove(), 2000);
-            }
+            const toast = document.createElement('div');
+            toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:50px;z-index:10000;font-size:12px;';
+            if(volverBloqueado){ toast.style.background='#dc2626'; toast.style.color='white'; toast.innerHTML='🔒 Módulo BLOQUEADO - Modo profesional activado'; }
+            else{ toast.style.background='#10b981'; toast.style.color='white'; toast.innerHTML='🔓 Módulo DESBLOQUEADO'; }
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2000);
             timeoutTitulo = null;
         }, 2000);
     };
@@ -608,12 +406,12 @@
     
     // ==================== PANTALLA PRINCIPAL ====================
     function renderHome(){
+        if(fechaHoraInterval) { clearInterval(fechaHoraInterval); fechaHoraInterval = null; }
         currentModule = 'home'; volverBloqueado = false;
         let accent = D.config.theme;
         let mostrarDolarHtml = D.config.mostrarDolar ? 
             `<div class="flex justify-center items-baseline gap-1 info-dinamica"><span id="tasaDolarMostrar" class="text-5xl font-black" style="color:${accent}">${fmtPrecio(D.config.dolarRate)}</span><span class="text-2xl font-bold" style="color:${accent}">Bs/USD</span></div>` :
-            `<div class="flex justify-center items-baseline gap-1 info-dinamica"><span id="fechaHoraMostrar" class="text-2xl font-black" style="color:${accent}"></span></div>`;
-        
+            `<div class="info-dinamica" style="text-align:center"></div>`;
         let modulos = [
             {icon:"fa-shopping-cart", label:"Ventas", id:"ventas"},
             {icon:"fa-boxes", label:"Inventario", id:"inventario"},
@@ -633,9 +431,9 @@
                 </div>
                 <div class="card-bcv">
                     <div class="led-converter" onclick="mostrarConvertidor()"><i class="fas fa-exchange-alt text-sm"></i></div>
-                    <p class="text-xs font-bold">${D.config.mostrarDolar ? 'TIPO DE CAMBIO (USD → VES)' : 'FECHA Y HORA'}</p>
+                    <p class="text-xs font-bold">${D.config.mostrarDolar ? 'TIPO DE CAMBIO (USD → VES)' : 'FECHA'}</p>
                     ${mostrarDolarHtml}
-                    <p class="text-[11px] mt-1">${D.config.mostrarDolar ? 'Actualizado: ' + D.config.lastUpdate : new Date().toLocaleString()}</p>
+                    <p class="text-[11px] mt-1">${D.config.mostrarDolar ? 'Actualizado: ' + D.config.lastUpdate : ''}</p>
                 </div>
                 <div class="home-grid">
                     ${modulos.map(m => `<button onclick="navigateTo('${m.id}')" class="main-module-btn" style="background:${accent};"><i class="fas ${m.icon}"></i><span>${m.label}</span></button>`).join('')}
@@ -644,15 +442,21 @@
         `;
         document.getElementById('searchGlobalInput').addEventListener('input', e => globalSearch(e.target.value));
         if(!D.config.mostrarDolar) {
-            const actualizarFechaHora = () => {
-                const span = document.getElementById('fechaHoraMostrar');
-                if(span) {
+            const actualizarFechaSolamente = () => {
+                const infoDiv = document.querySelector('.card-bcv .info-dinamica');
+                if(infoDiv) {
                     const ahora = new Date();
-                    span.innerHTML = `${ahora.toLocaleDateString('es-VE')}<br>${ahora.toLocaleTimeString('es-VE')}`;
+                    const optionsDia = { weekday: 'long' };
+                    let diaSemana = ahora.toLocaleDateString('es-ES', optionsDia).toUpperCase();
+                    const diaNumero = ahora.getDate();
+                    const mes = ahora.toLocaleDateString('es-ES', { month: 'long' });
+                    const año = ahora.getFullYear();
+                    const fechaFormateada = `${diaNumero} de ${mes} del ${año}`;
+                    infoDiv.innerHTML = `<div class="text-4xl font-black" style="color:${accent}">${diaSemana}</div><div class="text-base" style="color:${accent}">${fechaFormateada}</div>`;
                 }
-                setTimeout(actualizarFechaHora, 1000);
             };
-            actualizarFechaHora();
+            actualizarFechaSolamente();
+            fechaHoraInterval = setInterval(actualizarFechaSolamente, 60000); // actualiza cada minuto por si cambia de día
         }
     }
     async function globalSearch(term){
@@ -685,62 +489,34 @@
     window.editarProductoDesdeBusqueda = id => mostrarFormProducto(id, true);
     window.venderProductoDesdeBusqueda = id => { navigateTo('ventas'); setTimeout(() => agregarAlCarrito(id), 100); };
     window.mostrarConvertidor = () => {
+        if(convertidorModalActual) convertidorModalActual.remove();
         let m = document.createElement('div'); m.className = 'modal-form';
         m.innerHTML = `<div class="modal-form-content"><h3 class="font-bold text-lg mb-3">🔄 Convertidor Bs ↔ USD</h3><div class="mb-3"><label>Bolívares (Bs)</label><input type="number" id="bsInput" placeholder="Bs" class="border p-2 rounded w-full"></div><div class="mb-3"><label>Dólares (USD)</label><input type="number" id="usdInput" placeholder="USD" class="border p-2 rounded w-full"></div><p class="text-sm">Tasa: 1 USD = ${fmtPrecio(D.config.dolarRate)} Bs</p><button id="closeConv" class="mt-3 w-full py-2 rounded-xl bg-gray-200">Cerrar</button></div>`;
         document.body.appendChild(m);
+        convertidorModalActual = m;
         let bs = document.getElementById('bsInput'), usd = document.getElementById('usdInput');
         bs.oninput = () => { if(bs.value) usd.value = (parseFloat(bs.value) / D.config.dolarRate).toFixed(2); };
         usd.oninput = () => { if(usd.value) bs.value = (parseFloat(usd.value) * D.config.dolarRate).toFixed(2); };
-        document.getElementById('closeConv').onclick = () => m.remove();
+        document.getElementById('closeConv').onclick = () => { m.remove(); convertidorModalActual = null; };
+        m.onclick = e => { if(e.target === m) { m.remove(); convertidorModalActual = null; } };
     };
     
     // ==================== VENTAS ====================
     function renderVentas(){
         let bloqueado = volverBloqueado, accent = D.config.theme;
         tipoPago = 'pago_movil';
-        
         const html = `
-            <div class="page-header-fixed">
-                <div class="module-header">
-                    <h2 id="tituloModule" class="module-title ${bloqueado?'module-title-bloqueado':''}" style="color:${accent}" onmousedown="iniciarBloqueo(this,'Ventas')" onmouseup="cancelarBloqueo()" onmouseleave="cancelarBloqueo()" title="${bloqueado?'🔒 Módulo bloqueado - Mantén presionado para desbloquear':'🔓 Mantén presionado para bloquear'}">Ventas</h2>
-                    <div id="btnVolverModule" class="btn-back ${bloqueado?'btn-back-bloqueado':''}" onclick="${bloqueado?'':'backToHome()'}">${bloqueado?'<i class="fas fa-lock"></i> Bloqueado':'<i class="fas fa-arrow-left"></i> Volver'}</div>
-                </div>
-            </div>
-            <div class="page-container">
-                <div class="mb-3"><label>Cliente</label><select id="clienteSelect" class="border rounded-xl p-2 w-full"><option value="">-- Sin cliente --</option>${D.clientes.map(c => `<option value="${c.id}">${escapeHtml(c.nombre)}</option>`).join('')}</select></div>
-                <div class="mb-3"><input type="text" id="buscarProducto" placeholder="Buscar producto..." class="border-2 rounded-xl w-full p-2" style="border-color:${accent}"><div id="sugerencias" class="mt-1 border rounded-xl hidden divide-y max-h-48 overflow-auto"></div></div>
-                <div class="p-3 rounded-xl mb-3" style="background:rgba(0,0,0,0.05)"><div class="font-bold mb-2">🛒 Carrito</div><div id="carritoLista" class="max-h-52 overflow-auto"></div><div class="border-t pt-2 mt-2"><div class="ticket-line"><span>SUBTOTAL</span><span id="subtotal">0,00 Bs</span></div>${D.config.ivaActivo?'<div class="ticket-line"><span>IVA (16%)</span><span id="iva">0,00 Bs</span></div>':''}<div class="ticket-line font-bold"><span>TOTAL</span><span id="total">0,00 Bs</span></div></div></div>
-                <div class="mb-3"><label>Tipo de pago</label><select id="tipoPago" class="border rounded-xl p-2 w-full">
-                    <option value="efectivo_bs">💵 Efectivo (Bs)</option>
-                    <option value="dolares">💵 Dólares (USD)</option>
-                    <option value="tarjeta_debito">💳 Tarjeta Débito</option>
-                    <option value="transferencia">🏦 Transferencia</option>
-                    <option value="pago_movil" selected>📱 Pago Móvil</option>
-                </select></div>
-                <div id="cambioContainer" style="display: none;">
-                    <div class="grid grid-cols-2 gap-2 mb-3"><input type="number" id="montoPagado" placeholder="Monto recibido (Bs)" class="border rounded-xl p-2"><button id="calcularCambio" class="btn-azul-redondeado btn-redondeado py-2">Calcular cambio</button></div>
-                    <div id="cambioMensaje" class="text-green-600 text-sm mb-3"></div>
-                </div>
-                <button id="finalizarVenta" class="btn-finalizar-venta">✅ Finalizar Venta</button>
-            </div>
+            <div class="page-header-fixed"><div class="module-header"><h2 id="tituloModule" class="module-title ${bloqueado?'module-title-bloqueado':''}" style="color:${accent}" onmousedown="iniciarBloqueo(this,'Ventas')" onmouseup="cancelarBloqueo()" onmouseleave="cancelarBloqueo()" title="${bloqueado?'🔒 Módulo bloqueado - Mantén presionado para desbloquear':'🔓 Mantén presionado para bloquear'}">Ventas</h2><div id="btnVolverModule" class="btn-back ${bloqueado?'btn-back-bloqueado':''}" onclick="${bloqueado?'':'backToHome()'}">${bloqueado?'<i class="fas fa-lock"></i> Bloqueado':'<i class="fas fa-arrow-left"></i> Volver'}</div></div></div>
+            <div class="page-container"><div class="mb-3"><label>Cliente</label><select id="clienteSelect" class="border rounded-xl p-2 w-full"><option value="">-- Sin cliente --</option>${D.clientes.map(c => `<option value="${c.id}">${escapeHtml(c.nombre)}</option>`).join('')}</select></div><div class="mb-3"><input type="text" id="buscarProducto" placeholder="Buscar producto..." class="border-2 rounded-xl w-full p-2" style="border-color:${accent}"><div id="sugerencias" class="mt-1 border rounded-xl hidden divide-y max-h-48 overflow-auto"></div></div><div class="p-3 rounded-xl mb-3" style="background:rgba(0,0,0,0.05)"><div class="font-bold mb-2">🛒 Carrito</div><div id="carritoLista" class="max-h-52 overflow-auto"></div><div class="border-t pt-2 mt-2"><div class="ticket-line"><span>SUBTOTAL</span><span id="subtotal">0,00 Bs</span></div>${D.config.ivaActivo?'<div class="ticket-line"><span>IVA (16%)</span><span id="iva">0,00 Bs</span></div>':''}<div class="ticket-line font-bold"><span>TOTAL</span><span id="total">0,00 Bs</span></div></div></div><div class="mb-3"><label>Tipo de pago</label><select id="tipoPago" class="border rounded-xl p-2 w-full"><option value="efectivo_bs">💵 Efectivo (Bs)</option><option value="dolares">💵 Dólares (USD)</option><option value="tarjeta_debito">💳 Tarjeta Débito</option><option value="transferencia">🏦 Transferencia</option><option value="pago_movil" selected>📱 Pago Móvil</option></select></div><div id="cambioContainer" style="display:none"><div class="grid grid-cols-2 gap-2 mb-3"><input type="number" id="montoPagado" placeholder="Monto recibido (Bs)" class="border rounded-xl p-2"><button id="calcularCambio" class="btn-azul-redondeado btn-redondeado py-2">Calcular cambio</button></div><div id="cambioMensaje" class="text-green-600 text-sm mb-3"></div></div><button id="finalizarVenta" class="btn-finalizar-venta">✅ Finalizar Venta</button></div>
         `;
         document.getElementById('appRoot').innerHTML = html;
         carrito = []; totalVenta = 0;
         document.getElementById('buscarProducto').addEventListener('input', e => buscarProductos(e.target.value));
         document.getElementById('finalizarVenta').onclick = () => finalizarVenta();
-        
         const tipoPagoSelect = document.getElementById('tipoPago');
         const cambioContainer = document.getElementById('cambioContainer');
-        
-        tipoPagoSelect.onchange = () => {
-            tipoPago = tipoPagoSelect.value;
-            cambioContainer.style.display = tipoPago === 'efectivo_bs' ? 'block' : 'none';
-        };
-        
-        if(document.getElementById('calcularCambio')) {
-            document.getElementById('calcularCambio').onclick = () => calcularCambio();
-        }
-        
+        tipoPagoSelect.onchange = () => { tipoPago = tipoPagoSelect.value; cambioContainer.style.display = tipoPago === 'efectivo_bs' ? 'block' : 'none'; };
+        if(document.getElementById('calcularCambio')) document.getElementById('calcularCambio').onclick = () => calcularCambio();
         actualizarCarritoUI();
         if(volverBloqueado) document.getElementById('btnVolverModule').onclick = () => mostrarOverlayBloqueo();
         guardarSesion('ventas', { carrito, tipoPago });
@@ -795,28 +571,16 @@
         else cambio.innerHTML = 'Monto insuficiente';
     }
     async function finalizarVenta(){
-        if(carrito.length === 0) {
-            alert("Carrito vacío");
-            return;
-        }
-        
+        if(carrito.length === 0) { alert("Carrito vacío"); return; }
         let pagado = totalVenta;
         if(tipoPago === 'efectivo_bs') {
             pagado = parseFloat(document.getElementById('montoPagado')?.value);
-            if(isNaN(pagado) || pagado < totalVenta) {
-                alert("Monto insuficiente");
-                return;
-            }
+            if(isNaN(pagado) || pagado < totalVenta) { alert("Monto insuficiente"); return; }
         }
-        
         for(let it of carrito){
             let prod = D.productos.find(p => p.id === it.id);
-            if(!prod || prod.stock < it.cantidad) {
-                alert(`Stock insuficiente para ${it.nombre}`);
-                return;
-            }
+            if(!prod || prod.stock < it.cantidad) { alert(`Stock insuficiente para ${it.nombre}`); return; }
         }
-        
         for(let it of carrito){
             let prod = D.productos.find(p => p.id === it.id);
             prod.stock -= it.cantidad;
@@ -824,38 +588,24 @@
             let idx = D.productos.findIndex(p => p.id === it.id);
             if(idx !== -1) D.productos[idx].stock = prod.stock;
         }
-        
         let ahora = new Date();
         let codigo = `${ahora.getFullYear()}${(ahora.getMonth()+1).toString().padStart(2,'0')}${ahora.getDate().toString().padStart(2,'0')}-${ahora.getHours().toString().padStart(2,'0')}${ahora.getMinutes().toString().padStart(2,'0')}${ahora.getSeconds().toString().padStart(2,'0')}`;
         let clienteId = document.getElementById('clienteSelect').value;
         let clienteNombre = clienteId ? (D.clientes.find(c => c.id === clienteId)?.nombre || 'Cliente ocasional') : 'Cliente ocasional';
-        let itemsVenta = carrito.map(i => ({
-            idProducto: i.id, nombre: i.nombre, cantidad: i.cantidad, precioUnitario: i.precioVentaBs,
-            costoUnitario: i.costoRealBs || 0, subtotal: i.precioVentaBs * i.cantidad,
-            ganancia: (i.precioVentaBs - (i.costoRealBs || 0)) * i.cantidad
-        }));
+        let itemsVenta = carrito.map(i => ({ idProducto: i.id, nombre: i.nombre, cantidad: i.cantidad, precioUnitario: i.precioVentaBs, costoUnitario: i.costoRealBs || 0, subtotal: i.precioVentaBs * i.cantidad, ganancia: (i.precioVentaBs - (i.costoRealBs || 0)) * i.cantidad }));
         let subtotalVenta = itemsVenta.reduce((s,i) => s + i.subtotal, 0);
         let ivaVenta = D.config.ivaActivo ? subtotalVenta * 0.16 : 0;
         let gananciaTotal = itemsVenta.reduce((s,i) => s + i.ganancia, 0);
-        let nuevaVenta = {
-            id: codigo, fecha: ahora.toLocaleString(), timestamp: ahora.getTime(), cliente: clienteNombre,
-            items: itemsVenta, subtotal: subtotalVenta, iva: ivaVenta, total: totalVenta,
-            gananciaTotal: gananciaTotal, pago: pagado, cambio: pagado - totalVenta, tipoPago: tipoPago
-        };
+        let nuevaVenta = { id: codigo, fecha: ahora.toLocaleString(), timestamp: ahora.getTime(), cliente: clienteNombre, items: itemsVenta, subtotal: subtotalVenta, iva: ivaVenta, total: totalVenta, gananciaTotal: gananciaTotal, pago: pagado, cambio: pagado - totalVenta, tipoPago: tipoPago };
         await saveItem('ventas', nuevaVenta);
         D.ventas.push(nuevaVenta);
-        
         mostrarTicket(nuevaVenta);
-        renderHome();
     }
     
     // ==================== INVENTARIO ====================
     function renderInventario(){
         let bloqueado = volverBloqueado, accent = D.config.theme;
-        document.getElementById('appRoot').innerHTML = `
-            <div class="page-header-fixed"><div class="module-header"><h2 id="tituloModule" class="module-title ${bloqueado?'module-title-bloqueado':''}" style="color:${accent}" onmousedown="iniciarBloqueo(this,'Inventario')" onmouseup="cancelarBloqueo()" onmouseleave="cancelarBloqueo()" title="${bloqueado?'🔒 Bloqueado - Mantén presionado para desbloquear':'🔓 Mantén presionado para bloquear'}">Inventario</h2><div id="btnVolverModule" class="btn-back ${bloqueado?'btn-back-bloqueado':''}" onclick="${bloqueado?'':'backToHome()'}">${bloqueado?'<i class="fas fa-lock"></i> Bloqueado':'<i class="fas fa-arrow-left"></i> Volver'}</div></div></div>
-            <div class="page-container"><div class="mb-3 relative"><i class="fas fa-search absolute left-3 top-3 text-gray-400"></i><input type="text" id="searchInv" placeholder="Buscar producto..." class="pl-9 pr-3 py-2 border rounded-xl w-full"></div><button id="nuevoProducto" class="btn-azul-redondeado btn-redondeado mb-4 py-2 px-4">+ Nuevo producto</button><div id="listaProductos" class="scroll-area"></div></div>
-        `;
+        document.getElementById('appRoot').innerHTML = `<div class="page-header-fixed"><div class="module-header"><h2 id="tituloModule" class="module-title ${bloqueado?'module-title-bloqueado':''}" style="color:${accent}" onmousedown="iniciarBloqueo(this,'Inventario')" onmouseup="cancelarBloqueo()" onmouseleave="cancelarBloqueo()" title="${bloqueado?'🔒 Bloqueado - Mantén presionado para desbloquear':'🔓 Mantén presionado para bloquear'}">Inventario</h2><div id="btnVolverModule" class="btn-back ${bloqueado?'btn-back-bloqueado':''}" onclick="${bloqueado?'':'backToHome()'}">${bloqueado?'<i class="fas fa-lock"></i> Bloqueado':'<i class="fas fa-arrow-left"></i> Volver'}</div></div></div><div class="page-container"><div class="mb-3 relative"><i class="fas fa-search absolute left-3 top-3 text-gray-400"></i><input type="text" id="searchInv" placeholder="Buscar producto..." class="pl-9 pr-3 py-2 border rounded-xl w-full"></div><button id="nuevoProducto" class="btn-azul-redondeado btn-redondeado mb-4 py-2 px-4">+ Nuevo producto</button><div id="listaProductos" class="scroll-area"></div></div>`;
         if(volverBloqueado) document.getElementById('btnVolverModule').onclick = () => mostrarOverlayBloqueo();
         document.getElementById('searchInv').addEventListener('input', e => renderListaProductos(e.target.value.toLowerCase()));
         document.getElementById('nuevoProducto').onclick = () => mostrarFormProducto(null);
@@ -865,36 +615,13 @@
     function renderListaProductos(filtro = ''){
         let filt = D.productos.filter(p => p.nombre.toLowerCase().includes(filtro) || (p.codigo && p.codigo.toLowerCase().includes(filtro)));
         let cont = document.getElementById('listaProductos'); if(!cont) return;
-        cont.innerHTML = filt.map(p => `
-            <div class="product-card">
-                <div class="flex justify-between flex-wrap"><span class="font-bold">${escapeHtml(p.nombre)}</span><span class="text-xs">${escapeHtml(p.codigo||'')}</span></div>
-                <div class="text-sm">💰 ${fmtPrecio(p.precioVentaBs)} Bs / $${p.precioVentaUsd} | 📦 Stock: ${p.stock}</div>
-                <div class="text-xs break-words">🏷️ ${escapeHtml(p.categoria||'')} | 🚚 ${escapeHtml(p.proveedor||'—')}</div>
-                <div class="flex gap-2 mt-2">
-                    <button onclick="mostrarFormProducto('${p.id}')" class="btn-editar-redondeado">✏️ Editar</button>
-                    <button onclick="eliminarProducto('${p.id}')" class="btn-eliminar-redondeado">🗑️ Eliminar</button>
-                </div>
-            </div>
-        `).join('');
+        cont.innerHTML = filt.map(p => `<div class="product-card"><div class="flex justify-between flex-wrap"><span class="font-bold">${escapeHtml(p.nombre)}</span><span class="text-xs">${escapeHtml(p.codigo||'')}</span></div><div class="text-sm">💰 ${fmtPrecio(p.precioVentaBs)} Bs / $${p.precioVentaUsd} | 📦 Stock: ${p.stock}</div><div class="text-xs break-words">🏷️ ${escapeHtml(p.categoria||'')} | 🚚 ${escapeHtml(p.proveedor||'—')}</div><div class="flex gap-2 mt-2"><button onclick="mostrarFormProducto('${p.id}')" class="btn-editar-redondeado">✏️ Editar</button><button onclick="eliminarProducto('${p.id}')" class="btn-eliminar-redondeado">🗑️ Eliminar</button></div></div>`).join('');
     }
     async function mostrarFormProducto(id, desdeBusqueda = false){
         let prod = id ? D.productos.find(p => p.id === id) : null;
         let esNuevo = !prod;
         let modal = document.createElement('div'); modal.className = 'modal-form';
-        modal.innerHTML = `
-            <div class="modal-form-content">
-                <h3 class="text-xl font-bold mb-4">${esNuevo ? 'Nuevo Producto' : 'Editar Producto'}</h3>
-                <div class="mb-3"><label>Nombre</label><input id="nombre" value="${escapeHtml(prod?.nombre||'')}" class="border rounded-xl p-2 w-full"></div>
-                <div class="mb-3"><label>Código</label><input id="codigo" value="${escapeHtml(prod?.codigo||'')}" class="border rounded-xl p-2 w-full"></div>
-                <div class="mb-3"><label>Categoría</label><input id="categoria" value="${escapeHtml(prod?.categoria||'')}" class="border rounded-xl p-2 w-full"></div>
-                <div class="mb-3"><label>Proveedor</label><input id="proveedor" value="${escapeHtml(prod?.proveedor||'')}" class="border rounded-xl p-2 w-full"></div>
-                <div class="mb-3"><label>Stock</label><input type="number" id="stock" value="${prod?.stock||0}" class="border rounded-xl p-2 w-full"></div>
-                <div class="mb-3"><label>Costo Real (Bs)</label><input type="number" id="costoReal" step="any" value="${prod?.costoRealBs||0}" class="border rounded-xl p-2 w-full"></div>
-                <div class="mb-3"><label>Precio Venta (Bs)</label><input type="number" id="ventaBs" step="any" value="${prod?.precioVentaBs||''}" class="border rounded-xl p-2 w-full"></div>
-                <div class="mb-3"><label>Precio Venta (USD)</label><input type="number" id="ventaUsd" step="any" value="${prod?.precioVentaUsd||''}" class="border rounded-xl p-2 w-full"></div>
-                <div class="flex gap-3 mt-4"><button id="guardarBtn" class="btn-azul-redondeado btn-redondeado flex-1 py-2 font-bold">Guardar</button><button id="cancelarBtn" class="btn-redondeado flex-1 py-2 bg-gray-200">Cancelar</button></div>
-            </div>
-        `;
+        modal.innerHTML = `<div class="modal-form-content"><h3 class="text-xl font-bold mb-4">${esNuevo ? 'Nuevo Producto' : 'Editar Producto'}</h3><div class="mb-3"><label>Nombre</label><input id="nombre" value="${escapeHtml(prod?.nombre||'')}" class="border rounded-xl p-2 w-full"></div><div class="mb-3"><label>Código</label><input id="codigo" value="${escapeHtml(prod?.codigo||'')}" class="border rounded-xl p-2 w-full"></div><div class="mb-3"><label>Categoría</label><input id="categoria" value="${escapeHtml(prod?.categoria||'')}" class="border rounded-xl p-2 w-full"></div><div class="mb-3"><label>Proveedor</label><input id="proveedor" value="${escapeHtml(prod?.proveedor||'')}" class="border rounded-xl p-2 w-full"></div><div class="mb-3"><label>Stock</label><input type="number" id="stock" value="${prod?.stock||0}" class="border rounded-xl p-2 w-full"></div><div class="mb-3"><label>Costo Real (Bs)</label><input type="number" id="costoReal" step="any" value="${prod?.costoRealBs||0}" class="border rounded-xl p-2 w-full"></div><div class="mb-3"><label>Precio Venta (Bs)</label><input type="number" id="ventaBs" step="any" value="${prod?.precioVentaBs||''}" class="border rounded-xl p-2 w-full"></div><div class="mb-3"><label>Precio Venta (USD)</label><input type="number" id="ventaUsd" step="any" value="${prod?.precioVentaUsd||''}" class="border rounded-xl p-2 w-full"></div><div class="flex gap-3 mt-4"><button id="guardarBtn" class="btn-azul-redondeado btn-redondeado flex-1 py-2 font-bold">Guardar</button><button id="cancelarBtn" class="btn-redondeado flex-1 py-2 bg-gray-200">Cancelar</button></div></div>`;
         document.body.appendChild(modal);
         document.getElementById('cancelarBtn').onclick = () => modal.remove();
         let ventaBs = document.getElementById('ventaBs'), ventaUsd = document.getElementById('ventaUsd'), costoReal = document.getElementById('costoReal');
@@ -907,16 +634,7 @@
             let costoRealBs = parseFloat(costoReal.value) || 0;
             if(precioVentaBs > 0) precioVentaUsd = precioVentaBs / tasa();
             else if(precioVentaUsd > 0) precioVentaBs = precioVentaUsd * tasa();
-            let nuevo = {
-                id: esNuevo ? 'p'+Date.now() : prod.id,
-                nombre: document.getElementById('nombre').value,
-                codigo: document.getElementById('codigo').value,
-                categoria: document.getElementById('categoria').value,
-                proveedor: document.getElementById('proveedor').value,
-                stock: parseInt(document.getElementById('stock').value) || 0,
-                precioVentaBs, precioVentaUsd: precioVentaUsd.toFixed(2),
-                costoRealBs: costoRealBs
-            };
+            let nuevo = { id: esNuevo ? 'p'+Date.now() : prod.id, nombre: document.getElementById('nombre').value, codigo: document.getElementById('codigo').value, categoria: document.getElementById('categoria').value, proveedor: document.getElementById('proveedor').value, stock: parseInt(document.getElementById('stock').value) || 0, precioVentaBs, precioVentaUsd: precioVentaUsd.toFixed(2), costoRealBs: costoRealBs };
             if(esNuevo){ await saveItem('productos', nuevo); D.productos.push(nuevo); }
             else{ let idx = D.productos.findIndex(p => p.id === prod.id); D.productos[idx] = nuevo; await saveItem('productos', nuevo); }
             modal.remove();
@@ -929,10 +647,7 @@
     async function renderCrud(store, titulo, campos){
         let bloqueado = volverBloqueado, accent = D.config.theme;
         let items = await getAll(store); D[store] = items;
-        document.getElementById('appRoot').innerHTML = `
-            <div class="page-header-fixed"><div class="module-header"><h2 id="tituloModule" class="module-title ${bloqueado?'module-title-bloqueado':''}" style="color:${accent}" onmousedown="iniciarBloqueo(this,'${titulo}')" onmouseup="cancelarBloqueo()" onmouseleave="cancelarBloqueo()" title="${bloqueado?'🔒 Bloqueado - Mantén presionado para desbloquear':'🔓 Mantén presionado para bloquear'}">${titulo}</h2><div id="btnVolverModule" class="btn-back ${bloqueado?'btn-back-bloqueado':''}" onclick="${bloqueado?'':'backToHome()'}">${bloqueado?'<i class="fas fa-lock"></i> Bloqueado':'<i class="fas fa-arrow-left"></i> Volver'}</div></div></div>
-            <div class="page-container"><div class="mb-3 relative"><i class="fas fa-search absolute left-3 top-3 text-gray-400"></i><input type="text" id="searchCrud" placeholder="Buscar..." class="pl-9 pr-3 py-2 border rounded-xl w-full"></div><button id="agregarBtn" class="btn-azul-redondeado btn-redondeado mb-4 py-2 px-4">+ Agregar ${titulo}</button><div id="listaCrud" class="scroll-area"></div></div>
-        `;
+        document.getElementById('appRoot').innerHTML = `<div class="page-header-fixed"><div class="module-header"><h2 id="tituloModule" class="module-title ${bloqueado?'module-title-bloqueado':''}" style="color:${accent}" onmousedown="iniciarBloqueo(this,'${titulo}')" onmouseup="cancelarBloqueo()" onmouseleave="cancelarBloqueo()" title="${bloqueado?'🔒 Bloqueado - Mantén presionado para desbloquear':'🔓 Mantén presionado para bloquear'}">${titulo}</h2><div id="btnVolverModule" class="btn-back ${bloqueado?'btn-back-bloqueado':''}" onclick="${bloqueado?'':'backToHome()'}">${bloqueado?'<i class="fas fa-lock"></i> Bloqueado':'<i class="fas fa-arrow-left"></i> Volver'}</div></div></div><div class="page-container"><div class="mb-3 relative"><i class="fas fa-search absolute left-3 top-3 text-gray-400"></i><input type="text" id="searchCrud" placeholder="Buscar..." class="pl-9 pr-3 py-2 border rounded-xl w-full"></div><button id="agregarBtn" class="btn-azul-redondeado btn-redondeado mb-4 py-2 px-4">+ Agregar ${titulo}</button><div id="listaCrud" class="scroll-area"></div></div>`;
         if(volverBloqueado) document.getElementById('btnVolverModule').onclick = () => mostrarOverlayBloqueo();
         let search = document.getElementById('searchCrud'), agregar = document.getElementById('agregarBtn');
         let renderLista = filtro => {
@@ -1002,97 +717,43 @@
         let totalGanancia = ventas.reduce((a,b)=>a+(b.gananciaTotal||0),0);
         let totalGastos = D.gastos.reduce((a,b)=>a+(b.montoBs||0),0);
         let bloqueado = volverBloqueado, accent = D.config.theme;
-        document.getElementById('appRoot').innerHTML = `
-            <div class="page-header-fixed"><div class="module-header"><h2 id="tituloModule" class="module-title ${bloqueado?'module-title-bloqueado':''}" style="color:${accent}" onmousedown="iniciarBloqueo(this,'Reportes')" onmouseup="cancelarBloqueo()" onmouseleave="cancelarBloqueo()" title="${bloqueado?'🔒 Bloqueado - Mantén presionado para desbloquear':'🔓 Mantén presionado para bloquear'}">Reportes</h2><div id="btnVolverModule" class="btn-back ${bloqueado?'btn-back-bloqueado':''}" onclick="${bloqueado?'':'backToHome()'}">${bloqueado?'<i class="fas fa-lock"></i> Bloqueado':'<i class="fas fa-arrow-left"></i> Volver'}</div></div></div>
-            <div class="page-container"><div class="p-3 rounded-xl mb-3" style="background:rgba(0,0,0,0.05)"><p>💰 Ventas totales: ${fmtPrecio(totalVentas)} Bs</p><p>📈 Ganancia bruta: ${fmtPrecio(totalGanancia)} Bs</p><p>💸 Gastos totales: ${fmtPrecio(totalGastos)} Bs</p><p>📊 Utilidad neta: ${fmtPrecio(totalGanancia - totalGastos)} Bs</p></div><h3 class="font-bold mb-2">Últimas ventas</h3><div class="max-h-64 overflow-auto">${ventas.slice().reverse().map(v => `<div class="border-b py-2 text-sm cursor-pointer hover:bg-gray-100 hover:opacity-80" onclick="window.mostrarTicketDesdeReporte('${v.id}')"><b>${escapeHtml(v.id)}</b> - ${escapeHtml(v.fecha)}<br>Cliente: ${escapeHtml(v.cliente)} | Total: ${fmtPrecio(v.total)} Bs<br>Tipo pago: ${escapeHtml(v.tipoPago||'efectivo_bs')}<br>Items: ${v.items.map(i=>`${escapeHtml(i.nombre)} x${i.cantidad}`).join(', ')}</div>`).join('')}</div></div>
-        `;
+        document.getElementById('appRoot').innerHTML = `<div class="page-header-fixed"><div class="module-header"><h2 id="tituloModule" class="module-title ${bloqueado?'module-title-bloqueado':''}" style="color:${accent}" onmousedown="iniciarBloqueo(this,'Reportes')" onmouseup="cancelarBloqueo()" onmouseleave="cancelarBloqueo()" title="${bloqueado?'🔒 Bloqueado - Mantén presionado para desbloquear':'🔓 Mantén presionado para bloquear'}">Reportes</h2><div id="btnVolverModule" class="btn-back ${bloqueado?'btn-back-bloqueado':''}" onclick="${bloqueado?'':'backToHome()'}">${bloqueado?'<i class="fas fa-lock"></i> Bloqueado':'<i class="fas fa-arrow-left"></i> Volver'}</div></div></div><div class="page-container"><div class="p-3 rounded-xl mb-3" style="background:rgba(0,0,0,0.05)"><p>💰 Ventas totales: ${fmtPrecio(totalVentas)} Bs</p><p>📈 Ganancia bruta: ${fmtPrecio(totalGanancia)} Bs</p><p>💸 Gastos totales: ${fmtPrecio(totalGastos)} Bs</p><p>📊 Utilidad neta: ${fmtPrecio(totalGanancia - totalGastos)} Bs</p></div><h3 class="font-bold mb-2">Últimas ventas</h3><div class="max-h-64 overflow-auto">${ventas.slice().reverse().map(v => `<div class="border-b py-2 text-sm cursor-pointer hover:bg-gray-100 hover:opacity-80" onclick="window.mostrarTicketDesdeReporte('${v.id}')"><b>${escapeHtml(v.id)}</b> - ${escapeHtml(v.fecha)}<br>Cliente: ${escapeHtml(v.cliente)} | Total: ${fmtPrecio(v.total)} Bs<br>Tipo pago: ${escapeHtml(v.tipoPago||'efectivo_bs')}<br>Items: ${v.items.map(i=>`${escapeHtml(i.nombre)} x${i.cantidad}`).join(', ')}</div>`).join('')}</div></div>`;
         if(volverBloqueado) document.getElementById('btnVolverModule').onclick = () => mostrarOverlayBloqueo();
         guardarSesion('reportes', null);
     }
-    
-    window.mostrarTicketDesdeReporte = (ventaId) => {
-        const venta = D.ventas.find(v => v.id === ventaId);
-        if(venta) mostrarTicket(venta);
-    };
+    window.mostrarTicketDesdeReporte = (ventaId) => { const venta = D.ventas.find(v => v.id === ventaId); if(venta) mostrarTicket(venta); };
     
     // ==================== CONFIGURACIÓN MEJORADA ====================
     async function renderConfig(){
         let colores = ['#3b82f6','#8b5cf6','#10b981','#f59e0b','#ef4444','#ec4899','#000000','#22c55e','#a855f7','#f97316','#ff69b4','#00ced1'];
         let fondos = [{id:'light',nombre:'Blanco'},{id:'gray',nombre:'Grisáceo'},{id:'dark',nombre:'Negro'}];
         let bloqueado = volverBloqueado, accent = D.config.theme;
-        
-        document.getElementById('appRoot').innerHTML = `
-            <div class="page-header-fixed"><div class="module-header"><h2 id="tituloModule" class="module-title ${bloqueado?'module-title-bloqueado':''}" style="color:${accent}" onmousedown="iniciarBloqueo(this,'Configuración')" onmouseup="cancelarBloqueo()" onmouseleave="cancelarBloqueo()" title="${bloqueado?'🔒 Bloqueado - Mantén presionado para desbloquear':'🔓 Mantén presionado para bloquear'}">Configuración</h2><div id="btnVolverModule" class="btn-back ${bloqueado?'btn-back-bloqueado':''}" onclick="${bloqueado?'':'backToHome()'}">${bloqueado?'<i class="fas fa-lock"></i> Bloqueado':'<i class="fas fa-arrow-left"></i> Volver'}</div></div></div>
-            <div class="page-container">
-                <div class="config-section"><h3 class="font-bold mb-3 text-center">🏢 Datos de la Empresa</h3>
-                    <div class="mb-2"><label>Nombre de la tienda</label><input type="text" id="empresaNombre" value="${escapeHtml(D.config.empresa.nombre)}" class="border rounded-xl p-2 w-full"></div>
-                    <div class="mb-2"><label>Dirección</label><input type="text" id="empresaDireccion" value="${escapeHtml(D.config.empresa.direccion)}" class="border rounded-xl p-2 w-full"></div>
-                    <div class="mb-2"><label>Teléfono</label><input type="text" id="empresaTelefono" value="${escapeHtml(D.config.empresa.telefono)}" class="border rounded-xl p-2 w-full"></div>
-                    <div class="mb-2"><label>RIF</label><input type="text" id="empresaRif" value="${escapeHtml(D.config.empresa.rif)}" class="border rounded-xl p-2 w-full"></div>
-                    <div class="mb-2"><label>Logo (URL o emoji)</label><input type="text" id="empresaLogo" value="${escapeHtml(D.config.empresa.logo)}" placeholder="🛍️ o URL de imagen" class="border rounded-xl p-2 w-full"></div>
-                    <button id="guardarEmpresa" class="btn-azul-redondeado btn-redondeado w-full mt-2 py-2">💾 Guardar datos empresa</button>
-                </div>
-                <div class="config-section"><h3 class="font-bold mb-3 text-center">⚙️ Opciones generales</h3>
-                    <div class="flex flex-wrap justify-center gap-4">
-                        <label class="flex items-center gap-2"><span class="font-semibold">IVA 16%</span><input type="checkbox" id="toggleIVA" ${D.config.ivaActivo?'checked':''}></label>
-                        <label class="flex items-center gap-2"><span class="font-semibold">Margen ganancia</span><input type="checkbox" id="toggleMargen" ${D.config.usarMargen?'checked':''}></label>
-                        <label class="flex items-center gap-2"><span class="font-semibold">Prevenir cierre</span><input type="checkbox" id="togglePrevenirCierre" ${D.config.prevenirCierre?'checked':''}></label>
-                        <label class="flex items-center gap-2"><span class="font-semibold">Mostrar Dólar</span><input type="checkbox" id="toggleMostrarDolar" ${D.config.mostrarDolar?'checked':''}></label>
-                    </div>
-                </div>
-                <div class="config-section"><h3 class="font-bold mb-3 text-center">🎨 Temas de color</h3><div class="flex flex-wrap justify-center gap-2" id="paletaColores"></div></div>
-                <div class="config-section"><h3 class="font-bold mb-3 text-center">🖌️ Fondos de contraste</h3><div class="flex justify-center gap-4 flex-wrap">${fondos.map(f => `<div class="bg-option ${D.config.backgroundMode===f.id?'selected':''}" style="background:${f.id==='light'?'#ffffff':f.id==='gray'?'#2c2c2c':'#000000'}; border:2px solid var(--accent);" data-mode="${f.id}"><div class="text-center text-xs" style="color:${f.id==='light'?'#000':'#fff'}">${f.nombre}</div></div>`).join('')}</div></div>
-                <div class="mt-4 text-xs text-center">💰 POS Profesional - Datos locales</div>
-            </div>
-        `;
+        document.getElementById('appRoot').innerHTML = `<div class="page-header-fixed"><div class="module-header"><h2 id="tituloModule" class="module-title ${bloqueado?'module-title-bloqueado':''}" style="color:${accent}" onmousedown="iniciarBloqueo(this,'Configuración')" onmouseup="cancelarBloqueo()" onmouseleave="cancelarBloqueo()" title="${bloqueado?'🔒 Bloqueado - Mantén presionado para desbloquear':'🔓 Mantén presionado para bloquear'}">Configuración</h2><div id="btnVolverModule" class="btn-back ${bloqueado?'btn-back-bloqueado':''}" onclick="${bloqueado?'':'backToHome()'}">${bloqueado?'<i class="fas fa-lock"></i> Bloqueado':'<i class="fas fa-arrow-left"></i> Volver'}</div></div></div>
+        <div class="page-container"><div class="config-section"><h3 class="font-bold mb-3 text-center">🏢 Datos de la Empresa</h3><div class="mb-2"><label>Nombre de la tienda</label><input type="text" id="empresaNombre" value="${escapeHtml(D.config.empresa.nombre)}" class="border rounded-xl p-2 w-full"></div><div class="mb-2"><label>Dirección</label><input type="text" id="empresaDireccion" value="${escapeHtml(D.config.empresa.direccion)}" class="border rounded-xl p-2 w-full"></div><div class="mb-2"><label>Teléfono</label><input type="text" id="empresaTelefono" value="${escapeHtml(D.config.empresa.telefono)}" class="border rounded-xl p-2 w-full"></div><div class="mb-2"><label>RIF</label><input type="text" id="empresaRif" value="${escapeHtml(D.config.empresa.rif)}" class="border rounded-xl p-2 w-full"></div><div class="mb-2"><label>Logo (URL o emoji)</label><input type="text" id="empresaLogo" value="${escapeHtml(D.config.empresa.logo)}" placeholder="🛍️ o URL de imagen" class="border rounded-xl p-2 w-full"></div><button id="guardarEmpresa" class="btn-azul-redondeado btn-redondeado w-full mt-2 py-2">💾 Guardar datos empresa</button></div><div class="config-section"><h3 class="font-bold mb-3 text-center">⚙️ Opciones generales</h3><div class="flex flex-wrap justify-center gap-4"><label class="flex items-center gap-2"><span class="font-semibold">IVA 16%</span><input type="checkbox" id="toggleIVA" ${D.config.ivaActivo?'checked':''}></label><label class="flex items-center gap-2"><span class="font-semibold">Margen ganancia</span><input type="checkbox" id="toggleMargen" ${D.config.usarMargen?'checked':''}></label><label class="flex items-center gap-2"><span class="font-semibold">Prevenir cierre</span><input type="checkbox" id="togglePrevenirCierre" ${D.config.prevenirCierre?'checked':''}></label><label class="flex items-center gap-2"><span class="font-semibold">Mostrar Dólar</span><input type="checkbox" id="toggleMostrarDolar" ${D.config.mostrarDolar?'checked':''}></label></div></div><div class="config-section"><h3 class="font-bold mb-3 text-center">🎨 Temas de color</h3><div class="flex flex-wrap justify-center gap-2" id="paletaColores"></div></div><div class="config-section"><h3 class="font-bold mb-3 text-center">🖌️ Fondos de contraste</h3><div class="flex justify-center gap-4 flex-wrap">${fondos.map(f => `<div class="bg-option ${D.config.backgroundMode===f.id?'selected':''}" style="background:${f.id==='light'?'#ffffff':f.id==='gray'?'#2c2c2c':'#000000'}; border:2px solid var(--accent);" data-mode="${f.id}"><div class="text-center text-xs" style="color:${f.id==='light'?'#000':'#fff'}">${f.nombre}</div></div>`).join('')}</div></div><div class="mt-4 text-xs text-center">💰 POS Profesional - Datos locales</div></div>`;
         if(volverBloqueado) document.getElementById('btnVolverModule').onclick = () => mostrarOverlayBloqueo();
-        
         document.getElementById('guardarEmpresa').onclick = async () => {
-            D.config.empresa = {
-                nombre: document.getElementById('empresaNombre').value,
-                direccion: document.getElementById('empresaDireccion').value,
-                telefono: document.getElementById('empresaTelefono').value,
-                rif: document.getElementById('empresaRif').value,
-                logo: document.getElementById('empresaLogo').value
-            };
+            D.config.empresa = { nombre: document.getElementById('empresaNombre').value, direccion: document.getElementById('empresaDireccion').value, telefono: document.getElementById('empresaTelefono').value, rif: document.getElementById('empresaRif').value, logo: document.getElementById('empresaLogo').value };
             await saveConfig();
             alert('✓ Datos de empresa guardados');
         };
-        
         let paleta = document.getElementById('paletaColores');
-        colores.forEach(c => {
-            let circle = document.createElement('div'); circle.className = 'color-circle'; circle.style.backgroundColor = c;
-            circle.onclick = async () => { D.config.theme = c; if(esOscuro(c)) D.config.backgroundMode = 'light'; await saveConfig(); renderConfig(); };
-            paleta.appendChild(circle);
-        });
-        document.querySelectorAll('.bg-option').forEach(opt => {
-            opt.onclick = async () => {
-                let nuevo = opt.getAttribute('data-mode');
-                if(esOscuro(D.config.theme) && nuevo === 'dark') return;
-                D.config.backgroundMode = nuevo; await saveConfig(); renderConfig();
-            };
-        });
+        colores.forEach(c => { let circle = document.createElement('div'); circle.className = 'color-circle'; circle.style.backgroundColor = c; circle.onclick = async () => { D.config.theme = c; if(esOscuro(c)) D.config.backgroundMode = 'light'; await saveConfig(); renderConfig(); }; paleta.appendChild(circle); });
+        document.querySelectorAll('.bg-option').forEach(opt => { opt.onclick = async () => { let nuevo = opt.getAttribute('data-mode'); if(esOscuro(D.config.theme) && nuevo === 'dark') return; D.config.backgroundMode = nuevo; await saveConfig(); renderConfig(); }; });
         document.getElementById('toggleIVA').onchange = async e => { D.config.ivaActivo = e.target.checked; await saveConfig(); };
         document.getElementById('toggleMargen').onchange = async e => { D.config.usarMargen = e.target.checked; await saveConfig(); renderConfig(); };
         document.getElementById('togglePrevenirCierre').onchange = async e => { D.config.prevenirCierre = e.target.checked; await saveConfig(); };
         document.getElementById('toggleMostrarDolar').onchange = async e => { D.config.mostrarDolar = e.target.checked; await saveConfig(); renderHome(); };
-        
         guardarSesion('config', null);
     }
     
     // ==================== PWA ====================
     (function setupPWA() {
         const generarIcono = (size, bgColor = D.config.theme, textColor = '#ffffff') => {
-            const canvas = document.createElement('canvas');
-            canvas.width = size;
-            canvas.height = size;
+            const canvas = document.createElement('canvas'); canvas.width = size; canvas.height = size;
             const ctx = canvas.getContext('2d');
-            ctx.fillStyle = bgColor;
-            ctx.fillRect(0, 0, size, size);
-            ctx.fillStyle = textColor;
-            ctx.font = `bold ${size * 0.45}px "Inter", system-ui, sans-serif`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
+            ctx.fillStyle = bgColor; ctx.fillRect(0, 0, size, size);
+            ctx.fillStyle = textColor; ctx.font = `bold ${size * 0.45}px "Inter", system-ui, sans-serif`;
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
             ctx.fillText('JAM', size/2, size/2);
             return canvas.toDataURL('image/png');
         };
@@ -1101,7 +762,7 @@
         const manifest = { name: "JAM POS - Tienda Profesional", short_name: "JAM POS", description: "Sistema de punto de venta profesional", start_url: ".", display: "standalone", theme_color: D.config.theme, background_color: "#ffffff", icons: icons };
         const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
         document.querySelector('link[rel="manifest"]').setAttribute('href', URL.createObjectURL(manifestBlob));
-        const swCode = `const CACHE_NAME='jampos-v25';const iconUrls=${JSON.stringify(icons.map(i=>i.src))};self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(['/','https://cdn.tailwindcss.com','https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css','https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js',...iconUrls])));self.skipWaiting();});self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('/'))));});`;
+        const swCode = `const CACHE_NAME='jampos-v26';const iconUrls=${JSON.stringify(icons.map(i=>i.src))};self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(['/','https://cdn.tailwindcss.com','https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css','https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js',...iconUrls])));self.skipWaiting();});self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('/'))));});`;
         navigator.serviceWorker.register(URL.createObjectURL(new Blob([swCode],{type:'application/javascript'})));
         let deferredPrompt;
         window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredPrompt = e; if(!document.querySelector('.install-btn')){ let btn = document.createElement('button'); btn.innerText = '📲 Instalar App'; btn.className = 'install-btn'; btn.style.background = D.config.theme; btn.style.color = '#ffffff'; btn.onclick = () => { if(deferredPrompt){ deferredPrompt.prompt(); deferredPrompt.userChoice.then(()=>btn.remove()); } else btn.remove(); }; document.body.appendChild(btn); } });
