@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" id="themeColorMeta" content="#ffffff">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <link rel="manifest" href="data:application/manifest+json,{}" id="manifestLink">
     <title>JAM POS · Tienda Profesional</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -195,7 +197,7 @@
         config: 'jam_pos_config'
     };
     
-    // ==================== FUNCIONES DE PERSISTENCIA SINCRONAS CON localStorage ====================
+    // ==================== FUNCIONES DE PERSISTENCIA ====================
     function loadFromStorage(key, defaultValue = []) {
         const data = localStorage.getItem(key);
         if (!data) return defaultValue;
@@ -221,7 +223,6 @@
             items.push(item);
         }
         saveToStorage(key, items);
-        // Actualizar también D[store]
         D[store] = items;
     }
     
@@ -254,8 +255,7 @@
     let clienteSeleccionadoId = null;
     let clienteInputText = '';
     
-    async function loadAllData(){
-        // Cargar todos los datos desde localStorage
+    function loadAllData(){
         D.productos = getAll('productos');
         D.clientes = getAll('clientes');
         D.proveedores = getAll('proveedores');
@@ -263,7 +263,6 @@
         D.empleados = getAll('empleados');
         D.ventas = getAll('ventas');
         
-        // Cargar configuración
         const savedConfig = localStorage.getItem(STORAGE_KEYS.config);
         if (savedConfig) {
             try {
@@ -278,7 +277,6 @@
         if(D.config.mostrarDolar === undefined) D.config.mostrarDolar = true;
         if(D.config.prevenirCierre === undefined) D.config.prevenirCierre = true;
         
-        // Datos iniciales si están vacíos
         if(D.productos.length === 0){
             let init = [
                 {id:"p1", nombre:"Café Gourmet 500g", categoria:"Alimentos", precioVentaBs:58.5, precioVentaUsd:.86, stock:24, codigo:"CAF001", proveedor:"Distribuidora Central", costoRealBs:38},
@@ -293,10 +291,11 @@
             saveItem('clientes', c);
             D.clientes = [c];
         }
-        applyTheme(); await saveConfig();
+        applyTheme();
+        saveConfig();
     }
     
-    async function saveConfig(){ 
+    function saveConfig(){ 
         saveToStorage(STORAGE_KEYS.config, D.config);
         applyTheme(); 
     }
@@ -305,7 +304,32 @@
         document.documentElement.style.setProperty('--accent', D.config.theme);
         document.body.className = '';
         document.body.classList.add(`${D.config.backgroundMode}-mode`);
-        document.getElementById('themeColorMeta')?.setAttribute('content', D.config.backgroundMode === 'light' ? '#ffffff' : (D.config.backgroundMode === 'gray' ? '#2c2c2c' : '#000000'));
+        
+        let navBarColor;
+        switch(D.config.backgroundMode) {
+            case 'light': navBarColor = '#ffffff'; break;
+            case 'gray': navBarColor = '#2c2c2c'; break;
+            case 'dark': navBarColor = '#000000'; break;
+            default: navBarColor = '#ffffff';
+        }
+        
+        let themeColorMeta = document.getElementById('themeColorMeta');
+        if(!themeColorMeta){
+            themeColorMeta = document.createElement('meta');
+            themeColorMeta.id = 'themeColorMeta';
+            themeColorMeta.name = 'theme-color';
+            document.head.appendChild(themeColorMeta);
+        }
+        themeColorMeta.setAttribute('content', navBarColor);
+        
+        let statusBarMeta = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
+        if(!statusBarMeta){
+            statusBarMeta = document.createElement('meta');
+            statusBarMeta.name = 'apple-mobile-web-app-status-bar-style';
+            document.head.appendChild(statusBarMeta);
+        }
+        statusBarMeta.setAttribute('content', D.config.backgroundMode === 'light' ? 'default' : 'black');
+        
         actualizarInfoCard();
     }
     
@@ -333,7 +357,7 @@
                 D.config.lastUpdate = new Date().toLocaleDateString();
                 await saveConfig();
             }
-        }catch(e){}
+        }catch(e){ console.log("Sin conexión, usando tasa guardada"); }
         if (D.config.mostrarDolar) {
             let span = document.getElementById('tasaDolarMostrar');
             if(span) span.innerText = fmtDolar(D.config.dolarRate);
@@ -736,7 +760,7 @@
         for(let it of carrito){
             let prod = D.productos.find(p => p.id === it.id);
             prod.stock -= it.cantidad;
-            saveItem('productos', prod);
+            await saveItem('productos', prod);
             let idx = D.productos.findIndex(p => p.id === it.id);
             if(idx !== -1) D.productos[idx].stock = prod.stock;
         }
@@ -771,7 +795,7 @@
             cambio: pagado - totalVenta, 
             tipoPago: tipoPago 
         };
-        saveItem('ventas', nuevaVenta);
+        await saveItem('ventas', nuevaVenta);
         D.ventas.push(nuevaVenta);
         mostrarTicket(nuevaVenta);
     }
@@ -948,17 +972,17 @@
             if(precioVentaBs > 0) precioVentaUsd = precioVentaBs / tasa();
             else if(precioVentaUsd > 0) precioVentaBs = precioVentaUsd * tasa();
             let nuevo = { id: esNuevo ? 'p'+Date.now() : prod.id, nombre: document.getElementById('nombre').value, codigo: document.getElementById('codigo').value, categoria: document.getElementById('categoria').value, proveedor: document.getElementById('proveedor').value, stock: parseInt(document.getElementById('stock').value) || 0, precioVentaBs, precioVentaUsd: precioVentaUsd.toFixed(2), costoRealBs: costoRealBs };
-            if(esNuevo){ saveItem('productos', nuevo); D.productos.push(nuevo); }
-            else{ let idx = D.productos.findIndex(p => p.id === prod.id); D.productos[idx] = nuevo; saveItem('productos', nuevo); }
+            if(esNuevo){ await saveItem('productos', nuevo); D.productos.push(nuevo); }
+            else{ let idx = D.productos.findIndex(p => p.id === prod.id); D.productos[idx] = nuevo; await saveItem('productos', nuevo); }
             modal.remove();
             if(desdeBusqueda) renderHome(); else renderInventario();
         };
     }
-    window.eliminarProducto = async id => { if(confirm('¿Eliminar producto?')){ deleteItem('productos', id); D.productos = D.productos.filter(p => p.id !== id); renderInventario(); } };
+    window.eliminarProducto = async id => { if(confirm('¿Eliminar producto?')){ await deleteItem('productos', id); D.productos = D.productos.filter(p => p.id !== id); renderInventario(); } };
     
     async function renderCrud(store, titulo, campos){
         let bloqueado = volverBloqueado, accent = D.config.theme;
-        let items = getAll(store); D[store] = items;
+        let items = await getAll(store); D[store] = items;
         document.getElementById('appRoot').innerHTML = `<div class="page-header-fixed"><div class="module-header"><h2 id="tituloModule" class="module-title ${bloqueado?'module-title-bloqueado':''}" style="color:${accent}" onmousedown="iniciarBloqueo(this,'${titulo}')" onmouseup="cancelarBloqueo()" onmouseleave="cancelarBloqueo()" title="${bloqueado?'🔒 Bloqueado - Mantén presionado para desbloquear':'🔓 Mantén presionado para bloquear'}">${titulo}</h2><div id="btnVolverModule" class="btn-back ${bloqueado?'btn-back-bloqueado':''}" onclick="${bloqueado?'':'backToHome()'}">${bloqueado?'<i class="fas fa-lock"></i> Bloqueado':'<i class="fas fa-arrow-left"></i> Volver'}</div></div></div><div class="page-container"><div class="mb-3 relative"><i class="fas fa-search absolute left-3 top-3 text-gray-400"></i><input type="text" id="searchCrud" placeholder="Buscar..." class="pl-9 pr-3 py-2 border rounded-xl w-full"></div><button id="agregarBtn" class="btn-azul-redondeado btn-redondeado mb-4 py-2 px-4">+ Agregar ${titulo}</button><div id="listaCrud" class="scroll-area"></div></div>`;
         if(volverBloqueado) document.getElementById('btnVolverModule').onclick = () => mostrarOverlayBloqueo();
         let search = document.getElementById('searchCrud'), agregar = document.getElementById('agregarBtn');
@@ -984,7 +1008,7 @@
     }
     async function eliminarItemCrud(store, id){
         if(confirm('¿Eliminar este elemento?')){
-            deleteItem(store, id);
+            await deleteItem(store, id);
             D[store] = D[store].filter(i => i.id !== id);
             if(store === 'clientes') renderCrud('clientes','Clientes',['cedula','nombre','telefono','direccion','email']);
             else if(store === 'proveedores') renderCrud('proveedores','Proveedores',['rif','nombre','telefono','contacto','direccion']);
@@ -993,9 +1017,9 @@
         }
     }
     
-    // ==================== REPORTES (con enlace a detalle del cliente) ====================
+    // ==================== REPORTES ====================
     async function renderReportes(){
-        let ventas = getAll('ventas');
+        let ventas = await getAll('ventas');
         let totalVentas = ventas.reduce((a,b)=>a+(b.total||0),0);
         let totalGanancia = ventas.reduce((a,b)=>a+(b.gananciaTotal||0),0);
         let totalGastos = D.gastos.reduce((a,b)=>a+(b.montoBs||0),0);
@@ -1037,7 +1061,7 @@
         guardarSesion('config', null);
     }
     
-    // ==================== PWA ====================
+    // ==================== SERVICE WORKER CORREGIDO - AHORA SÍ FUNCIONA OFFLINE ====================
     (function setupPWA() {
         const generarIcono = (size, bgColor = D.config.theme, textColor = '#ffffff') => {
             const canvas = document.createElement('canvas'); canvas.width = size; canvas.height = size;
@@ -1053,13 +1077,108 @@
         const manifest = { name: "JAM POS - Tienda Profesional", short_name: "JAM POS", description: "Sistema de punto de venta profesional", start_url: ".", display: "standalone", theme_color: D.config.theme, background_color: "#ffffff", icons: icons };
         const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
         document.querySelector('link[rel="manifest"]').setAttribute('href', URL.createObjectURL(manifestBlob));
-        const swCode = `const CACHE_NAME='jampos-v32';const iconUrls=${JSON.stringify(icons.map(i=>i.src))};self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(['/','https://cdn.tailwindcss.com','https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css','https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js',...iconUrls])));self.skipWaiting();});self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('/'))));});`;
-        navigator.serviceWorker.register(URL.createObjectURL(new Blob([swCode],{type:'application/javascript'})));
+        
+        // SERVICE WORKER CORREGIDO - CACHEA TODOS LOS RECURSOS
+        const swCode = `
+const CACHE_NAME = 'jampos-offline-v5';
+const urlsToCache = [
+    '/',
+    'https://cdn.tailwindcss.com',
+    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
+    'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js'
+];
+
+self.addEventListener('install', event => {
+    console.log('Service Worker instalando...');
+    event.waitUntil(
+        caches.open(CACHE_NAME)
+            .then(cache => {
+                console.log('Cacheando recursos iniciales');
+                return cache.addAll(urlsToCache);
+            })
+            .then(() => self.skipWaiting())
+    );
+});
+
+self.addEventListener('activate', event => {
+    console.log('Service Worker activado');
+    event.waitUntil(
+        caches.keys().then(cacheNames => {
+            return Promise.all(
+                cacheNames.map(cacheName => {
+                    if (cacheName !== CACHE_NAME) {
+                        console.log('Eliminando cache antigua:', cacheName);
+                        return caches.delete(cacheName);
+                    }
+                })
+            );
+        }).then(() => self.clients.claim())
+    );
+});
+
+self.addEventListener('fetch', event => {
+    event.respondWith(
+        caches.match(event.request)
+            .then(response => {
+                if (response) {
+                    return response;
+                }
+                return fetch(event.request)
+                    .then(response => {
+                        if (!response || response.status !== 200 || response.type !== 'basic') {
+                            return response;
+                        }
+                        const responseToCache = response.clone();
+                        caches.open(CACHE_NAME)
+                            .then(cache => {
+                                cache.put(event.request, responseToCache);
+                            });
+                        return response;
+                    })
+                    .catch(() => {
+                        if (event.request.mode === 'navigate') {
+                            return caches.match('/');
+                        }
+                        return new Response('Recurso no disponible offline', { status: 503 });
+                    });
+            })
+    );
+});
+`;
+        if ('serviceWorker' in navigator) {
+            const blob = new Blob([swCode], {type: 'application/javascript'});
+            const swUrl = URL.createObjectURL(blob);
+            navigator.serviceWorker.register(swUrl)
+                .then(reg => console.log('Service Worker registrado:', reg))
+                .catch(err => console.log('Error al registrar SW:', err));
+        }
+        
         let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredPrompt = e; if(!document.querySelector('.install-btn')){ let btn = document.createElement('button'); btn.innerText = '📲 Instalar App'; btn.className = 'install-btn'; btn.style.background = D.config.theme; btn.style.color = '#ffffff'; btn.onclick = () => { if(deferredPrompt){ deferredPrompt.prompt(); deferredPrompt.userChoice.then(()=>btn.remove()); } else btn.remove(); }; document.body.appendChild(btn); } });
+        window.addEventListener('beforeinstallprompt', e => { 
+            e.preventDefault(); 
+            deferredPrompt = e; 
+            if(!document.querySelector('.install-btn')){ 
+                let btn = document.createElement('button'); 
+                btn.innerText = '📲 Instalar App'; 
+                btn.className = 'install-btn'; 
+                btn.style.background = D.config.theme; 
+                btn.style.color = '#ffffff'; 
+                btn.onclick = () => { 
+                    if(deferredPrompt){ 
+                        deferredPrompt.prompt(); 
+                        deferredPrompt.userChoice.then(()=>btn.remove()); 
+                    } else btn.remove(); 
+                }; 
+                document.body.appendChild(btn); 
+            } 
+        });
     })();
     
-    (async () => { await loadAllData(); await actualizarTasa(); renderHome(); cargarSesion(); })();
+    // ==================== INICIALIZACIÓN ====================
+    loadAllData();
+    actualizarTasa();
+    renderHome();
+    cargarSesion();
 </script>
 </body>
 </html>
