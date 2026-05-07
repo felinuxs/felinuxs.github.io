@@ -4,8 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" id="themeColorMeta" content="#ffffff">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-status-bar-style" id="statusBarStyleMeta" content="default">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="msapplication-navbutton-color" id="msNavColor" content="#ffffff">
     <link rel="manifest" href="data:application/manifest+json,{}" id="manifestLink">
     <title>JAM POS · Tienda Profesional</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -106,6 +107,8 @@
         .modulo-bloqueado-mensaje i { font-size: 50px; color: #dc2626; margin-bottom: 15px; }
         .modulo-bloqueado-mensaje p { margin: 10px 0; font-size: 14px; }
         .modulo-bloqueado-mensaje small { font-size: 11px; color: gray; }
+        
+        /* Estilos para los temas */
         body.light-mode{background:#fff}
         body.light-mode .main-container, body.light-mode .page-container, body.light-mode .card-bcv, body.light-mode .product-card, body.light-mode .client-card, body.light-mode .modal-form-content, body.light-mode .home-container{background:#fff!important;color:#1e1e1e!important}
         body.light-mode input, body.light-mode select, body.light-mode textarea, body.light-mode .btn-back{background:#fff;color:#1e1e1e;border-color:#e2e8f0}
@@ -114,6 +117,7 @@
         body.light-mode .led-converter{background:var(--accent)}
         body.light-mode .led-converter i{color:#fff!important}
         body.light-mode #globalResults, body.light-mode .global-result{background:#fff!important;color:#1e1e1e!important;border-color:#e2e8f0!important}
+        
         body.gray-mode{background:#2c2c2c}
         body.gray-mode .main-container, body.gray-mode .page-container, body.gray-mode .card-bcv, body.gray-mode .product-card, body.gray-mode .client-card, body.gray-mode .modal-form-content, body.gray-mode .home-container{background:#3a3a3a!important;color:#f0f0f0!important}
         body.gray-mode input, body.gray-mode select, body.gray-mode textarea, body.gray-mode .btn-back{background:#4a4a4a!important;color:#f0f0f0!important;border-color:#6a6a6a!important}
@@ -122,6 +126,7 @@
         body.gray-mode .led-converter{background:var(--accent)}
         body.gray-mode .led-converter i{color:#fff!important}
         body.gray-mode #globalResults, body.gray-mode .global-result{background:#4a4a4a!important;color:#f0f0f0!important;border-color:#6a6a6a!important}
+        
         body.dark-mode{background:#000!important}
         body.dark-mode .main-container, body.dark-mode .page-container, body.dark-mode .card-bcv, body.dark-mode .product-card, body.dark-mode .client-card, body.dark-mode .modal-form-content, body.dark-mode .home-container{background:#0a0a0a!important;color:#e0e0e0!important}
         body.dark-mode input, body.dark-mode select, body.dark-mode textarea, body.dark-mode .btn-back{background:#1a1a1a!important;color:#e0e0e0!important;border-color:#3a3a3a!important}
@@ -130,13 +135,27 @@
         body.dark-mode .led-converter{background:var(--accent)}
         body.dark-mode .led-converter i{color:#000!important}
         body.dark-mode #globalResults, body.dark-mode .global-result{background:#1a1a1a!important;color:#e0e0e0!important;border-color:#3a3a3a!important}
+        
+        /* Fix para barra de navegación inferior */
+        body {
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+        }
+        
+        @media (display-mode: standalone) {
+            body {
+                background-color: var(--nav-bar-color, #ffffff);
+            }
+        }
+        
         @media print {
             body * { visibility: hidden; }
             #ticketParaImprimir, #ticketParaImprimir * { visibility: visible; }
             #ticketParaImprimir { position: absolute; top: 0; left: 0; width: 280px; margin: 0; padding: 10px; box-shadow: none; }
             .ticket-buttons { display: none; }
         }
+        
         ::-webkit-scrollbar{width:6px}
+        
         .cliente-wrapper { position: relative; display: flex; align-items: center; }
         .cliente-wrapper input { flex: 1; padding-right: 40px; }
         .cliente-wrapper .btn-nuevo-cliente-icon {
@@ -305,16 +324,34 @@
         document.body.className = '';
         document.body.classList.add(`${D.config.backgroundMode}-mode`);
         
+        // Determinar el color de la barra de navegación según el modo
         let navBarColor;
+        let statusBarStyle = 'default';
+        
         switch(D.config.backgroundMode) {
-            case 'light': navBarColor = '#ffffff'; break;
-            case 'gray': navBarColor = '#2c2c2c'; break;
-            case 'dark': navBarColor = '#000000'; break;
-            default: navBarColor = '#ffffff';
+            case 'light':
+                navBarColor = '#ffffff';
+                statusBarStyle = 'default';
+                break;
+            case 'gray':
+                navBarColor = '#2c2c2c';
+                statusBarStyle = 'black-translucent';
+                break;
+            case 'dark':
+                navBarColor = '#000000';
+                statusBarStyle = 'black-translucent';
+                break;
+            default:
+                navBarColor = '#ffffff';
+                statusBarStyle = 'default';
         }
         
+        // Establecer variable CSS para la barra de navegación
+        document.documentElement.style.setProperty('--nav-bar-color', navBarColor);
+        
+        // 1. Actualizar theme-color para Android/mobile Chrome
         let themeColorMeta = document.getElementById('themeColorMeta');
-        if(!themeColorMeta){
+        if (!themeColorMeta) {
             themeColorMeta = document.createElement('meta');
             themeColorMeta.id = 'themeColorMeta';
             themeColorMeta.name = 'theme-color';
@@ -322,15 +359,39 @@
         }
         themeColorMeta.setAttribute('content', navBarColor);
         
-        let statusBarMeta = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
-        if(!statusBarMeta){
+        // 2. Para iOS - status bar style
+        let statusBarMeta = document.getElementById('statusBarStyleMeta');
+        if (!statusBarMeta) {
             statusBarMeta = document.createElement('meta');
+            statusBarMeta.id = 'statusBarStyleMeta';
             statusBarMeta.name = 'apple-mobile-web-app-status-bar-style';
             document.head.appendChild(statusBarMeta);
         }
-        statusBarMeta.setAttribute('content', D.config.backgroundMode === 'light' ? 'default' : 'black');
+        statusBarMeta.setAttribute('content', statusBarStyle);
         
+        // 3. Para Windows Phone / Edge
+        let msNavColor = document.getElementById('msNavColor');
+        if (!msNavColor) {
+            msNavColor = document.createElement('meta');
+            msNavColor.id = 'msNavColor';
+            msNavColor.name = 'msapplication-navbutton-color';
+            document.head.appendChild(msNavColor);
+        }
+        msNavColor.setAttribute('content', navBarColor);
+        
+        // 4. Actualizar la visualización de tasa/card
         actualizarInfoCard();
+        
+        // 5. Forzar la actualización del color de la barra de navegación en Android
+        setTimeout(() => {
+            let bg = getComputedStyle(document.body).backgroundColor;
+            let meta = document.querySelector('meta[name="theme-color"]');
+            if (meta && bg !== 'rgba(0, 0, 0, 0)') {
+                meta.setAttribute('content', bg);
+            }
+        }, 100);
+        
+        console.log('Tema aplicado:', D.config.backgroundMode, 'Barra color:', navBarColor);
     }
     
     function actualizarInfoCard() {
