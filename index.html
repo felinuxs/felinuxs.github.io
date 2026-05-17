@@ -360,7 +360,7 @@
         const endpoints = [
             {
                 name: 'PyDolarVenezuela (BCV)',
-                url: 'https://pydolarvenezuela-api.vercel.app/api/v1/dollar?page=bcv',
+                url: 'https://api.exchangerate-api.com/v4/latest/USD',
                 extractor: (data) => {
                     // Estructura esperada: { moneda: "USD", precio: 63.45, ... } o array
                     if (data && data.price) return parseFloat(data.price);
