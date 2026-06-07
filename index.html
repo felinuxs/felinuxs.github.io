@@ -6,12 +6,14 @@
     <meta name="theme-color" id="themeColorMeta" content="#ffffff">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="JAM POS">
     <meta name="color-scheme" id="colorSchemeMeta" content="light">
     <link rel="manifest" href="data:application/manifest+json,{}" id="manifestLink">
     <title>JAM POS · Tienda Profesional</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <style>
         *{transition:all .2s ease;user-select:none;-webkit-tap-highlight-color:transparent;box-sizing:border-box}
         body{font-family:'Inter',system-ui,sans-serif;margin:0;padding:0;min-height:100vh;overflow-x:hidden}
@@ -20,7 +22,7 @@
         .page-container,.home-container{padding:0 12px 20px 12px;min-height:auto}
         .btn-redondeado{border-radius:40px!important;padding:8px 16px!important;font-weight:600!important;cursor:pointer!important;border:none!important}
         .btn-redondeado:active{transform:scale(.96)}
-        .btn-editar-redondeado, .btn-eliminar-redondeado, .btn-verde-redondeado {
+        .btn-editar-redondeado, .btn-eliminar-redondeado, .btn-verde-redondeado, .btn-copiar-redondeado {
             padding: 4px 10px !important;
             font-size: 0.7rem !important;
             font-weight: 500 !important;
@@ -29,10 +31,11 @@
             align-items: center !important;
             gap: 4px !important;
         }
-        .btn-editar-redondeado i, .btn-eliminar-redondeado i, .btn-verde-redondeado i { font-size: 0.65rem !important; }
+        .btn-editar-redondeado i, .btn-eliminar-redondeado i, .btn-verde-redondeado i, .btn-copiar-redondeado i { font-size: 0.65rem !important; }
         .btn-editar-redondeado{background:#f97316!important;color:#fff!important}
         .btn-eliminar-redondeado{background:#ef4444!important;color:#fff!important}
         .btn-verde-redondeado{background:#10b981!important;color:#fff!important}
+        .btn-copiar-redondeado{background:#6b7280!important;color:#fff!important}
         .btn-azul-redondeado{background:var(--accent)!important;color:#fff!important;padding:8px 16px!important;font-weight:600!important}
         .btn-finalizar-venta {
             background: #10b981 !important;
@@ -127,17 +130,101 @@
         @media print { body * { visibility: hidden; } #ticketParaImprimir, #ticketParaImprimir * { visibility: visible; } #ticketParaImprimir { position: absolute; top: 0; left: 0; width: 280px; margin: 0; padding: 10px; box-shadow: none; } .ticket-buttons { display: none; } }
         ::-webkit-scrollbar{width:6px}
         
-        .cliente-wrapper { position: relative; display: flex; align-items: center; gap: 8px; }
-        .cliente-wrapper input { flex: 1; padding-right: 40px; }
-        .btn-nuevo-cliente-icon { background: var(--accent); border: none; border-radius: 40px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: white; font-size: 1.1rem; transition: 0.1s linear; flex-shrink: 0; }
-        .btn-nuevo-cliente-icon:active { transform: scale(0.94); }
-        .sugerencias-clientes { position: absolute; z-index: 150; background: inherit; border: 1px solid var(--accent); border-radius: 20px; max-height: 200px; overflow-y: auto; width: calc(100% - 50px); margin-top: 2px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); top: 100%; left: 0; }
+        /* Wrappers para íconos dentro de inputs */
+        .input-wrapper {
+            position: relative;
+            width: 100%;
+        }
+        .input-wrapper i {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--accent);
+            cursor: pointer;
+            font-size: 1.1rem;
+            z-index: 10;
+        }
+        .input-wrapper input {
+            padding-right: 40px;
+        }
+        
+        .cliente-wrapper {
+            position: relative;
+            width: 100%;
+        }
+        .cliente-wrapper input {
+            padding-right: 40px;
+        }
+        .btn-nuevo-cliente-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--accent);
+            cursor: pointer;
+            font-size: 1.1rem;
+            z-index: 10;
+        }
+        .btn-nuevo-cliente-icon:active { transform: translateY(-50%) scale(0.95); }
+        
+        .sugerencias-clientes { position: absolute; z-index: 150; background: inherit; border: 1px solid var(--accent); border-radius: 20px; max-height: 200px; overflow-y: auto; width: 100%; margin-top: 2px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); top: 100%; left: 0; }
         .sugerencia-cliente { padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #eee; }
         .sugerencia-cliente:hover { background: rgba(0,0,0,0.05); }
         .sugerencia-cliente:last-child { border-bottom: none; }
         .cliente-link { cursor: pointer; color: var(--accent); text-decoration: underline; }
         .notificacion-flotante { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); padding: 10px 20px; border-radius: 50px; z-index: 10000; font-size: 12px; font-weight: 500; animation: fadeOut 3s ease forwards; }
         @keyframes fadeOut { 0% { opacity: 1; transform: translateX(-50%) translateY(0); } 70% { opacity: 1; } 100% { opacity: 0; transform: translateX(-50%) translateY(-10px); visibility: hidden; } }
+
+        /* Escáner */
+        .scanner-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: black;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .scanner-header {
+            position: absolute;
+            top: 20px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 20px;
+            z-index: 2001;
+        }
+        #reader {
+            width: 100%;
+            max-width: 500px;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+        
+        /* Área de productos más amplia */
+        .lista-productos-amplia {
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+        .ver-ticket-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 2px 10px;
+            font-size: 11px;
+            cursor: pointer;
+            margin-left: 8px;
+        }
+        .ver-ticket-btn:active { transform: scale(0.95); }
     </style>
 </head>
 <body><div class="main-container" id="appRoot"></div>
@@ -148,54 +235,6 @@
     const fmtDolar = v => Number(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const esOscuro = c => { let r=parseInt(c.slice(1,3),16), g=parseInt(c.slice(3,5),16), b=parseInt(c.slice(5,7),16); return(.299*r + .587*g + .114*b) < 128; };
     function mostrarNotificacion(mensaje, tipo = 'info') { const notif = document.createElement('div'); notif.className = 'notificacion-flotante'; notif.style.backgroundColor = tipo === 'success' ? '#10b981' : (tipo === 'error' ? '#ef4444' : '#3b82f6'); notif.style.color = 'white'; notif.innerText = mensaje; document.body.appendChild(notif); setTimeout(() => notif.remove(), 3000); }
-    
-    // ==================== FUNCIÓN PARA TINTAR BARRA DE NAVEGACIÓN INFERIOR (ANDROID) ====================
-    function setNavigationBarColor(color) {
-        // Método 1: Tintar mediante theme-color (solo barra superior, pero ayuda)
-        let metaTheme = document.querySelector('meta[name="theme-color"]');
-        if(metaTheme) metaTheme.setAttribute('content', color);
-        
-        // Método 2: Intentar usar la API experimental de Android (WebView/Chrome)
-        if(window.navigator?.virtualKeyboard) {
-            // No es suficiente, pero intentamos con CSS
-        }
-        // Método 3: La forma más efectiva es usar la siguiente línea (solo funciona si la app está instalada o en standalone)
-        // No hay API directa, pero podemos forzar un cambio de color-scheme y usar env()
-        document.documentElement.style.setProperty('--nav-bar-color', color);
-        
-        // Método 4: Para Chrome en Android (>= 2020) se puede usar 'displayCutout' y background
-        // Creamos un style dinámico para forzar el color de la barra de navegación
-        let style = document.getElementById('dynamic-nav-style');
-        if(!style) {
-            style = document.createElement('style');
-            style.id = 'dynamic-nav-style';
-            document.head.appendChild(style);
-        }
-        style.innerHTML = `
-            @media (display-mode: standalone) {
-                body {
-                    padding-bottom: env(safe-area-inset-bottom);
-                }
-            }
-            /* Forzar el color de fondo de la barra de navegación en Android (truco visual) */
-            body::before {
-                display: none;
-            }
-        `;
-        
-        // Truco: Si el modo es light, claro; si dark, negro; si gray, gris oscuro
-        // Esto no es perfecto pero muchos navegadores lo respetan con theme-color
-        // Además agregamos un meta para color-scheme
-        let colorSchemeMeta = document.getElementById('colorSchemeMeta');
-        if(colorSchemeMeta) {
-            if(color === '#ffffff' || color === '#fff') colorSchemeMeta.setAttribute('content', 'light');
-            else colorSchemeMeta.setAttribute('content', 'dark');
-        }
-        
-        // Método avanzado: Forzar repintado visual
-        document.body.style.transform = 'translateZ(0)';
-        setTimeout(() => { document.body.style.transform = ''; }, 100);
-    }
     
     // ==================== STORAGE KEYS ====================
     const STORAGE_KEYS = {
@@ -220,7 +259,7 @@
     let D = {
         productos: [], clientes: [], proveedores: [], gastos: [], empleados: [], ventas: [],
         config: { 
-            key:'mainConfig', theme:'#3b82f6', dolarRate:67.85, lastUpdate:new Date().toLocaleDateString(), 
+            key:'mainConfig', theme:'#a855f7', dolarRate:67.85, lastUpdate:new Date().toLocaleDateString(), 
             ivaActivo:true, usarMargen:false, backgroundMode:'light', prevenirCierre:true,
             mostrarDolar: true, tasaManual: false, tasaManualValue: 67.85,
             empresa: { nombre:'JAM POS', direccion:'', telefono:'', rif:'', logo:'' }
@@ -229,17 +268,8 @@
     let currentModule = 'home', volverBloqueado = false, timeoutTitulo = null;
     let carrito = [], tipoPago = 'pago_movil', clienteSeleccionadoId = null, clienteInputText = '', totalVenta = 0;
     
-    // ==================== PERSISTENCIA DE SESIÓN DE VENTA ====================
-    function guardarSesionVenta() {
-        saveToStorage(STORAGE_KEYS.session_cart, carrito);
-        saveToStorage(STORAGE_KEYS.session_meta, { tipoPago, clienteSeleccionadoId, clienteInputText });
-    }
-    function cargarSesionVenta() {
-        const savedCart = loadFromStorage(STORAGE_KEYS.session_cart, null);
-        if(savedCart && Array.isArray(savedCart)) carrito = savedCart;
-        const savedMeta = loadFromStorage(STORAGE_KEYS.session_meta, null);
-        if(savedMeta) { tipoPago = savedMeta.tipoPago || 'pago_movil'; clienteSeleccionadoId = savedMeta.clienteSeleccionadoId || null; clienteInputText = savedMeta.clienteInputText || ''; }
-    }
+    function guardarSesionVenta() { saveToStorage(STORAGE_KEYS.session_cart, carrito); saveToStorage(STORAGE_KEYS.session_meta, { tipoPago, clienteSeleccionadoId, clienteInputText }); }
+    function cargarSesionVenta() { const savedCart = loadFromStorage(STORAGE_KEYS.session_cart, null); if(savedCart && Array.isArray(savedCart)) carrito = savedCart; const savedMeta = loadFromStorage(STORAGE_KEYS.session_meta, null); if(savedMeta) { tipoPago = savedMeta.tipoPago || 'pago_movil'; clienteSeleccionadoId = savedMeta.clienteSeleccionadoId || null; clienteInputText = savedMeta.clienteInputText || ''; } }
     function sincronizarUIVenta() {
         if(document.getElementById('clienteIdHidden')) document.getElementById('clienteIdHidden').value = clienteSeleccionadoId || '';
         if(document.getElementById('clienteInput')) document.getElementById('clienteInput').value = clienteInputText;
@@ -297,31 +327,8 @@
         document.documentElement.style.setProperty('--accent', D.config.theme);
         document.body.className = '';
         document.body.classList.add(`${D.config.backgroundMode}-mode`);
-        
-        let navBarColor = getNavBarColorFromMode();
-        
-        // Actualizar theme-color para barra superior y para intentar pintar la inferior
         let themeColorMeta = document.getElementById('themeColorMeta');
-        if(!themeColorMeta){
-            themeColorMeta = document.createElement('meta');
-            themeColorMeta.id = 'themeColorMeta';
-            themeColorMeta.name = 'theme-color';
-            document.head.appendChild(themeColorMeta);
-        }
-        themeColorMeta.setAttribute('content', navBarColor);
-        
-        // Forzar tintado de barra de navegación inferior mediante función especial
-        setNavigationBarColor(navBarColor);
-        
-        // Actualizar barra de estado iOS
-        let statusBarMeta = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
-        if(!statusBarMeta){
-            statusBarMeta = document.createElement('meta');
-            statusBarMeta.name = 'apple-mobile-web-app-status-bar-style';
-            document.head.appendChild(statusBarMeta);
-        }
-        statusBarMeta.setAttribute('content', D.config.backgroundMode === 'light' ? 'default' : 'black');
-        
+        if(themeColorMeta) themeColorMeta.setAttribute('content', getNavBarColorFromMode());
         actualizarInfoCard();
     }
     
@@ -340,7 +347,6 @@
         }
     }
     
-    // ==================== API TASA ====================
     async function obtenerTasaDesdeAPI() {
         try {
             const controller = new AbortController();
@@ -399,22 +405,76 @@
         }
     });
     
+    // ==================== ESCÁNER ====================
+    let scannerActivo = false;
+    function iniciarEscaner(callback) {
+        if(scannerActivo) return;
+        scannerActivo = true;
+        const scannerDiv = document.createElement('div');
+        scannerDiv.className = 'scanner-container';
+        scannerDiv.id = 'scannerContainer';
+        scannerDiv.innerHTML = `
+            <div class="scanner-header">
+                <button id="btnCerrarScanner" class="btn-redondeado" style="background:#ef4444; color:white;"><i class="fas fa-times"></i> Cerrar</button>
+                <span style="color:white; font-weight:bold;"><i class="fas fa-camera"></i> Escanear código</span>
+            </div>
+            <div id="reader" style="width:100%; max-width:500px;"></div>
+            <p style="color:white; margin-top:20px; text-align:center; font-size:12px;">🔍 Enfoca el código de barras</p>
+        `;
+        document.body.appendChild(scannerDiv);
+        
+        const html5QrCode = new Html5Qrcode("reader");
+        const config = { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 };
+        
+        html5QrCode.start({ facingMode: "environment" }, config, (decodedText) => {
+            html5QrCode.stop();
+            scannerDiv.remove();
+            scannerActivo = false;
+            if(callback) callback(decodedText);
+        }, (error) => {});
+        
+        document.getElementById('btnCerrarScanner').onclick = () => {
+            if(html5QrCode.isScanning) html5QrCode.stop();
+            scannerDiv.remove();
+            scannerActivo = false;
+        };
+    }
+
     // ==================== VENTAS ====================
     async function renderVentas(){
         let bloqueado = volverBloqueado, accent = D.config.theme;
         const html = `
             <div class="page-header-fixed"><div class="module-header"><h2 id="tituloModule" class="module-title ${bloqueado?'module-title-bloqueado':''}" style="color:${accent}" onmousedown="iniciarBloqueo(this,'Ventas')" onmouseup="cancelarBloqueo()" onmouseleave="cancelarBloqueo()">Ventas</h2><div id="btnVolverModule" class="btn-back ${bloqueado?'btn-back-bloqueado':''}" onclick="${bloqueado?'':'backToHome()'}">${bloqueado?'<i class="fas fa-lock"></i> Bloqueado':'<i class="fas fa-arrow-left"></i> Volver'}</div></div></div>
             <div class="page-container">
-                <div class="mb-3"><label>Cliente</label>
+                <!-- Cliente con ícono de nuevo cliente DENTRO del campo -->
+                <div class="mb-3">
                     <div class="cliente-wrapper">
                         <input type="text" id="clienteInput" placeholder="Buscar por nombre o cédula..." class="border rounded-xl p-2 w-full" autocomplete="off" value="${escapeHtml(clienteInputText)}">
-                        <button id="btnNuevoClienteIcon" class="btn-nuevo-cliente-icon" title="Nuevo cliente"><i class="fas fa-plus"></i></button>
+                        <button id="btnNuevoClienteIcon" class="btn-nuevo-cliente-icon" title="Nuevo cliente"><i class="fas fa-user-plus"></i></button>
                     </div>
                     <div id="sugerenciasClientes" class="sugerencias-clientes hidden"></div>
                     <input type="hidden" id="clienteIdHidden" value="${clienteSeleccionadoId || ''}">
                 </div>
-                <div class="mb-3"><input type="text" id="buscarProducto" placeholder="Buscar producto..." class="border-2 rounded-xl w-full p-2" style="border-color:${accent}"><div id="sugerencias" class="mt-1 border rounded-xl hidden divide-y max-h-48 overflow-auto"></div></div>
-                <div class="p-3 rounded-xl mb-3" style="background:rgba(0,0,0,0.05)"><div class="font-bold mb-2">🛒 Carrito</div><div id="carritoLista" class="max-h-52 overflow-auto"></div><div class="border-t pt-2 mt-2"><div class="ticket-line"><span>SUBTOTAL</span><span id="subtotal">0,00 Bs</span></div>${D.config.ivaActivo?'<div class="ticket-line"><span>IVA (16%)</span><span id="iva">0,00 Bs</span></div>':''}<div class="ticket-line font-bold"><span>TOTAL</span><span id="total">0,00 Bs</span></div></div></div>
+                
+                <!-- Búsqueda de producto con escáner y nuevo cliente dentro -->
+                <div class="mb-3 input-wrapper">
+                    <i class="fas fa-camera" id="btnAbrirEscanerVenta"></i>
+                    <input type="text" id="buscarProducto" placeholder="Buscar o escanear producto..." class="border-2 rounded-xl w-full p-2" style="border-color:${accent}">
+                    <div id="sugerencias" class="mt-1 border rounded-xl hidden divide-y max-h-48 overflow-auto"></div>
+                </div>
+                
+                <!-- Carrito y totales -->
+                <div class="p-3 rounded-xl mb-3" style="background:rgba(0,0,0,0.05)">
+                    <div class="font-bold mb-2">🛒 Carrito</div>
+                    <div id="carritoLista" class="max-h-52 overflow-auto"></div>
+                    <div class="border-t pt-2 mt-2">
+                        <div class="ticket-line"><span>SUBTOTAL</span><span id="subtotal">0,00 Bs</span></div>
+                        ${D.config.ivaActivo?'<div class="ticket-line"><span>IVA (16%)</span><span id="iva">0,00 Bs</span></div>':''}
+                        <div class="ticket-line font-bold"><span>TOTAL</span><span id="total">0,00 Bs</span></div>
+                    </div>
+                </div>
+                
+                <!-- Tipo de pago -->
                 <div class="mb-3"><label>Tipo de pago</label><select id="tipoPago" class="border rounded-xl p-2 w-full">
                     <option value="efectivo_bs">💵 Efectivo (Bs)</option>
                     <option value="dolares">💵 Dólares (USD)</option>
@@ -431,6 +491,7 @@
         actualizarCarritoUI();
         sincronizarUIVenta();
         
+        // Cliente con ícono dentro
         const inputCliente = document.getElementById('clienteInput');
         const sugerenciasDiv = document.getElementById('sugerenciasClientes');
         const hiddenId = document.getElementById('clienteIdHidden');
@@ -446,7 +507,38 @@
         };
         inputCliente.addEventListener('input', e => { clienteInputText = e.target.value; buscarClientes(); guardarSesionVenta(); });
         
-        document.getElementById('btnNuevoClienteIcon').onclick = async () => { await window.mostrarFormCrud('clientes', null, ['cedula','nombre','telefono','direccion','email'], true); D.clientes = getAll('clientes'); inputCliente.value = ''; hiddenId.value = ''; clienteSeleccionadoId = null; clienteInputText = ''; guardarSesionVenta(); };
+        document.getElementById('btnNuevoClienteIcon').onclick = async () => { 
+            await window.mostrarFormCrud('clientes', null, ['cedula','nombre','telefono','direccion','email'], true); 
+            D.clientes = getAll('clientes'); 
+            inputCliente.value = ''; 
+            hiddenId.value = ''; 
+            clienteSeleccionadoId = null; 
+            clienteInputText = ''; 
+            guardarSesionVenta(); 
+        };
+        
+        // Escáner para ventas
+        document.getElementById('btnAbrirEscanerVenta').onclick = () => {
+            iniciarEscaner((codigo) => {
+                const productoEncontrado = D.productos.find(p => p.codigo === codigo);
+                if (productoEncontrado) {
+                    if(productoEncontrado.stock > 0){
+                        let ex = carrito.find(c => c.id === productoEncontrado.id);
+                        if(ex) ex.cantidad++;
+                        else carrito.push({...productoEncontrado, cantidad:1});
+                        actualizarCarritoUI();
+                        guardarSesionVenta();
+                        mostrarNotificacion(`✅ ${productoEncontrado.nombre} agregado al carrito`, 'success');
+                    } else {
+                        mostrarNotificacion(`❌ ${productoEncontrado.nombre} sin stock`, 'error');
+                    }
+                } else {
+                    if(confirm(`Producto con código "${codigo}" no encontrado. ¿Desea crearlo ahora?`)){
+                        mostrarFormProducto(null, false, codigo);
+                    }
+                }
+            });
+        };
         
         document.getElementById('buscarProducto').addEventListener('input', e => buscarProductos(e.target.value));
         document.getElementById('finalizarVenta').onclick = () => finalizarVenta();
@@ -617,6 +709,17 @@
         actualizarCarritoUI();
     }
     
+    // Función para copiar detalles del producto
+    window.copiarDetallesProducto = async (producto) => {
+        const texto = `📦 *${producto.nombre}*\n🔢 Código: ${producto.codigo || 'N/A'}\n💰 Precio: ${fmtPrecio(producto.precioVentaBs)} Bs ($${producto.precioVentaUsd})\n📦 Stock: ${producto.stock}\n🏷️ Categoría: ${producto.categoria || 'N/A'}\n🚚 Proveedor: ${producto.proveedor || 'N/A'}`;
+        try {
+            await navigator.clipboard.writeText(texto);
+            mostrarNotificacion('✓ Detalles del producto copiados', 'success');
+        } catch(e) {
+            alert('No se pudo copiar');
+        }
+    };
+    
     // ==================== TICKET ====================
     function imprimirTicket(venta) {
         const formasPago = { 'efectivo_bs':'EFECTIVO Bs','pago_movil':'PAGO MÓVIL','transferencia':'TRANSFERENCIA','tarjeta_debito':'TARJETA DÉBITO','dolares':'DÓLARES' };
@@ -647,7 +750,7 @@
     window.descargarTicketImagen = async () => { const ticket = document.getElementById('ticketParaImprimir'); if(!ticket) return; try { const canvas = await html2canvas(ticket, { scale: 2, backgroundColor: '#ffffff' }); const link = document.createElement('a'); link.download = `ticket_${Date.now()}.png`; link.href = canvas.toDataURL(); link.click(); } catch(e) { alert('Error al generar imagen'); } };
     window.copiarTicketTexto = () => { const ticket = document.getElementById('ticketParaImprimir'); if(!ticket) return; const texto = ticket.innerText; navigator.clipboard.writeText(texto).then(() => alert('✓ Ticket copiado')).catch(() => alert('Error al copiar')); };
     
-    // ==================== NAVEGACIÓN CON PERSISTENCIA ====================
+    // ==================== NAVEGACIÓN ====================
     window.navigateTo = m => {
         if(volverBloqueado && currentModule !== 'home') { mostrarOverlayBloqueo(); return; }
         if(currentModule === 'ventas') guardarSesionVenta();
@@ -766,6 +869,7 @@
                         <div class="flex gap-2 mt-2">
                             <button onclick="event.stopPropagation();editarProductoDesdeBusqueda('${p.id}')" class="btn-editar-redondeado">✏️ Editar</button>
                             <button onclick="event.stopPropagation();venderProductoDesdeBusqueda('${p.id}')" class="btn-verde-redondeado">🛒 Vender</button>
+                            <button onclick="event.stopPropagation();copiarDetallesProducto(${JSON.stringify(p).replace(/"/g, '&quot;')})" class="btn-copiar-redondeado"><i class="fas fa-copy"></i> Copiar</button>
                         </div>
                     </div>`;
         });
@@ -795,7 +899,7 @@
     // ==================== INVENTARIO ====================
     async function renderInventario(){
         let bloqueado = volverBloqueado, accent = D.config.theme;
-        document.getElementById('appRoot').innerHTML = `<div class="page-header-fixed"><div class="module-header"><h2 id="tituloModule" class="module-title ${bloqueado?'module-title-bloqueado':''}" style="color:${accent}" onmousedown="iniciarBloqueo(this,'Inventario')" onmouseup="cancelarBloqueo()" onmouseleave="cancelarBloqueo()">Inventario</h2><div id="btnVolverModule" class="btn-back ${bloqueado?'btn-back-bloqueado':''}" onclick="${bloqueado?'':'backToHome()'}">${bloqueado?'<i class="fas fa-lock"></i> Bloqueado':'<i class="fas fa-arrow-left"></i> Volver'}</div></div></div><div class="page-container"><div class="mb-3 relative"><i class="fas fa-search absolute left-3 top-3 text-gray-400"></i><input type="text" id="searchInv" placeholder="Buscar producto..." class="pl-9 pr-3 py-2 border rounded-xl w-full"></div><button id="nuevoProducto" class="btn-azul-redondeado btn-redondeado mb-4 py-2 px-4">+ Nuevo producto</button><div id="listaProductos" class="scroll-area"></div></div>`;
+        document.getElementById('appRoot').innerHTML = `<div class="page-header-fixed"><div class="module-header"><h2 id="tituloModule" class="module-title ${bloqueado?'module-title-bloqueado':''}" style="color:${accent}" onmousedown="iniciarBloqueo(this,'Inventario')" onmouseup="cancelarBloqueo()" onmouseleave="cancelarBloqueo()">Inventario</h2><div id="btnVolverModule" class="btn-back ${bloqueado?'btn-back-bloqueado':''}" onclick="${bloqueado?'':'backToHome()'}">${bloqueado?'<i class="fas fa-lock"></i> Bloqueado':'<i class="fas fa-arrow-left"></i> Volver'}</div></div></div><div class="page-container"><div class="mb-3 relative"><i class="fas fa-search absolute left-3 top-3 text-gray-400"></i><input type="text" id="searchInv" placeholder="Buscar producto..." class="pl-9 pr-3 py-2 border rounded-xl w-full"></div><button id="nuevoProducto" class="btn-azul-redondeado btn-redondeado mb-4 py-2 px-4">+ Nuevo producto</button><div id="listaProductos" class="scroll-area lista-productos-amplia"></div></div>`;
         if(volverBloqueado) document.getElementById('btnVolverModule').onclick = () => mostrarOverlayBloqueo();
         document.getElementById('searchInv').addEventListener('input', e => renderListaProductos(e.target.value.toLowerCase()));
         document.getElementById('nuevoProducto').onclick = () => mostrarFormProducto(null);
@@ -805,15 +909,32 @@
     function renderListaProductos(filtro = ''){
         let filt = D.productos.filter(p => p.nombre.toLowerCase().includes(filtro) || (p.codigo && p.codigo.toLowerCase().includes(filtro)));
         let cont = document.getElementById('listaProductos'); if(!cont) return;
-        cont.innerHTML = filt.map(p => `<div class="product-card"><div class="flex justify-between flex-wrap"><span class="font-bold">${escapeHtml(p.nombre)}</span><span class="text-xs">${escapeHtml(p.codigo||'')}</span></div><div class="text-sm">💰 ${fmtPrecio(p.precioVentaBs)} Bs / $${p.precioVentaUsd} | 📦 Stock: ${p.stock}</div><div class="text-xs break-words">🏷️ ${escapeHtml(p.categoria||'')} | 🚚 ${escapeHtml(p.proveedor||'—')}</div><div class="flex gap-2 mt-2"><button onclick="mostrarFormProducto('${p.id}')" class="btn-editar-redondeado">✏️ Editar</button><button onclick="eliminarProducto('${p.id}')" class="btn-eliminar-redondeado">🗑️ Eliminar</button></div></div>`).join('');
+        cont.innerHTML = filt.map(p => `<div class="product-card"><div class="flex justify-between flex-wrap"><span class="font-bold">${escapeHtml(p.nombre)}</span><span class="text-xs">${escapeHtml(p.codigo||'')}</span></div><div class="text-sm">💰 ${fmtPrecio(p.precioVentaBs)} Bs / $${p.precioVentaUsd} | 📦 Stock: ${p.stock}</div><div class="text-xs break-words">🏷️ ${escapeHtml(p.categoria||'')} | 🚚 ${escapeHtml(p.proveedor||'—')}</div><div class="flex gap-2 mt-2"><button onclick="mostrarFormProducto('${p.id}')" class="btn-editar-redondeado">✏️ Editar</button><button onclick="eliminarProducto('${p.id}')" class="btn-eliminar-redondeado">🗑️ Eliminar</button><button onclick="copiarDetallesProducto(${JSON.stringify(p).replace(/"/g, '&quot;')})" class="btn-copiar-redondeado"><i class="fas fa-copy"></i> Copiar</button></div></div>`).join('');
     }
     
-    async function mostrarFormProducto(id, desdeBusqueda = false){
+    async function mostrarFormProducto(id, desdeBusqueda = false, codigoPrefijado = null){
         let prod = id ? D.productos.find(p => p.id === id) : null;
         let esNuevo = !prod;
         let modal = document.createElement('div'); modal.className = 'modal-form';
-        modal.innerHTML = `<div class="modal-form-content"><h3 class="text-xl font-bold mb-4">${esNuevo ? 'Nuevo Producto' : 'Editar Producto'}</h3><div class="mb-3"><label>Nombre</label><input id="nombre" value="${escapeHtml(prod?.nombre||'')}" class="border rounded-xl p-2 w-full"></div><div class="mb-3"><label>Código</label><input id="codigo" value="${escapeHtml(prod?.codigo||'')}" class="border rounded-xl p-2 w-full"></div><div class="mb-3"><label>Categoría</label><input id="categoria" value="${escapeHtml(prod?.categoria||'')}" class="border rounded-xl p-2 w-full"></div><div class="mb-3"><label>Proveedor</label><input id="proveedor" value="${escapeHtml(prod?.proveedor||'')}" class="border rounded-xl p-2 w-full"></div><div class="mb-3"><label>Stock</label><input type="number" id="stock" value="${prod?.stock||0}" class="border rounded-xl p-2 w-full"></div><div class="mb-3"><label>Costo Real (Bs)</label><input type="number" id="costoReal" step="any" value="${prod?.costoRealBs||0}" class="border rounded-xl p-2 w-full"></div><div class="mb-3"><label>Precio Venta (Bs)</label><input type="number" id="ventaBs" step="any" value="${prod?.precioVentaBs||''}" class="border rounded-xl p-2 w-full"></div><div class="mb-3"><label>Precio Venta (USD)</label><input type="number" id="ventaUsd" step="any" value="${prod?.precioVentaUsd||''}" class="border rounded-xl p-2 w-full"></div><div class="flex gap-3 mt-4"><button id="guardarBtn" class="btn-azul-redondeado btn-redondeado flex-1 py-2 font-bold">Guardar</button><button id="cancelarBtn" class="btn-redondeado flex-1 py-2 bg-gray-200">Cancelar</button></div></div>`;
+        modal.innerHTML = `<div class="modal-form-content"><h3 class="text-xl font-bold mb-4">${esNuevo ? 'Nuevo Producto' : 'Editar Producto'}</h3>
+            <div class="mb-3"><label>Nombre</label><input id="nombre" value="${escapeHtml(prod?.nombre||'')}" class="border rounded-xl p-2 w-full"></div>
+            <div class="mb-3"><label>Código de barras</label><div class="input-wrapper"><input id="codigo" value="${codigoPrefijado || escapeHtml(prod?.codigo||'')}" class="border rounded-xl p-2 w-full" placeholder="Código para escanear"><i class="fas fa-camera" id="btnEscanearCodigoProducto"></i></div></div>
+            <div class="mb-3"><label>Categoría</label><input id="categoria" value="${escapeHtml(prod?.categoria||'')}" class="border rounded-xl p-2 w-full"></div>
+            <div class="mb-3"><label>Proveedor</label><input id="proveedor" value="${escapeHtml(prod?.proveedor||'')}" class="border rounded-xl p-2 w-full"></div>
+            <div class="mb-3"><label>Stock</label><input type="number" id="stock" value="${prod?.stock||0}" class="border rounded-xl p-2 w-full"></div>
+            <div class="mb-3"><label>Costo Real (Bs)</label><input type="number" id="costoReal" step="any" value="${prod?.costoRealBs||0}" class="border rounded-xl p-2 w-full"></div>
+            <div class="mb-3"><label>Precio Venta (Bs)</label><input type="number" id="ventaBs" step="any" value="${prod?.precioVentaBs||''}" class="border rounded-xl p-2 w-full"></div>
+            <div class="mb-3"><label>Precio Venta (USD)</label><input type="number" id="ventaUsd" step="any" value="${prod?.precioVentaUsd||''}" class="border rounded-xl p-2 w-full"></div>
+            <div class="flex gap-3 mt-4"><button id="guardarBtn" class="btn-azul-redondeado btn-redondeado flex-1 py-2 font-bold">Guardar</button><button id="cancelarBtn" class="btn-redondeado flex-1 py-2 bg-gray-200">Cancelar</button></div></div>`;
         document.body.appendChild(modal);
+        
+        document.getElementById('btnEscanearCodigoProducto').onclick = () => {
+            iniciarEscaner((codigo) => {
+                document.getElementById('codigo').value = codigo;
+                mostrarNotificacion(`Código ${codigo} asignado`, 'success');
+            });
+        };
+        
         document.getElementById('cancelarBtn').onclick = () => modal.remove();
         let ventaBs = document.getElementById('ventaBs'), ventaUsd = document.getElementById('ventaUsd'), costoReal = document.getElementById('costoReal');
         let tasa = () => D.config.dolarRate;
@@ -881,9 +1002,14 @@
         let totalGastos = D.gastos.reduce((a,b)=>a+(b.montoBs||0),0);
         let bloqueado = volverBloqueado, accent = D.config.theme;
         document.getElementById('appRoot').innerHTML = `<div class="page-header-fixed"><div class="module-header"><h2 id="tituloModule" class="module-title ${bloqueado?'module-title-bloqueado':''}" style="color:${accent}" onmousedown="iniciarBloqueo(this,'Reportes')" onmouseup="cancelarBloqueo()" onmouseleave="cancelarBloqueo()">Reportes</h2><div id="btnVolverModule" class="btn-back ${bloqueado?'btn-back-bloqueado':''}" onclick="${bloqueado?'':'backToHome()'}">${bloqueado?'<i class="fas fa-lock"></i> Bloqueado':'<i class="fas fa-arrow-left"></i> Volver'}</div></div></div>
-        <div class="page-container"><div class="p-3 rounded-xl mb-3" style="background:rgba(0,0,0,0.05)"><p>💰 Ventas totales: ${fmtPrecio(totalVentas)} Bs</p><p>📈 Ganancia bruta: ${fmtPrecio(totalGanancia)} Bs</p><p>💸 Gastos totales: ${fmtPrecio(totalGastos)} Bs</p><p>📊 Utilidad neta: ${fmtPrecio(totalGanancia - totalGastos)} Bs</p></div><h3 class="font-bold mb-2">Últimas ventas</h3><div class="max-h-64 overflow-auto">${ventas.slice().reverse().map(v => `<div class="border-b py-2 text-sm"><b>${escapeHtml(v.id)}</b> - ${escapeHtml(v.fecha)}<br>Cliente: <span class="cliente-link" onclick="window.mostrarDetalleCliente('${v.clienteId || ''}')">${escapeHtml(v.cliente)}</span> | Total: ${fmtPrecio(v.total)} Bs<br>Tipo pago: ${escapeHtml(v.tipoPago||'efectivo_bs')}<br>Items: ${v.items.map(i=>`${escapeHtml(i.nombre)} x${i.cantidad}`).join(', ')}</div>`).join('')}</div></div>`;
+        <div class="page-container"><div class="p-3 rounded-xl mb-3" style="background:rgba(0,0,0,0.05)"><p>💰 Ventas totales: ${fmtPrecio(totalVentas)} Bs</p><p>📈 Ganancia bruta: ${fmtPrecio(totalGanancia)} Bs</p><p>💸 Gastos totales: ${fmtPrecio(totalGastos)} Bs</p><p>📊 Utilidad neta: ${fmtPrecio(totalGanancia - totalGastos)} Bs</p></div><h3 class="font-bold mb-2">Últimas ventas</h3><div class="max-h-64 overflow-auto">${ventas.slice().reverse().map(v => `<div class="border-b py-2 text-sm"><b>${escapeHtml(v.id)}</b> - ${escapeHtml(v.fecha)}<br>Cliente: <span class="cliente-link" onclick="window.mostrarDetalleCliente('${v.clienteId || ''}')">${escapeHtml(v.cliente)}</span> | Total: ${fmtPrecio(v.total)} Bs<br>Tipo pago: ${escapeHtml(v.tipoPago||'efectivo_bs')}<br>Items: ${v.items.map(i=>`${escapeHtml(i.nombre)} x${i.cantidad}`).join(', ')}<button class="ver-ticket-btn" onclick="window.verTicketAnterior('${v.id}')"><i class="fas fa-receipt"></i> Ver ticket</button></div>`).join('')}</div></div>`;
         if(volverBloqueado) document.getElementById('btnVolverModule').onclick = () => mostrarOverlayBloqueo();
     }
+    
+    window.verTicketAnterior = (ventaId) => {
+        const venta = D.ventas.find(v => v.id === ventaId);
+        if(venta) mostrarTicket(venta);
+    };
     
     window.mostrarDetalleCliente = (clienteId) => {
         if (!clienteId) return;
@@ -1053,12 +1179,13 @@
         document.querySelector('link[rel="manifest"]').setAttribute('href', URL.createObjectURL(manifestBlob));
         
         const swCode = `
-const CACHE_NAME = 'jampos-offline-v8';
+const CACHE_NAME = 'jampos-offline-v9';
 const urlsToCache = [
     '/',
     'https://cdn.tailwindcss.com',
     'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
-    'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js'
+    'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js',
+    'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js'
 ];
 
 self.addEventListener('install', event => {
