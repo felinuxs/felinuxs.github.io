@@ -3,18 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="theme-color" id="themeColorMeta" content="#ffffff">
+    <meta name="theme-color" id="themeColorMeta" content="#a855f7">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="JAM POS">
     <meta name="color-scheme" id="colorSchemeMeta" content="light">
     <link rel="manifest" href="data:application/manifest+json,{}" id="manifestLink">
-    <title>JAM POS · Tienda Profesional</title>
+    <title>JAM POS · Tienda Profesional (Demo 24h)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <style>
+        /* Todos los estilos originales se mantienen */
         *{transition:all .2s ease;user-select:none;-webkit-tap-highlight-color:transparent;box-sizing:border-box}
         body{font-family:'Inter',system-ui,sans-serif;margin:0;padding:0;min-height:100vh;overflow-x:hidden}
         .main-container{max-width:100%;margin:0 auto;padding:0;min-height:100vh}
@@ -99,7 +100,6 @@
         .modulo-bloqueado-mensaje p { margin: 10px 0; font-size: 14px; }
         .modulo-bloqueado-mensaje small { font-size: 11px; color: gray; }
         
-        /* Modos de fondo */
         body.light-mode{background:#fff}
         body.light-mode .main-container, body.light-mode .page-container, body.light-mode .card-bcv, body.light-mode .product-card, body.light-mode .client-card, body.light-mode .modal-form-content, body.light-mode .home-container{background:#fff!important;color:#1e1e1e!important}
         body.light-mode input, body.light-mode select, body.light-mode textarea, body.light-mode .btn-back{background:#fff;color:#1e1e1e;border-color:#e2e8f0}
@@ -130,105 +130,153 @@
         @media print { body * { visibility: hidden; } #ticketParaImprimir, #ticketParaImprimir * { visibility: visible; } #ticketParaImprimir { position: absolute; top: 0; left: 0; width: 280px; margin: 0; padding: 10px; box-shadow: none; } .ticket-buttons { display: none; } }
         ::-webkit-scrollbar{width:6px}
         
-        /* Wrappers para íconos dentro de inputs */
-        .input-wrapper {
-            position: relative;
-            width: 100%;
-        }
-        .input-wrapper i {
-            position: absolute;
-            right: 14px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--accent);
-            cursor: pointer;
-            font-size: 1.1rem;
-            z-index: 10;
-        }
-        .input-wrapper input {
-            padding-right: 40px;
-        }
-        
-        .cliente-wrapper {
-            position: relative;
-            width: 100%;
-        }
-        .cliente-wrapper input {
-            padding-right: 40px;
-        }
-        .btn-nuevo-cliente-icon {
-            position: absolute;
-            right: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            color: var(--accent);
-            cursor: pointer;
-            font-size: 1.1rem;
-            z-index: 10;
-        }
+        .input-wrapper { position: relative; width: 100%; }
+        .input-wrapper i { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: var(--accent); cursor: pointer; font-size: 1.1rem; z-index: 10; }
+        .input-wrapper input { padding-right: 40px; }
+        .cliente-wrapper { position: relative; width: 100%; }
+        .cliente-wrapper input { padding-right: 40px; }
+        .btn-nuevo-cliente-icon { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--accent); cursor: pointer; font-size: 1.1rem; z-index: 10; }
         .btn-nuevo-cliente-icon:active { transform: translateY(-50%) scale(0.95); }
-        
         .sugerencias-clientes { position: absolute; z-index: 150; background: inherit; border: 1px solid var(--accent); border-radius: 20px; max-height: 200px; overflow-y: auto; width: 100%; margin-top: 2px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); top: 100%; left: 0; }
         .sugerencia-cliente { padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #eee; }
         .sugerencia-cliente:hover { background: rgba(0,0,0,0.05); }
         .sugerencia-cliente:last-child { border-bottom: none; }
         .cliente-link { cursor: pointer; color: var(--accent); text-decoration: underline; }
-        .notificacion-flotante { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); padding: 10px 20px; border-radius: 50px; z-index: 10000; font-size: 12px; font-weight: 500; animation: fadeOut 3s ease forwards; }
+        .notificacion-flotante { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); padding: 10px 20px; border-radius: 50px; z-index: 10000; font-size: 12px; font-weight: 500; animation: fadeOut 3s ease forwards; background: #3b82f6; color: white; }
         @keyframes fadeOut { 0% { opacity: 1; transform: translateX(-50%) translateY(0); } 70% { opacity: 1; } 100% { opacity: 0; transform: translateX(-50%) translateY(-10px); visibility: hidden; } }
 
-        /* Escáner */
-        .scanner-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: black;
-            z-index: 2000;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-        .scanner-header {
-            position: absolute;
-            top: 20px;
-            left: 0;
-            right: 0;
-            display: flex;
-            justify-content: space-between;
-            padding: 0 20px;
-            z-index: 2001;
-        }
-        #reader {
-            width: 100%;
-            max-width: 500px;
-            border-radius: 20px;
-            overflow: hidden;
-        }
-        
-        /* Área de productos más amplia */
-        .lista-productos-amplia {
-            max-height: 60vh;
-            overflow-y: auto;
-        }
-        .ver-ticket-btn {
-            background: var(--accent);
-            color: white;
-            border: none;
-            border-radius: 20px;
-            padding: 2px 10px;
-            font-size: 11px;
-            cursor: pointer;
-            margin-left: 8px;
-        }
+        .scanner-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: black; z-index: 2000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .scanner-header { position: absolute; top: 20px; left: 0; right: 0; display: flex; justify-content: space-between; padding: 0 20px; z-index: 2001; }
+        #reader { width: 100%; max-width: 500px; border-radius: 20px; overflow: hidden; }
+        .lista-productos-amplia { max-height: 60vh; overflow-y: auto; }
+        .ver-ticket-btn { background: var(--accent); color: white; border: none; border-radius: 20px; padding: 2px 10px; font-size: 11px; cursor: pointer; margin-left: 8px; }
         .ver-ticket-btn:active { transform: scale(0.95); }
+        
+        /* Estilos para el modal de bloqueo y desbloqueo */
+        .lock-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 10000; display: flex; align-items: center; justify-content: center; flex-direction: column; backdrop-filter: blur(10px); }
+        .lock-card { background: white; border-radius: 30px; padding: 30px; max-width: 350px; text-align: center; margin: 20px; }
+        .lock-card h2 { color: #ef4444; margin-bottom: 15px; }
+        .lock-card input { border: 2px solid #a855f7; border-radius: 50px; padding: 12px; width: 100%; margin: 15px 0; text-align: center; font-size: 18px; }
+        .demo-alert { position: fixed; bottom: 20px; left: 20px; right: 20px; background: #f59e0b; color: #000; padding: 12px; border-radius: 16px; text-align: center; font-size: 12px; z-index: 9999; box-shadow: 0 4px 12px rgba(0,0,0,0.2); cursor: pointer; }
+        .demo-alert i { margin-right: 8px; }
+        .demo-alert:active { transform: scale(0.98); }
     </style>
 </head>
 <body><div class="main-container" id="appRoot"></div>
 <script>
+    // ==================== SISTEMA DE BLOQUEO POR 24 HORAS ====================
+    const LOCK_KEY = 'jam_pos_unlock_code';
+    const INSTALL_DATE_KEY = 'jam_pos_install_date';
+    const UNLOCK_CODE = 'JAMPOS2024'; // Código de desbloqueo (se entrega al pagar $5)
+    const CONTACT_PHONE = '04248668338';
+    
+    // Verificar si ya está desbloqueado
+    function isUnlocked() {
+        const savedCode = localStorage.getItem(LOCK_KEY);
+        return savedCode === UNLOCK_CODE;
+    }
+    
+    // Verificar si ya pasaron 24 horas desde la primera instalación
+    function isExpired() {
+        if (isUnlocked()) return false;
+        
+        let installDate = localStorage.getItem(INSTALL_DATE_KEY);
+        if (!installDate) {
+            // Primera vez que se abre la app
+            const now = new Date();
+            localStorage.setItem(INSTALL_DATE_KEY, now.toISOString());
+            return false;
+        }
+        
+        const install = new Date(installDate);
+        const now = new Date();
+        const hoursDiff = (now - install) / (1000 * 60 * 60);
+        return hoursDiff >= 24;
+    }
+    
+    // Mostrar modal de bloqueo (cuando ya pasaron 24h)
+    function showLockModal() {
+        const modal = document.createElement('div');
+        modal.className = 'lock-modal';
+        modal.id = 'lockModal';
+        modal.innerHTML = `
+            <div class="lock-card">
+                <i class="fas fa-lock" style="font-size: 50px; color: #ef4444;"></i>
+                <h2>⏰ Tiempo de prueba agotado</h2>
+                <p>Tu período de prueba de <strong>24 horas</strong> ha finalizado.</p>
+                <p style="margin: 15px 0;">Para continuar usando JAM POS, adquiere tu licencia por solo <strong>$5</strong></p>
+                <div style="background: #f3f4f6; border-radius: 16px; padding: 10px; margin: 15px 0;">
+                    <i class="fab fa-whatsapp" style="color: #25D366;"></i>
+                    <strong style="font-size: 18px;">${CONTACT_PHONE}</strong>
+                </div>
+                <p style="font-size: 12px; color: gray;">Envía tu código de dispositivo por WhatsApp y recibe tu código de activación</p>
+                <input type="text" id="unlockCodeInput" placeholder="Ingresa tu código de activación" autocomplete="off">
+                <button id="btnUnlock" class="btn-azul-redondeado" style="width: 100%; padding: 12px;">🔓 Activar licencia</button>
+                <button id="btnContactWhatsApp" class="btn-redondeado" style="width: 100%; margin-top: 10px; background: #25D366; color: white;"><i class="fab fa-whatsapp"></i> Contactar por WhatsApp</button>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        
+        document.getElementById('btnUnlock').onclick = () => {
+            const code = document.getElementById('unlockCodeInput').value.trim();
+            if (code === UNLOCK_CODE) {
+                localStorage.setItem(LOCK_KEY, code);
+                modal.remove();
+                location.reload();
+            } else {
+                alert('❌ Código incorrecto. Verifica e inténtalo de nuevo.');
+            }
+        };
+        
+        document.getElementById('btnContactWhatsApp').onclick = () => {
+            const deviceInfo = `Solicito activación JAM POS - Dispositivo: ${navigator.userAgent.substring(0, 100)}`;
+            window.open(`https://wa.me/58${CONTACT_PHONE}?text=${encodeURIComponent(deviceInfo)}`, '_blank');
+        };
+    }
+    
+    // Mostrar alerta temporal (cada 5 minutos) recordando que es versión demo
+    let alertInterval = null;
+    function startDemoAlert() {
+        if (isUnlocked()) return;
+        
+        // Mostrar alerta cada 5 minutos (300000 ms)
+        alertInterval = setInterval(() => {
+            showTrialReminder();
+        }, 300000);
+        
+        // Mostrar primera alerta a los 10 segundos
+        setTimeout(() => {
+            showTrialReminder();
+        }, 10000);
+    }
+    
+    function showTrialReminder() {
+        const reminder = document.createElement('div');
+        reminder.className = 'demo-alert';
+        reminder.innerHTML = `
+            <i class="fas fa-hourglass-half"></i>
+            <strong>⚠️ Versión de prueba</strong> | Tienes 24 horas para evaluar el sistema.
+            <br><small>🔓 Paga $5 y obtén tu licencia permanente → WhatsApp ${CONTACT_PHONE}</small>
+        `;
+        document.body.appendChild(reminder);
+        
+        reminder.onclick = () => {
+            window.open(`https://wa.me/58${CONTACT_PHONE}?text=Hola%2C%20quiero%20adquirir%20la%20licencia%20de%20JAM%20POS%20por%20%245`, '_blank');
+        };
+        
+        setTimeout(() => {
+            if (reminder && reminder.remove) reminder.remove();
+        }, 8000);
+    }
+    
+    // Detener el intervalo si se desbloquea
+    function stopDemoAlert() {
+        if (alertInterval) {
+            clearInterval(alertInterval);
+            alertInterval = null;
+        }
+    }
+    
     // ==================== UTILIDADES ====================
     const escapeHtml = s => s ? s.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])) : '';
     const fmtPrecio = v => { let num = Number(v); if(isNaN(num)) num = 0; return num.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
@@ -241,35 +289,17 @@
         const ahora = new Date();
         const hora = ahora.getHours();
         let saludo = "";
-        
-        if (hora >= 5 && hora < 12) {
-            saludo = "¡Buenos días";
-        } else if (hora >= 12 && hora < 19) {
-            saludo = "¡Buenas tardes";
-        } else {
-            saludo = "¡Buenas noches";
-        }
-        
+        if (hora >= 5 && hora < 12) { saludo = "¡Buenos días"; }
+        else if (hora >= 12 && hora < 19) { saludo = "¡Buenas tardes"; }
+        else { saludo = "¡Buenas noches"; }
         const dia = ahora.getDate();
         const mes = ahora.getMonth() + 1;
         const año = ahora.getFullYear();
         const fechaFormateada = `${dia}/${mes}/${año}`;
-        
         const nombreProducto = producto.nombre || "Producto";
         const precioBs = fmtPrecio(producto.precioVentaBs);
         const precioUsd = producto.precioVentaUsd || (producto.precioVentaBs / D.config.dolarRate).toFixed(2);
-        
-        const mensaje = `${saludo}, estimado cliente! 🌟
-
-📦 SÍ tenemos en existencia:
-
-📌 *${nombreProducto}*
-💰 *Precio por unidad:* ${precioBs} Bs  |  ${precioUsd} USD
-📅 Precio en Bs válido solo para el ${fechaFormateada} (sujeto a cambios tasa BCV).
-💵 El precio en USD se mantiene fijo.
-
-✅ Por favor confirme su pedido para gestionarlo con anticipación. Le enviaremos confirmación una vez verificado el pago. 🙏`;
-        
+        const mensaje = `${saludo}, estimado cliente! 🌟\n\n📦 SÍ tenemos en existencia:\n\n📌 *${nombreProducto}*\n💰 *Precio por unidad:* ${precioBs} Bs  |  ${precioUsd} USD\n📅 Precio en Bs válido solo para el ${fechaFormateada} (sujeto a cambios tasa BCV).\n💵 El precio en USD se mantiene fijo.\n\n✅ Por favor confirme su pedido para gestionarlo con anticipación. Le enviaremos confirmación una vez verificado el pago. 🙏`;
         return mensaje;
     }
     
@@ -428,9 +458,6 @@
     window.addEventListener('beforeunload', function(e) {
         if (D.config?.prevenirCierre !== false) {
             guardarSesionVenta();
-            e.preventDefault();
-            e.returnValue = '¿Estás seguro de salir? La venta en curso se perderá.';
-            return '¿Estás seguro de salir? La venta en curso se perderá.';
         }
     });
     
@@ -438,7 +465,6 @@
     window.addEventListener('popstate', function(e) {
         if (D.config?.prevenirCierre !== false) {
             history.pushState(null, null, location.href);
-            if (confirm('¿Deseas salir de la aplicación?')) window.close();
         }
     });
     
@@ -476,14 +502,13 @@
             scannerActivo = false;
         };
     }
-
+    
     // ==================== VENTAS ====================
     async function renderVentas(){
         let bloqueado = volverBloqueado, accent = D.config.theme;
         const html = `
             <div class="page-header-fixed"><div class="module-header"><h2 id="tituloModule" class="module-title ${bloqueado?'module-title-bloqueado':''}" style="color:${accent}" onmousedown="iniciarBloqueo(this,'Ventas')" onmouseup="cancelarBloqueo()" onmouseleave="cancelarBloqueo()">Ventas</h2><div id="btnVolverModule" class="btn-back ${bloqueado?'btn-back-bloqueado':''}" onclick="${bloqueado?'':'backToHome()'}">${bloqueado?'<i class="fas fa-lock"></i> Bloqueado':'<i class="fas fa-arrow-left"></i> Volver'}</div></div></div>
             <div class="page-container">
-                <!-- Cliente con ícono de nuevo cliente DENTRO del campo -->
                 <div class="mb-3">
                     <div class="cliente-wrapper">
                         <input type="text" id="clienteInput" placeholder="Buscar por nombre o cédula..." class="border rounded-xl p-2 w-full" autocomplete="off" value="${escapeHtml(clienteInputText)}">
@@ -493,14 +518,12 @@
                     <input type="hidden" id="clienteIdHidden" value="${clienteSeleccionadoId || ''}">
                 </div>
                 
-                <!-- Búsqueda de producto con escáner dentro -->
                 <div class="mb-3 input-wrapper">
                     <i class="fas fa-camera" id="btnAbrirEscanerVenta"></i>
                     <input type="text" id="buscarProducto" placeholder="Buscar o escanear producto..." class="border-2 rounded-xl w-full p-2" style="border-color:${accent}">
                     <div id="sugerencias" class="mt-1 border rounded-xl hidden divide-y max-h-48 overflow-auto"></div>
                 </div>
                 
-                <!-- Carrito y totales -->
                 <div class="p-3 rounded-xl mb-3" style="background:rgba(0,0,0,0.05)">
                     <div class="font-bold mb-2">🛒 Carrito</div>
                     <div id="carritoLista" class="max-h-52 overflow-auto"></div>
@@ -511,7 +534,6 @@
                     </div>
                 </div>
                 
-                <!-- Tipo de pago -->
                 <div class="mb-3"><label>Tipo de pago</label><select id="tipoPago" class="border rounded-xl p-2 w-full">
                     <option value="efectivo_bs">💵 Efectivo (Bs)</option>
                     <option value="dolares">💵 Dólares (USD)</option>
@@ -527,85 +549,31 @@
         if(volverBloqueado && document.getElementById('btnVolverModule')) document.getElementById('btnVolverModule').onclick = () => mostrarOverlayBloqueo();
         actualizarCarritoUI();
         
-        // ========== CLIENTE: BÚSQUEDA Y SUGERENCIAS CORREGIDA ==========
         const inputCliente = document.getElementById('clienteInput');
         const sugerenciasDiv = document.getElementById('sugerenciasClientes');
         const hiddenId = document.getElementById('clienteIdHidden');
         
-        // Función para buscar clientes y mostrar sugerencias
         const buscarYMostrarClientes = () => {
             const term = inputCliente.value.trim().toLowerCase();
-            
-            if (!term) {
-                sugerenciasDiv.classList.add('hidden');
-                hiddenId.value = '';
-                clienteSeleccionadoId = null;
-                clienteInputText = '';
-                guardarSesionVenta();
-                return;
-            }
-            
-            // Buscar en D.clientes (base de datos actualizada)
-            const filtrados = D.clientes.filter(c => 
-                (c.nombre && c.nombre.toLowerCase().includes(term)) || 
-                (c.cedula && c.cedula.toLowerCase().includes(term))
-            );
-            
-            if (filtrados.length === 0) {
-                sugerenciasDiv.innerHTML = '<div class="sugerencia-cliente">No se encontraron clientes</div>';
-                sugerenciasDiv.classList.remove('hidden');
-                hiddenId.value = '';
-                clienteSeleccionadoId = null;
-                return;
-            }
-            
-            // Mostrar sugerencias
-            sugerenciasDiv.innerHTML = filtrados.map(c => `
-                <div class="sugerencia-cliente" data-id="${c.id}" data-nombre="${escapeHtml(c.nombre)} (${c.cedula || 'Sin cédula'})">
-                    <strong>${escapeHtml(c.nombre)}</strong> - ${escapeHtml(c.cedula || 'Sin cédula')}
-                </div>
-            `).join('');
+            if (!term) { sugerenciasDiv.classList.add('hidden'); hiddenId.value = ''; clienteSeleccionadoId = null; clienteInputText=''; guardarSesionVenta(); return; }
+            const filtrados = D.clientes.filter(c => (c.nombre && c.nombre.toLowerCase().includes(term)) || (c.cedula && c.cedula.toLowerCase().includes(term)));
+            if (filtrados.length === 0) { sugerenciasDiv.innerHTML = '<div class="sugerencia-cliente">No se encontraron clientes</div>'; sugerenciasDiv.classList.remove('hidden'); hiddenId.value = ''; clienteSeleccionadoId = null; return; }
+            sugerenciasDiv.innerHTML = filtrados.map(c => `<div class="sugerencia-cliente" data-id="${c.id}" data-nombre="${escapeHtml(c.nombre)} (${c.cedula || 'Sin cédula'})"><strong>${escapeHtml(c.nombre)}</strong> - ${escapeHtml(c.cedula || 'Sin cédula')}</div>`).join('');
             sugerenciasDiv.classList.remove('hidden');
-            
-            // Asignar evento click a cada sugerencia
-            document.querySelectorAll('.sugerencia-cliente').forEach(el => {
-                el.onclick = () => {
-                    const id = el.dataset.id;
-                    const nombreCompleto = el.dataset.nombre;
-                    hiddenId.value = id;
-                    clienteSeleccionadoId = id;
-                    clienteInputText = nombreCompleto;
-                    inputCliente.value = nombreCompleto;
-                    sugerenciasDiv.classList.add('hidden');
-                    guardarSesionVenta();
-                    mostrarNotificacion(`Cliente seleccionado: ${nombreCompleto}`, 'success');
-                };
-            });
+            document.querySelectorAll('.sugerencia-cliente').forEach(el => { el.onclick = () => { hiddenId.value = el.dataset.id; clienteSeleccionadoId = el.dataset.id; clienteInputText = el.dataset.nombre; inputCliente.value = clienteInputText; sugerenciasDiv.classList.add('hidden'); guardarSesionVenta(); }; });
+        };
+        inputCliente.addEventListener('input', e => { clienteInputText = e.target.value; buscarYMostrarClientes(); guardarSesionVenta(); });
+        
+        document.getElementById('btnNuevoClienteIcon').onclick = async () => { 
+            await window.mostrarFormCrud('clientes', null, ['cedula','nombre','telefono','direccion','email'], true); 
+            D.clientes = getAll('clientes'); 
+            inputCliente.value = ''; 
+            hiddenId.value = ''; 
+            clienteSeleccionadoId = null; 
+            clienteInputText = ''; 
+            guardarSesionVenta(); 
         };
         
-        // Evento input para búsqueda en tiempo real
-        inputCliente.addEventListener('input', (e) => {
-            clienteInputText = e.target.value;
-            buscarYMostrarClientes();
-            guardarSesionVenta();
-        });
-        
-        // Botón nuevo cliente dentro del campo
-        document.getElementById('btnNuevoClienteIcon').onclick = async () => {
-            await window.mostrarFormCrud('clientes', null, ['cedula','nombre','telefono','direccion','email'], true);
-            // Recargar clientes después de crear uno nuevo
-            D.clientes = getAll('clientes');
-            // Limpiar campos
-            inputCliente.value = '';
-            hiddenId.value = '';
-            clienteSeleccionadoId = null;
-            clienteInputText = '';
-            guardarSesionVenta();
-            // Volver a mostrar sugerencias si hay texto
-            if (inputCliente.value.trim()) buscarYMostrarClientes();
-        };
-        
-        // Escáner para ventas
         document.getElementById('btnAbrirEscanerVenta').onclick = () => {
             iniciarEscaner((codigo) => {
                 const productoEncontrado = D.productos.find(p => p.codigo === codigo);
@@ -797,7 +765,6 @@
         actualizarCarritoUI();
     }
     
-    // Función para copiar detalles del producto con mensaje inteligente
     window.copiarDetallesProducto = async (producto) => {
         const mensaje = generarMensajeProducto(producto);
         try {
@@ -1267,7 +1234,7 @@
         document.querySelector('link[rel="manifest"]').setAttribute('href', URL.createObjectURL(manifestBlob));
         
         const swCode = `
-const CACHE_NAME = 'jampos-offline-v9';
+const CACHE_NAME = 'jampos-offline-v10';
 const urlsToCache = [
     '/',
     'https://cdn.tailwindcss.com',
@@ -1349,10 +1316,22 @@ self.addEventListener('fetch', event => {
         });
     })();
     
-    // ==================== INICIALIZACIÓN ====================
-    loadAllData();
-    actualizarTasa(false);
-    renderHome();
+    // ==================== INICIALIZACIÓN CON BLOQUEO ====================
+    // Verificar estado de la licencia antes de cargar la app
+    if (isExpired() && !isUnlocked()) {
+        showLockModal();
+        // No cargar la aplicación principal si está bloqueada
+        document.getElementById('appRoot').innerHTML = '<div style="display:none"></div>';
+    } else {
+        // Iniciar la aplicación normalmente
+        loadAllData();
+        actualizarTasa(false);
+        renderHome();
+        // Iniciar alertas de demo si no está desbloqueado
+        if (!isUnlocked()) {
+            startDemoAlert();
+        }
+    }
 </script>
 </body>
 </html>
