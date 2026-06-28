@@ -1,0 +1,19 @@
+﻿<!DOCTYPE html>
+<html><head><meta charset="UTF-8"></head><body>
+<div id="appRoot"></div>
+<script>
+console.log("inline script works");
+</script>
+<script src="js/config.js"></script>
+<script>
+console.log("after config.js - STORAGE_KEYS:", typeof STORAGE_KEYS, "DATA_STORES:", typeof DATA_STORES);
+</script>
+<script src="js/utils.js"></script>
+<script>
+console.log("after utils.js - escapeHtml:", typeof escapeHtml, "mostrarNotificacion:", typeof mostrarNotificacion);
+</script>
+<script>
+console.log("If you see this, basic modules load OK");
+document.getElementById('appRoot').innerHTML = '<h1>TEST OK</h1>';
+</script>
+</body></html>
