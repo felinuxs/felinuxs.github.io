@@ -1,0 +1,7 @@
+node_modules/
+src-tauri/target/
+src-tauri/debug/
+*.o
+*.exe
+.DS_Store
+Thumbs.db
