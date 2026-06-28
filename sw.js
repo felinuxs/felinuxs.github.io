@@ -1,4 +1,4 @@
-const CACHE_NAME = "jampos-cache-v6";
+const CACHE_NAME = "jampos-cache-v7";
 const STATIC_ASSETS = [
   "/",
   "/index.html",
@@ -18,9 +18,14 @@ const STATIC_ASSETS = [
   "/fa-solid-900.ttf",
   "/fa-v4compatibility.woff2",
   "/fa-v4compatibility.ttf",
-  "/app.js",
   "/style.css",
-  "/quagga.min.js"
+  "/quagga.min.js",
+  "/js/config.js",
+  "/js/utils.js",
+  "/js/db.js",
+  "/js/cloud-sync.js",
+  "/js/scanner.js",
+  "/js/app.js"
 ];
 
 self.addEventListener("install", (event) => {
