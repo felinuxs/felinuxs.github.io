@@ -5,11 +5,104 @@
     const parseBs = v => parseFloat(String(v).replace(/\./g, '').replace(',', '.')) || 0;
     const esOscuro = c => { let r=parseInt(c.slice(1,3),16), g=parseInt(c.slice(3,5),16), b=parseInt(c.slice(5,7),16); return(.299*r + .587*g + .114*b) < 128; };
     const normalizeText = s => (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-    const capitalizeWords = s => s.replace(/\b\w/g, c => c.toUpperCase());
+    const capitalizeWords = s => s.replace(/(^|[^\p{L}\p{N}])(\p{L})/gu, (m, p1, p2) => p1 + p2.toUpperCase());
     function mostrarNotificacion(mensaje, tipo = 'info') { const notif = document.createElement('div'); notif.className = 'notificacion-flotante'; notif.style.backgroundColor = tipo === 'success' ? '#10b981' : (tipo === 'error' ? '#ef4444' : '#3b82f6'); notif.style.color = 'white'; notif.innerText = mensaje; document.body.appendChild(notif); setTimeout(() => notif.remove(), 3000); }
+    async function puenteResultado(v){ return (v && typeof v.then === 'function') ? await v : v; }
+    function mostrarNotificacionNativa(titulo, cuerpo, tag) {
+        if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
+        if (Notification.permission === 'granted') {
+            navigator.serviceWorker.ready.then(function(reg) { if(reg.active) reg.active.postMessage({ type: 'showNotification', title: titulo, body: cuerpo, tag: tag || 'jampos' }); });
+        } else if (Notification.permission !== 'denied') {
+            Notification.requestPermission().then(function(perm) {
+                if (perm === 'granted') {
+                    navigator.serviceWorker.ready.then(function(reg) { if(reg.active) reg.active.postMessage({ type: 'showNotification', title: titulo, body: cuerpo, tag: tag || 'jampos' }); });
+                }
+            });
+        }
+    }
+    
+    // ==================== DIÁLOGOS NATIVOS (reemplazan alert/confirm/prompt) ====================
+    function jamDialogo(opciones) {
+        return new Promise((resolve) => {
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-form';
+            overlay.style.zIndex = '12000';
+            const iconos = { info: 'ℹ️', error: '⚠️', success: '✅', pregunta: '❓' };
+            const tipo = opciones.tipo || 'info';
+            const cerrar = (i) => {
+                let val = i >= 0 ? opciones.botones[i].valor : null;
+                if (opciones.input && val === '__ok__') {
+                    const inp = document.getElementById('dialogoInput');
+                    val = inp ? inp.value : '';
+                }
+                overlay.remove();
+                resolve(val);
+            };
+            const dialogo = document.createElement('div');
+            dialogo.className = 'dialogo-nativo';
+            const titulo = document.createElement('div');
+            titulo.className = 'dialogo-titulo';
+            const icono = document.createElement('span');
+            icono.className = 'dialogo-icono';
+            icono.textContent = iconos[tipo];
+            titulo.appendChild(icono);
+            titulo.appendChild(document.createTextNode(opciones.titulo || 'Aviso'));
+            dialogo.appendChild(titulo);
+            const cuerpo = document.createElement('div');
+            cuerpo.className = 'dialogo-cuerpo';
+            cuerpo.textContent = opciones.mensaje;
+            dialogo.appendChild(cuerpo);
+            let inp = null;
+            if (opciones.input) {
+                inp = document.createElement('input');
+                inp.id = 'dialogoInput';
+                inp.className = 'dialogo-input';
+                inp.type = 'text';
+                inp.value = opciones.input.valor || '';
+                inp.placeholder = opciones.input.placeholder || '';
+                inp.autocomplete = 'off';
+                dialogo.appendChild(inp);
+            }
+            const botones = document.createElement('div');
+            botones.className = 'dialogo-botones';
+            opciones.botones.forEach((b, i) => {
+                const btn = document.createElement('button');
+                btn.className = 'dialogo-boton' + (b.destacado ? ' dialogo-boton-primario' : '');
+                btn.textContent = b.texto;
+                btn.onclick = () => cerrar(i);
+                botones.appendChild(btn);
+            });
+            dialogo.appendChild(botones);
+            overlay.appendChild(dialogo);
+            document.body.appendChild(overlay);
+            overlay.onclick = (e) => { if (e.target === overlay) cerrar(opciones.botones.length === 1 ? 0 : -1); };
+            if (inp) {
+                const idxOk = opciones.botones.findIndex(b => b.valor === '__ok__');
+                inp.focus();
+                inp.addEventListener('keydown', (e) => { if (e.key === 'Enter' && idxOk >= 0) cerrar(idxOk); });
+            }
+        });
+    }
+    function jamAlert(mensaje, tipo = 'info') {
+        return jamDialogo({ titulo: tipo === 'error' ? 'Error' : 'Aviso', mensaje, tipo, botones: [{ texto: 'Aceptar', valor: true, destacado: true }] });
+    }
+    function jamConfirm(mensaje) {
+        return jamDialogo({ titulo: 'Confirmación', mensaje, tipo: 'pregunta', botones: [{ texto: 'Cancelar', valor: false }, { texto: 'Aceptar', valor: true, destacado: true }] });
+    }
+    function jamPrompt(mensaje, valor, placeholder) {
+        return jamDialogo({ titulo: 'Ingreso de datos', mensaje, tipo: 'info', input: { valor, placeholder }, botones: [{ texto: 'Cancelar', valor: null }, { texto: 'Aceptar', valor: '__ok__', destacado: true }] });
+    }
+    window.alert = (m) => jamAlert(String(m));
     
     // ==================== FUNCIÓN PARA TINTAR BARRA DE NAVEGACIÓN INFERIOR (ANDROID) ====================
     function setNavigationBarColor(color) {
+        // Método nativo (WebView): pinta de verdad la barra de estado y la de navegación
+        try {
+            if (window.AndroidBridge && AndroidBridge.setSystemBarsColor) {
+                AndroidBridge.setSystemBarsColor(color);
+            }
+        } catch(e) {}
+        
         // Método 1: Tintar mediante theme-color (solo barra superior, pero ayuda)
         let metaTheme = document.querySelector('meta[name="theme-color"]');
         if(metaTheme) metaTheme.setAttribute('content', color);
@@ -57,6 +150,7 @@
     }
     
     // ==================== STORAGE KEYS ====================
+    const DATA_STORES = ['productos', 'clientes', 'proveedores', 'gastos', 'empleados', 'ventas', 'tasa_diaria'];
     const STORAGE_KEYS = {
         productos: 'jam_pos_productos',
         clientes: 'jam_pos_clientes',
@@ -68,6 +162,53 @@
         session_cart: 'jam_pos_cart',
         session_meta: 'jam_pos_meta'
     };
+
+    function abrirBaseDatos() {
+        return new Promise((resolve, reject) => {
+            const req = indexedDB.open('jampos_db', 2);
+            req.onupgradeneeded = e => { const db = e.target.result; DATA_STORES.forEach(s => { if (!db.objectStoreNames.contains(s)) db.createObjectStore(s); }); };
+            req.onsuccess = e => resolve(e.target.result);
+            req.onerror = e => reject(e.target.error);
+        });
+    }
+    async function saveToIDB(store, data) {
+        const db = await abrirBaseDatos();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(store, 'readwrite');
+            const obj = tx.objectStore(store);
+            obj.clear();
+            (data || []).forEach(item => {
+                if (!item) return;
+                if (!item.id) item.id = 'idb' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+                try { obj.put(item, item.id); } catch (e) {}
+            });
+            tx.oncomplete = () => { db.close(); resolve(); };
+            tx.onerror = e => { db.close(); reject(e.target.error); };
+        });
+    }
+    async function loadFromIDB(store) {
+        const db = await abrirBaseDatos();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(store, 'readonly');
+            const obj = tx.objectStore(store);
+            const req = obj.getAll();
+            req.onsuccess = () => { db.close(); resolve(req.result || []); };
+            req.onerror = e => { db.close(); reject(e.target.error); };
+        });
+    }
+    async function addToIDB(store, items) {
+        const db = await abrirBaseDatos();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(store, 'readwrite');
+            const obj = tx.objectStore(store);
+            (items || []).forEach(item => {
+                if (!item || !item.id) return;
+                try { obj.put(item, item.id); } catch (e) {}
+            });
+            tx.oncomplete = () => { db.close(); resolve(); };
+            tx.onerror = e => { db.close(); reject(e.target.error); };
+        });
+    }
     
     function loadFromStorage(key, defaultValue = []) { const data = localStorage.getItem(key); if (!data) return defaultValue; try { return JSON.parse(data); } catch(e) { return defaultValue; } }
     function saveToStorage(key, data) { localStorage.setItem(key, JSON.stringify(data)); }
@@ -77,8 +218,8 @@
             D[store] = D[store] || [];
             const i = D[store].findIndex(x => x.id === item.id);
             if (i !== -1) D[store][i] = item; else D[store].push(item);
-            await saveToIDB(store, D[store]);
-            encolarSync(store, 'save', item);
+            try { await saveToIDB(store, D[store]); } catch(e) { console.warn('IDB save error', e); }
+            try { encolarSync(store, 'save', item); } catch(e) {}
         } else {
             const items = loadFromStorage(key, []);
             const idx = items.findIndex(x => x.id === item.id);
@@ -91,8 +232,8 @@
         const key = STORAGE_KEYS[store];
         if (DATA_STORES.includes(store)) {
             D[store] = (D[store] || []).filter(x => x.id !== id);
-            await saveToIDB(store, D[store]);
-            encolarSync(store, 'delete', { id });
+            try { await saveToIDB(store, D[store]); } catch(e) { console.warn('IDB delete error', e); }
+            try { encolarSync(store, 'delete', { id }); } catch(e) {}
         } else {
             const items = loadFromStorage(key, []).filter(x => x.id !== id);
             saveToStorage(key, items);
@@ -100,7 +241,7 @@
         }
     }
     async function getAll(store) {
-        if (DATA_STORES.includes(store)) return await loadFromIDB(store);
+        if (DATA_STORES.includes(store)) { try { return await loadFromIDB(store); } catch(e) { console.warn('IDB load error', e); } }
         return loadFromStorage(STORAGE_KEYS[store], []);
     }
     
@@ -109,7 +250,7 @@
         productos: [], clientes: [], proveedores: [], gastos: [], empleados: [], ventas: [],
         config: { 
             key:'mainConfig', theme:'#3b82f6', dolarRate:67.85, lastUpdate:new Date().toLocaleDateString(), 
-            ivaActivo:true, usarMargen:false, backgroundMode:'light', autoOscuro:false, prevenirCierre:true,
+            ivaActivo:false, ivaPorcentaje:16, usarMargen:false, backgroundMode:'light', autoOscuro:true, prevenirCierre:true,
             mostrarDolar: true, tasaManual: false, tasaManualValue: 67.85,
             empresa: { nombre:'JAM POS', direccion:'', telefono:'', rif:'', logo:'' },
             alertaStockBajo: true, alertaTasa: true, sonidoAlertas: true
@@ -139,12 +280,14 @@
     }
     
     async function loadAllData(){
+        leerCarpetaNativa();
         D.productos = await getAll('productos');
         D.clientes = await getAll('clientes');
         D.proveedores = await getAll('proveedores');
         D.gastos = await getAll('gastos');
         D.empleados = await getAll('empleados');
         D.ventas = await getAll('ventas');
+        D.tasaDiaria = await getAll('tasa_diaria');
         const savedConfig = localStorage.getItem(STORAGE_KEYS.config);
         if (savedConfig) try { D.config = { ...D.config, ...JSON.parse(savedConfig) }; } catch(e) {}
         if(!D.config.backgroundMode) D.config.backgroundMode = 'light';
@@ -153,7 +296,11 @@
         if(D.config.prevenirCierre === undefined) D.config.prevenirCierre = true;
         if(D.config.tasaManual === undefined) D.config.tasaManual = false;
         if(!D.config.tasaManualValue) D.config.tasaManualValue = D.config.dolarRate || 67.85;
-        if(D.config.autoOscuro === undefined) D.config.autoOscuro = false;
+        if(D.config.autoOscuro === undefined) D.config.autoOscuro = true;
+        if(D.config.ivaActivo === undefined) D.config.ivaActivo = false;
+        
+        try { await migrarTasaDiaria(); } catch(e) { console.warn('tasa_diaria migrate', e); }
+        refrescarCacheTasaDiaria();
         
         if(D.productos.length === 0){}
         if(D.clientes.length === 0){}
@@ -169,22 +316,28 @@
     function actualizarManifestPWA() {
     }
     
-    function getNavBarColorFromMode() {
-        switch(D.config.backgroundMode) {
-            case 'light': return '#ffffff';
-            case 'gray': return '#2c2c2c';
-            case 'dark': return '#000000';
-            default: return '#ffffff';
-        }
+    function esTemaOscuro(color) {
+        if (typeof color !== 'string') return false;
+        const hex = color.replace('#', '').trim();
+        if (hex.length !== 6) return false;
+        const r = parseInt(hex.slice(0, 2), 16), g = parseInt(hex.slice(2, 4), 16), b = parseInt(hex.slice(4, 6), 16);
+        if (isNaN(r) || isNaN(g) || isNaN(b)) return false;
+        return (0.299 * r + 0.587 * g + 0.114 * b) / 255 < 0.3;
     }
     
     function applyTheme(){
         document.documentElement.style.setProperty('--accent', D.config.theme);
+        // Modo efectivo: si el tema elegido es negro/oscuro y el fondo es oscuro,
+        // el fondo se cambia automáticamente a blanco para que todo resalte.
+        const temaOscuro = esTemaOscuro(D.config.theme);
+        let modo = D.config.backgroundMode;
+        if (temaOscuro && modo === 'dark') modo = 'light';
         document.body.className = '';
-        document.body.classList.add(`${D.config.backgroundMode}-mode`);
+        document.body.classList.add(`${modo}-mode`);
+        if (temaOscuro) document.body.classList.add('accent-oscuro');
         actualizarModoLayout();
         
-        let navBarColor = getNavBarColorFromMode();
+        const navBarColor = modo === 'dark' ? '#000000' : '#ffffff';
         
         // Actualizar theme-color para barra superior y para intentar pintar la inferior
         let themeColorMeta = document.getElementById('themeColorMeta');
@@ -206,7 +359,7 @@
             statusBarMeta.name = 'apple-mobile-web-app-status-bar-style';
             document.head.appendChild(statusBarMeta);
         }
-        statusBarMeta.setAttribute('content', D.config.backgroundMode === 'light' ? 'default' : 'black');
+        statusBarMeta.setAttribute('content', modo === 'light' ? 'default' : 'black');
         
         actualizarInfoCard();
     }
@@ -243,19 +396,25 @@
     async function actualizarTasa(forzar = false) {
         if (D.config.tasaManual && !forzar) {
             D.config.dolarRate = D.config.tasaManualValue;
+            registrarCambioTasa(D.config.dolarRate);
             saveConfig();
             actualizarDisplayTasa();
+            recalcularPreciosPorTasa();
             return;
         }
         const tasaNueva = await obtenerTasaDesdeAPI();
         if (tasaNueva !== null) {
+            const tasaPrevia = D.config.dolarRate;
             D.config.dolarRate = tasaNueva;
             D.config.lastUpdate = new Date().toLocaleDateString() + " " + new Date().toLocaleTimeString();
             if (forzar && D.config.tasaManual) D.config.tasaManualValue = tasaNueva;
+            registrarCambioTasa(D.config.dolarRate);
             saveConfig();
             if(forzar) mostrarNotificacion(`Tasa actualizada: ${fmtDolar(tasaNueva)} Bs/USD`, 'success');
+            notificarTasaActualizada(tasaPrevia, tasaNueva);
         } else if(!D.config.dolarRate) D.config.dolarRate = 67.85;
         actualizarDisplayTasa();
+        recalcularPreciosPorTasa();
     }
     
     function actualizarDisplayTasa() {
@@ -264,6 +423,28 @@
             if (span) span.innerText = fmtDolar(D.config.dolarRate);
             let tasaDisplay = document.getElementById('tasaActualDisplay');
             if(tasaDisplay) tasaDisplay.innerText = fmtDolar(D.config.dolarRate);
+        }
+    }
+    async function recalcularPreciosPorTasa() {
+        let cambios = 0, tasa = D.config.dolarRate;
+        for(const p of D.productos) {
+            if(p.precioVentaUsd && p.precioVentaUsd > 0) {
+                const nuevoBs = Math.round(p.precioVentaUsd * tasa * 100) / 100;
+                if(Math.abs(nuevoBs - p.precioVentaBs) > 0.01) { p.precioVentaBs = nuevoBs; cambios++; }
+            }
+            if(p.costoRealUsd && p.costoRealUsd > 0) {
+                const nuevoBs = Math.round(p.costoRealUsd * tasa * 100) / 100;
+                if(Math.abs(nuevoBs - p.costoRealBs) > 0.01) { p.costoRealBs = nuevoBs; cambios++; }
+            }
+            if(p.precioDescuentoUsd && p.precioDescuentoUsd > 0) {
+                const nuevoBs = Math.round(p.precioDescuentoUsd * tasa * 100) / 100;
+                if(Math.abs(nuevoBs - (p.precioDescuentoBs || 0)) > 0.01) { p.precioDescuentoBs = nuevoBs; cambios++; }
+            }
+        }
+        if(cambios > 0) {
+            try { await saveToIDB('productos', D.productos); } catch(e) {}
+            saveToStorage(STORAGE_KEYS.productos, D.productos);
+            mostrarNotificacion(`Precios actualizados: ${cambios} producto(s)`, 'success');
         }
     }
     
@@ -282,34 +463,68 @@
     const mqModoOscuro = window.matchMedia('(prefers-color-scheme: dark)');
     mqModoOscuro.addEventListener('change', () => aplicarModoSistema());
     
-    // Control de navegacion movil: back siempre a home
-    let salirCount = 0;
-    window.addEventListener('beforeunload', function(e) {
-        if (D.config?.prevenirCierre !== false) {
-            guardarSesionVenta();
-            e.preventDefault();
-            e.returnValue = '';
-            return '';
-        }
-    });
+    // Control de navegacion movil: el botón atrás NUNCA agota el historial (así el navegador no puede cerrar la app).
+    // En móviles Chrome/Safari el navegador ignora beforeunload y cierra la pestaña en silencio cuando el historial se agota;
+    // por eso aquí SIEMPRE se re-empuja una entrada al instante. El cierre real solo ocurre con el botón "Cerrar" del popup.
+    function guardarYPrevenirCierre(e) {
+        guardarSesionVenta();
+        localStorage.setItem('jam_last_module', currentModule || '');
+        if (window._permitirSalida || D.config?.prevenirCierre === false) return;
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+    }
+    window.addEventListener('beforeunload', guardarYPrevenirCierre);
     
-    history.pushState(null, null, location.href);
-    window.addEventListener('popstate', function(e) {
-        if (D.config?.prevenirCierre === false) return;
-        if (currentModule !== 'home') {
-            salirCount = 0;
-            if (window.backToHome) window.backToHome();
-            history.pushState(null, null, location.href);
-        } else {
-            salirCount++;
-            if (salirCount >= 2) {
-                if (confirm('Presiona OK para salir de la aplicacion')) {
-                    if (window.close) window.close();
-                }
-                salirCount = 0;
+    function cerrarAplicacion() {
+        window._permitirSalida = true;
+        guardarSesionVenta();
+        localStorage.setItem('jam_last_module', '');
+        try {
+            if (window.AndroidBridge && AndroidBridge.cerrarApp) {
+                AndroidBridge.cerrarApp();
+                return;
             }
-            history.pushState(null, null, location.href);
+        } catch(e) {}
+        setTimeout(() => { try { if (window.close) window.close(); } catch(e) {} }, 50);
+        setTimeout(() => {
+            try { if (!document.hidden) location.replace('about:blank'); } catch(e) {}
+        }, 400);
+    }
+    
+    let dialogoSalidaAbierto = false;
+    function mostrarDialogoSalida() {
+        dialogoSalidaAbierto = true;
+        return jamDialogo({
+            titulo: '¿Salir de la aplicación?',
+            mensaje: 'Al cerrar la aplicación se guardará el trabajo actual. Solo podrás salir con el botón "Cerrar"; usa "Volver" para continuar.',
+            tipo: 'pregunta',
+            botones: [
+                { texto: 'Volver', valor: false },
+                { texto: 'Cerrar', valor: true, destacado: true }
+            ]
+        }).then(decision => {
+            if (decision === true) cerrarAplicacion();
+        }).finally(() => {
+            dialogoSalidaAbierto = false;
+        });
+    }
+    // Expuesto para que el WebView nativo (Kotlin) lance el popup desde el botón atrás
+    window.mostrarDialogoSalida = mostrarDialogoSalida;
+    
+    // El listener se registra ANTES de empujar historial y el push va en try/catch,
+    // para que ningún error de pushState deje a la app sin protección.
+    function empujarHistorial() {
+        try { history.pushState(null, null, location.href); } catch(e) {}
+    }
+    empujarHistorial();
+    window.addEventListener('popstate', async function(e) {
+        empujarHistorial();
+        if (currentModule !== 'home') {
+            if (window.backToHome) window.backToHome();
+            return;
         }
+        if (!dialogoSalidaAbierto) await mostrarDialogoSalida();
     });
     
     // ==================== VENTAS ====================
@@ -319,15 +534,23 @@
             <div class="page-header-fixed"><div class="module-header"><h2 id="tituloModule" class="module-title ${bloqueado?'module-title-bloqueado':''}" style="color:${accent}" onmousedown="iniciarBloqueo(this,'Ventas')" onmouseup="cancelarBloqueo()" onmouseleave="cancelarBloqueo()">Ventas</h2><div id="btnVolverModule" class="btn-back ${bloqueado?'btn-back-bloqueado':''}" onclick="${bloqueado?'':'backToHome()'}">${bloqueado?'<i class="fas fa-lock"></i> Bloqueado':'<i class="fas fa-arrow-left"></i> Volver'}</div></div></div>
             <div class="page-container ventas-layout">
                 <div class="ventas-top">
-                    <div class="cliente-search-wrap"><label class="text-xs">Cliente</label>
-                        <div class="cliente-wrapper">
-                            <input type="text" id="clienteInput" placeholder="Buscar por nombre o cédula..." class="border rounded-xl p-2 w-full" autocomplete="off" value="${escapeHtml(clienteInputText)}">
-                            <button id="btnNuevoClienteIcon" class="btn-nuevo-cliente-icon" title="Nuevo cliente"><i class="fas fa-plus"></i></button>
+                    <div class="cliente-search-wrap">
+                        <div class="buscador">
+                            <i class="fas fa-search icono-busqueda"></i>
+                            <input type="text" id="clienteInput" placeholder="Buscar cliente por nombre o cédula..." class="border-2 rounded-xl p-2 w-full" style="border-color:${accent}" autocomplete="off" value="${escapeHtml(clienteInputText)}">
+                            <button id="btnNuevoClienteIcon" class="btn-icon-cuadrado" title="Nuevo cliente"><i class="fas fa-plus"></i></button>
                         </div>
                         <div id="sugerenciasClientes" class="sugerencias-clientes hidden"></div>
                         <input type="hidden" id="clienteIdHidden" value="${clienteSeleccionadoId || ''}">
                     </div>
-                    <div class="sugerencias-wrap"><div class="flex gap-2"><input type="text" id="buscarProducto" placeholder="Buscar por nombre o código de barras..." class="border-2 rounded-xl p-2 flex-1" style="border-color:${accent}" autocomplete="off"><button id="btnScanVentas" class="btn-redondeado px-3 flex-shrink-0" style="background:var(--accent,#3b82f6);color:#fff" title="Escanear con cámara">📷</button></div><div id="sugerencias" class="hidden"></div></div>
+                    <div class="sugerencias-wrap" style="margin-top:14px">
+                        <div class="buscador">
+                            <i class="fas fa-search icono-busqueda"></i>
+                            <input type="text" id="buscarProducto" placeholder="Buscar por nombre o código de barras..." class="border-2 rounded-xl p-2 w-full" style="border-color:${accent}" autocomplete="off">
+                            <button id="btnScanVentas" class="btn-icon-cuadrado" title="Escanear con cámara">📷</button>
+                        </div>
+                        <div id="sugerencias" class="hidden"></div>
+                    </div>
                 </div>
                 <div class="ventas-cart-scroll"><div id="carritoLista"></div></div>
                 <div class="ventas-bottom">
@@ -398,19 +621,37 @@
         let camposHtml = '';
         for(let i=0; i<campos.length; i++){
             let key = campos[i];
-            let valor = item ? (item[key]||'') : '';
-            let tipoInput = (key === 'cedula' || key === 'telefono') ? 'tel' : 'text';
-            let valDisplay = (key === 'montoBs' || key === 'salarioBs') ? fmtPrecio(valor) : escapeHtml(valor.toString());
-            camposHtml += `<div class="mb-3"><label>${nombres[key]||key}</label><input type="${tipoInput}" id="field${i}" value="${valDisplay}" class="border rounded-xl p-2 w-full" inputmode="${tipoInput === 'tel' ? 'numeric' : key === 'montoBs' || key === 'salarioBs' ? 'decimal' : 'text'}"></div>`;
+            let esFecha = (key === 'fecha' || key === 'fechaContrato');
+            let valor = item ? (item[key]||'') : (esFecha ? msToDateStr(Date.now()) : '');
+            let tipoInput = (key === 'cedula' || key === 'telefono') ? 'tel' : (esFecha ? 'date' : 'text');
+            let valDisplay = (key === 'montoBs' || key === 'salarioBs') ? fmtPrecio(valor) : (esFecha ? aFechaISO(valor) : escapeHtml(valor.toString()));
+            let inputmode = tipoInput === 'tel' ? 'numeric' : (key === 'montoBs' || key === 'salarioBs') ? 'decimal' : (esFecha ? 'date' : 'text');
+            camposHtml += `<div class="mb-3"><label>${nombres[key]||key}</label><input type="${tipoInput}" id="field${i}" value="${valDisplay}" class="border rounded-xl p-2 w-full" inputmode="${inputmode}"></div>`;
         }
         modal.innerHTML = `<div class="modal-form-content"><h3 class="text-xl font-bold mb-4">${id ? 'Editar' : 'Nuevo'} ${store === 'clientes' ? 'Cliente' : 'Elemento'}</h3>${camposHtml}<div class="flex gap-3 mt-4"><button id="guardarCrud" class="btn-azul-redondeado btn-redondeado flex-1 py-2 font-bold">Guardar</button><button id="cancelarCrud" class="btn-redondeado flex-1 py-2 bg-gray-200">Cancelar</button></div></div>`;
         document.body.appendChild(modal);
         document.getElementById('cancelarCrud').onclick = () => modal.remove();
         document.getElementById('guardarCrud').onclick = async () => {
+            const requeridos = { clientes:['nombre'], proveedores:['nombre'], gastos:['concepto'], empleados:['nombre'] };
+            const titulosStore = { clientes:'Cliente', proveedores:'Proveedor', gastos:'Gasto', empleados:'Empleado' };
+            let errores = [];
+            for(let i=0; i<campos.length; i++){
+                let val = document.getElementById(`field${i}`).value.trim();
+                if((requeridos[store]||[]).includes(campos[i]) && !val) errores.push(nombres[campos[i]] || campos[i]);
+                if(campos[i] === 'montoBs' && store === 'gastos' && parseBs(val) <= 0) errores.push('Monto (Bs)');
+            }
+            if(errores.length){
+                await jamDialogo({ titulo:'Faltan datos', tipo:'error', mensaje: `No se puede guardar el ${titulosStore[store] || store}. Complete los siguientes campos:\n\n• ${errores.join('\n• ')}`, botones:[{ texto:'Entendido', valor:true, destacado:true }] });
+                return;
+            }
             let nuevo = { id: id || (store === 'clientes' ? 'c' : 'pr') + Date.now() + '_' + Date.now() };
             for(let i=0; i<campos.length; i++) {
-                let val = document.getElementById(`field${i}`).value;
+                let val = document.getElementById(`field${i}`).value.trim();
                 nuevo[campos[i]] = (campos[i] === 'nombre' || campos[i] === 'concepto' || campos[i] === 'contacto' || campos[i] === 'cargo') ? capitalizeWords(val) : val;
+                if(campos[i] === 'fecha' || campos[i] === 'fechaContrato'){
+                    let p = val.split('-').map(Number);
+                    nuevo.timestamp = new Date(p[0], (p[1]||1)-1, p[2]||1).getTime();
+                }
             }
             if(store === 'gastos') nuevo.montoBs = parseBs(nuevo.montoBs);
             if(store === 'empleados') nuevo.salarioBs = parseBs(nuevo.salarioBs);
@@ -446,17 +687,62 @@
         sug.classList.remove('hidden');
     }
     
+    function mostrarSelectorPrecio(prod, pr, cb){
+        const descPct = (typeof prod.porcentajeDescuento === 'number' && prod.porcentajeDescuento > 0) ? prod.porcentajeDescuento : 0;
+        let modal = document.createElement('div'); modal.className = 'modal-form';
+        modal.innerHTML = `<div class="modal-form-content" style="max-width:340px">
+            <h3 class="text-lg font-bold mb-1" style="color:var(--accent,#3b82f6)">💰 Elegir precio de venta</h3>
+            <p class="text-xs mb-3 opacity-70">${escapeHtml(prod.nombre)}</p>
+            <div class="flex flex-col gap-2">
+                <button id="selNormal" class="btn-redondeado p-3 text-left" style="border:2px solid var(--accent,#3b82f6)">
+                    <div class="font-bold">Precio normal</div>
+                    <div class="text-sm">${fmtPrecio(pr.normalBs)} Bs</div>
+                    <div class="text-xs opacity-60">USD $${pr.normalUsd}</div>
+                </button>
+                <button id="selOferta" class="btn-redondeado p-3 text-left" style="border:2px solid #10b981">
+                    <div class="font-bold" style="color:#10b981">🏷️ Precio con descuento (-${descPct}%)</div>
+                    <div class="text-sm">${fmtPrecio(pr.desc.bs)} Bs</div>
+                    <div class="text-xs opacity-60">USD $${pr.desc.usd}</div>
+                </button>
+            </div>
+            <button id="cancelarPrecio" class="w-full mt-3 py-2 rounded-xl bg-gray-200">Cancelar</button>
+        </div>`;
+        document.body.appendChild(modal);
+        modal.querySelector('#selNormal').onclick = () => { modal.remove(); cb({ bs: pr.normalBs, usd: pr.normalUsd }, false); };
+        modal.querySelector('#selOferta').onclick = () => { modal.remove(); cb({ bs: pr.desc.bs, usd: pr.desc.usd }, true); };
+        modal.querySelector('#cancelarPrecio').onclick = () => modal.remove();
+        modal.onclick = e => { if(e.target === modal) modal.remove(); };
+    }
+    function agregarProductoAlCarrito(prod){
+        let ex = carrito.find(c => c.id === prod.id);
+        let enCarrito = ex ? ex.cantidad : 0;
+        if(prod.stock <= 0) { mostrarNotificacion(`⚠️ "${escapeHtml(prod.nombre)}" está agotado`, 'error'); return false; }
+        if(enCarrito + 1 > prod.stock) { mostrarNotificacion(`⚠️ Solo hay ${prod.stock} de "${escapeHtml(prod.nombre)}" en stock`, 'error'); return false; }
+        const confirmar = (precio, oferta) => {
+            if(ex) ex.cantidad++;
+            else {
+                let item = Object.assign({}, prod, { cantidad: 1, precioUsadoBs: precio.bs, precioUsadoUsd: precio.usd, precioOferta: oferta });
+                carrito.push(item);
+            }
+            actualizarCarritoUI();
+            guardarSesionVenta();
+            return true;
+        };
+        const pr = preciosProducto(prod);
+        if(pr.tieneDesc){
+            mostrarSelectorPrecio(prod, pr, confirmar);
+        } else {
+            return confirmar({ bs: pr.normalBs, usd: pr.normalUsd }, false);
+        }
+        return true;
+    }
     window.agregarAlCarrito = id => {
         let prod = D.productos.find(p => p.id === id);
-        if(prod && prod.stock > 0){
-            let ex = carrito.find(c => c.id === id);
-            if(ex) ex.cantidad++;
-            else carrito.push({...prod, cantidad:1});
-            actualizarCarritoUI();
-            let bp = document.getElementById('buscarProducto');
-            if(bp){ bp.value = '';             document.getElementById('sugerencias')?.classList.add('hidden'); }
-            guardarSesionVenta();
-        }
+        if(!prod) return;
+        agregarProductoAlCarrito(prod);
+        let bp = document.getElementById('buscarProducto');
+        if(bp){ bp.value = '';             document.getElementById('sugerencias')?.classList.add('hidden'); }
+        guardarSesionVenta();
     };
     
     // ==================== CÓDIGO DE BARRAS ====================
@@ -464,15 +750,11 @@
         if(!codigo) return;
         let prod = D.productos.find(p => p.codigo && normalizeText(p.codigo.toString()) === normalizeText(codigo));
         if(!prod) { mostrarNotificacion(`❌ Producto con código "${escapeHtml(codigo)}" no encontrado`, 'error'); return; }
-        if(prod.stock <= 0) { mostrarNotificacion(`⚠️ Stock insuficiente para "${escapeHtml(prod.nombre)}"`, 'error'); return; }
-        let ex = carrito.find(c => c.id === prod.id);
-        if(ex) ex.cantidad++;
-        else carrito.push({...prod, cantidad:1});
-        actualizarCarritoUI();
+        const ok = agregarProductoAlCarrito(prod);
         document.getElementById('buscarProducto').value = '';
         let sug = document.getElementById('sugerencias'); if(sug) sug.classList.add('hidden');
         guardarSesionVenta();
-        mostrarNotificacion(`✅ Agregado: ${escapeHtml(prod.nombre)} × ${ex ? ex.cantidad : 1}`, 'success');
+        if(ok) mostrarNotificacion(`✅ Agregado: ${escapeHtml(prod.nombre)}`, 'success');
     };
     window.buscarPorCodigoInventario = codigo => {
         if(!codigo) return;
@@ -480,7 +762,6 @@
         if(!prod) { mostrarNotificacion(`❌ Producto con código "${escapeHtml(codigo)}" no encontrado`, 'error'); return; }
         document.getElementById('searchInv').value = normalizeText(prod.nombre).slice(0,30);
         renderListaProductos(normalizeText(prod.nombre).slice(0,30));
-        document.getElementById('barcodeInvInput').value = '';
         setTimeout(() => { let cards = document.querySelectorAll('.product-card'); if(cards.length > 0) cards[0].scrollIntoView({behavior:'smooth', block:'center'}); }, 100);
     };
     function detenerScanner(escaneo, stream) {
@@ -554,9 +835,10 @@
         }
         let suma = 0, html = '';
         carrito.forEach((it,i) => {
-            let subit = it.precioVentaBs * it.cantidad;
+            let precioU = (it.precioUsadoBs != null && it.precioUsadoBs > 0) ? it.precioUsadoBs : it.precioVentaBs;
+            let subit = precioU * it.cantidad;
             suma += subit;
-            html += `<div class="flex justify-between text-sm py-1"><div>${escapeHtml(it.nombre)} x${it.cantidad}</div><div>${fmtPrecio(subit)} Bs <button onclick="eliminarDelCarrito(${i})" class="text-red-500 ml-2"><i class="fas fa-trash"></i></button></div></div>`;
+            html += `<div class="flex justify-between text-sm py-1"><div>${escapeHtml(it.nombre)} x${it.cantidad}${it.precioOferta ? ' <span class="text-xs" style="color:#10b981">(Oferta)</span>' : ''}</div><div>${fmtPrecio(subit)} Bs <button onclick="eliminarDelCarrito(${i})" class="text-red-500 ml-2"><i class="fas fa-trash"></i></button></div></div>`;
         });
         cont.innerHTML = html;
         let pctIva = D.config.ivaPorcentaje / 100;
@@ -583,16 +865,18 @@
             </div>`;
         }).join('');
         let totalPagos = suma;
-        let status = document.getElementById('splitTotalStatus');
-        if(status){
-            let diff = totalPagos - totalVenta;
-            if(Math.abs(diff) < 0.01) status.className = 'split-total-match ok';
-            else status.className = 'split-total-match err';
-            status.innerHTML = `Total asignado: ${fmtPrecio(totalPagos)} Bs ${Math.abs(diff) < 0.01 ? '✅' : `(faltan ${fmtPrecio(Math.abs(diff))} Bs)`}`;
-        }
+        actualizarSplitStatus(totalPagos);
     }
-    window.cambiarMetodoSplit = (i, v) => { pagosDivididos[i].metodo = v; renderPagosDivididosUI(); };
-    window.cambiarMontoSplit = (i, v) => { pagosDivididos[i].monto = parseFloat(v) || 0; renderPagosDivididosUI(); };
+    function actualizarSplitStatus(totalPagos){
+        let status = document.getElementById('splitTotalStatus');
+        if(!status) return;
+        let diff = totalPagos - totalVenta;
+        if(Math.abs(diff) < 0.01) status.className = 'split-total-match ok';
+        else status.className = 'split-total-match err';
+        status.innerHTML = `Total asignado: ${fmtPrecio(totalPagos)} Bs ${Math.abs(diff) < 0.01 ? '✅' : `(faltan ${fmtPrecio(Math.abs(diff))} Bs)`}`;
+    }
+    window.cambiarMetodoSplit = (i, v) => { pagosDivididos[i].metodo = v; actualizarSplitStatus(pagosDivididos.reduce((s,p)=>s+(parseFloat(p.monto)||0),0)); };
+    window.cambiarMontoSplit = (i, v) => { pagosDivididos[i].monto = parseFloat(v) || 0; actualizarSplitStatus(pagosDivididos.reduce((s,p)=>s+(parseFloat(p.monto)||0),0)); };
     window.eliminarSplit = (i) => { if(pagosDivididos.length > 1) { pagosDivididos.splice(i,1); renderPagosDivididosUI(); } };
     
     function calcularCambio(){
@@ -604,7 +888,7 @@
     
     async function finalizarVenta(){
         if(carrito.length === 0) { alert("Carrito vacío"); return; }
-        if(!confirm(`¿Desea finalizar la venta por ${fmtPrecio(totalVenta)} Bs?`)) return;
+        if(!(await jamConfirm(`¿Desea finalizar la venta por ${fmtPrecio(totalVenta)} Bs?`))) return;
         let pagado = totalVenta, detallePagos = null;
         if(tipoPago === 'efectivo_bs') {
             pagado = parseFloat(document.getElementById('montoPagado')?.value);
@@ -627,7 +911,7 @@
         }
         verificarStockBajo();
         let ahora = new Date();
-        let codigo = `${ahora.getFullYear()}${(ahora.getMonth()+1).toString().padStart(2,'0')}${ahora.getDate().toString().padStart(2,'0')}-${ahora.getHours().toString().padStart(2,'0')}${ahora.getMinutes().toString().padStart(2,'0')}${ahora.getSeconds().toString().padStart(2,'0')}`;
+        let codigo = `${ahora.getFullYear()}${(ahora.getMonth()+1).toString().padStart(2,'0')}${ahora.getDate().toString().padStart(2,'0')}-${ahora.getHours().toString().padStart(2,'0')}${ahora.getMinutes().toString().padStart(2,'0')}${ahora.getSeconds().toString().padStart(2,'0')}${ahora.getMilliseconds().toString().padStart(3,'0')}`;
         let clienteId = document.getElementById('clienteIdHidden')?.value || null;
         let clienteNombre = "Cliente General";
         if(clienteId) {
@@ -638,7 +922,13 @@
             if(nombreIngresado) clienteNombre = nombreIngresado;
         }
         
-        let itemsVenta = carrito.map(i => ({ idProducto: i.id, nombre: i.nombre, cantidad: i.cantidad, precioUnitario: i.precioVentaBs, costoUnitario: i.costoRealBs || 0, subtotal: i.precioVentaBs * i.cantidad, ganancia: (i.precioVentaBs - (i.costoRealBs || 0)) * i.cantidad }));
+        let itemsVenta = carrito.map(i => {
+            const precioU = (i.precioUsadoBs != null && i.precioUsadoBs > 0) ? i.precioUsadoBs : i.precioVentaBs;
+            const precioUsd = (i.precioUsadoUsd != null && i.precioUsadoUsd > 0) ? i.precioUsadoUsd : i.precioVentaUsd;
+            const costoUsd = parseFloat(i.costoRealUsd) || 0;
+            const costoBsActual = costoUsd > 0 ? Math.round(costoUsd * (D.config.dolarRate || 1) * 100) / 100 : (i.costoRealBs || 0);
+            return { idProducto: i.id, nombre: i.nombre, cantidad: i.cantidad, precioUnitario: precioU, precioUsd: precioUsd, costoUnitario: costoBsActual, subtotal: precioU * i.cantidad, ganancia: (precioU - costoBsActual) * i.cantidad, precioOferta: !!i.precioOferta };
+        });
         let subtotalVenta = itemsVenta.reduce((s,i) => s + i.subtotal, 0);
         let ivaVenta = D.config.ivaActivo ? subtotalVenta * (D.config.ivaPorcentaje / 100) : 0;
         let gananciaTotal = itemsVenta.reduce((s,i) => s + i.ganancia, 0);
@@ -653,12 +943,15 @@
             iva: ivaVenta, 
             total: totalVenta, 
             gananciaTotal: gananciaTotal, 
+            dolarRate: D.config.dolarRate || 0,
+            ivaPorcentaje: D.config.ivaPorcentaje,
             pago: pagado, 
             cambio: pagado - totalVenta, 
             tipoPago: tipoPago,
             detallePagos: detallePagos
         };
         await saveItem('ventas', nuevaVenta);
+        mostrarNotificacionNativa('Venta registrada', `${clienteNombre} — ${fmtPrecio(totalVenta)} Bs`, 'venta');
         mostrarTicket(nuevaVenta);
         carrito = [];
         clienteSeleccionadoId = null;
@@ -672,6 +965,34 @@
     }
     
     // ==================== TICKET ====================
+    function esPagoEfectivo(venta){
+        if(!venta) return false;
+        if(venta.tipoPago === 'efectivo_bs' || venta.tipoPago === 'dolares') return true;
+        if(venta.tipoPago === 'pago_dividido' && Array.isArray(venta.detallePagos) && venta.detallePagos.length){
+            return venta.detallePagos.every(d => d.metodo === 'efectivo_bs' || d.metodo === 'dolares');
+        }
+        return false;
+    }
+    function textoFechaVenta(venta){
+        if(!venta) return '';
+        if(venta.timestamp && !isNaN(new Date(venta.timestamp).getTime())) return new Date(venta.timestamp).toLocaleString();
+        let f = String(venta.fecha || '').trim();
+        if(!f) return '';
+        let iso = f.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[T ](\d{1,2}):(\d{1,2}))?/);
+        if(iso){
+            let d = new Date(+iso[1], +iso[2]-1, +iso[3], +(iso[4]||0), +(iso[5]||0));
+            if(!isNaN(d.getTime())) return d.toLocaleString();
+        }
+        let m = f.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{2,4})(?:[ ,]+(\d{1,2}):(\d{1,2}))?/);
+        if(m){
+            let aa = m[3].length === 2 ? '20' + m[3] : m[3];
+            let d = new Date(+aa, +m[2]-1, +m[1], +(m[4]||0), +(m[5]||0));
+            if(!isNaN(d.getTime())) return d.toLocaleString();
+        }
+        let d2 = new Date(f);
+        if(!isNaN(d2.getTime())) return d2.toLocaleString();
+        return f;
+    }
     function imprimirTicket(venta) {
         // 42 columnas = estandar 80mm; cambiar a 32 si es ticketera 58mm
         const W = 42;
@@ -691,23 +1012,23 @@
         if (D.config.empresa.telefono) t += cen('TEL: ' + esc(D.config.empresa.telefono)) + '\n';
         if (D.config.empresa.rif) t += cen('RIF: ' + esc(D.config.empresa.rif)) + '\n';
         t += eq + '\n';
-        t += cen(new Date(venta.fecha).toLocaleString()) + '\n';
+        t += cen(textoFechaVenta(venta)) + '\n';
         t += cen('Ticket: ' + venta.id) + '\n';
         t += 'Cliente: ' + esc(venta.cliente) + '\n';
         t += eq + '\n';
         // Items: nombre a izq, precio a der
         venta.items.forEach(item => {
-            let nom = item.cantidad + 'x ' + esc(item.nombre);
+            let nom = item.cantidad + 'x ' + esc(item.nombre) + (item.precioOferta ? ' (OFERTA)' : '');
             let pre = fmtPrecio(item.subtotal) + ' Bs';
             t += padR(nom, W - 10) + padL(pre, 10) + '\n';
         });
         t += gui + '\n';
         t += padR('SUBTOTAL', W - 10) + padL(fmtPrecio(venta.subtotal) + ' Bs', 10) + '\n';
-        if (venta.iva) t += padR('IVA (' + D.config.ivaPorcentaje + '%)', W - 10) + padL(fmtPrecio(venta.iva) + ' Bs', 10) + '\n';
+        if (venta.iva) t += padR('IVA (' + (venta.ivaPorcentaje != null ? venta.ivaPorcentaje : D.config.ivaPorcentaje) + '%)', W - 10) + padL(fmtPrecio(venta.iva) + ' Bs', 10) + '\n';
         t += padR('TOTAL', W - 10) + padL(fmtPrecio(venta.total) + ' Bs', 10) + '\n';
         t += gui + '\n';
         t += padR('PAGO', W - 10) + padL(fmtPrecio(venta.pago) + ' Bs', 10) + '\n';
-        t += padR('CAMBIO', W - 10) + padL(fmtPrecio(venta.cambio) + ' Bs', 10) + '\n';
+        if (esPagoEfectivo(venta)) t += padR('CAMBIO', W - 10) + padL(fmtPrecio(venta.cambio) + ' Bs', 10) + '\n';
         if (venta.detallePagos) {
             t += padR('FORMA DE PAGO:', W - 10) + padL('DIVIDIDO', 10) + '\n';
             venta.detallePagos.forEach(d => {
@@ -734,19 +1055,21 @@
         setTimeout(() => { try { v.focus(); v.print(); } catch(e){} }, 500);
     }
     
-    function mostrarTicket(venta) {
+    function generarTicketHTML(venta, mostrarTasa = false) {
         const formasPago = { 'efectivo_bs':'EFECTIVO Bs','pago_movil':'PAGO MÓVIL','transferencia':'TRANSFERENCIA','tarjeta_debito':'TARJETA DÉBITO','dolares':'DÓLARES','pago_dividido':'PAGO DIVIDIDO' };
-        const itemsHtml = venta.items.map(item => `<div class="item"><span>${item.cantidad}x ${escapeHtml(item.nombre)}</span><span>${fmtPrecio(item.subtotal)} Bs</span></div>`).join('');
-        const logoHtml = D.config.empresa.logo ? `<div class="logo"><img src="${D.config.empresa.logo}" style="max-width:60px; max-height:60px;"></div>` : '';
+        const itemsHtml = venta.items.map(item => `<div class="item"><span>${item.cantidad}x ${escapeHtml(item.nombre)}${item.precioOferta ? ' <span style="color:#10b981;font-size:9px">(OFERTA)</span>' : ''}</span><span>${fmtPrecio(item.subtotal)} Bs</span></div>`).join('');
+        const logoHtml = D.config.empresa.logo ? `<div class="logo"><img src="${escapeHtml(D.config.empresa.logo)}" style="max-width:60px; max-height:60px;"></div>` : '';
         let formaPagoHtml = `<div class="ticket-line"><span>FORMA DE PAGO</span><span>${formasPago[venta.tipoPago] || venta.tipoPago}</span></div>`;
         if(venta.detallePagos){
             let etiqMetodo = {'efectivo_bs':'Efectivo Bs','dolares':'Dólares','tarjeta_debito':'Tarjeta Débito','transferencia':'Transferencia','pago_movil':'Pago Móvil'};
             let detalleHtml = venta.detallePagos.map(d => `<div class="ticket-line" style="font-size:9px"><span>${etiqMetodo[d.metodo]||d.metodo}</span><span>${fmtPrecio(d.monto)} Bs</span></div>`).join('');
             formaPagoHtml = `<div class="ticket-line" style="font-weight:bold"><span>FORMA DE PAGO</span><span>PAGO DIVIDIDO</span></div>${detalleHtml}`;
         }
-        const ticketHtml = `<div class="ticket-virtual" id="ticketParaImprimir">${logoHtml}<div class="header"><h3>${escapeHtml(D.config.empresa.nombre)}</h3>${D.config.empresa.direccion ? `<p>${escapeHtml(D.config.empresa.direccion)}</p>` : ''}${D.config.empresa.telefono ? `<p>📞 ${escapeHtml(D.config.empresa.telefono)}</p>` : ''}${D.config.empresa.rif ? `<p>RIF: ${escapeHtml(D.config.empresa.rif)}</p>` : ''}<p>${new Date(venta.fecha).toLocaleString()}</p><p>Ticket: ${venta.id}</p><p>Cliente: ${escapeHtml(venta.cliente)}</p></div><div class="items">${itemsHtml}</div><div class="ticket-line"><span>SUBTOTAL</span><span>${fmtPrecio(venta.subtotal)} Bs</span></div>${venta.iva ? `<div class="ticket-line"><span>IVA (${D.config.ivaPorcentaje}%)</span><span>${fmtPrecio(venta.iva)} Bs</span></div>` : ''}<div class="ticket-line total"><span>TOTAL</span><span>${fmtPrecio(venta.total)} Bs</span></div><div class="ticket-line"><span>PAGO</span><span>${fmtPrecio(venta.pago)} Bs</span></div><div class="ticket-line"><span>CAMBIO</span><span>${fmtPrecio(venta.cambio)} Bs</span></div>${formaPagoHtml}<div class="footer"><p>¡Gracias por su compra!</p><p>${D.config.empresa.nombre}</p></div></div><div class="ticket-buttons"><button class="ticket-btn btn-print" onclick="window.imprimirTicketDirecto('${venta.id}')"><i class="fas fa-print"></i> Imprimir</button><button class="ticket-btn btn-wa" onclick="window.enviarTicketPorWhatsApp('${venta.id}')"><i class="fab fa-whatsapp"></i> WhatsApp</button><button class="ticket-btn btn-img" onclick="window.descargarTicketImagen()"><i class="fas fa-download"></i> Imagen</button><button class="ticket-btn btn-copy" onclick="window.copiarTicketTexto()"><i class="fas fa-copy"></i> Copiar</button><button class="ticket-btn btn-cerrar" onclick="window.cerrarTicketModalYVolverInicio()"><i class="fas fa-times"></i> Cerrar</button></div>`;
+        return `<div class="ticket-virtual" id="ticketParaImprimir">${logoHtml}<div class="header"><h3>${escapeHtml(D.config.empresa.nombre)}</h3>${D.config.empresa.direccion ? `<p>${escapeHtml(D.config.empresa.direccion)}</p>` : ''}${D.config.empresa.telefono ? `<p>📞 ${escapeHtml(D.config.empresa.telefono)}</p>` : ''}${D.config.empresa.rif ? `<p>RIF: ${escapeHtml(D.config.empresa.rif)}</p>` : ''}<p>${textoFechaVenta(venta)}</p>${mostrarTasa && venta.dolarRate ? `<p>Tasa: 1 USD = ${fmtDolar(venta.dolarRate)} Bs</p>` : ''}<p>Ticket: ${venta.id}</p><p>Cliente: ${escapeHtml(venta.cliente)}</p></div><div class="items">${itemsHtml}</div><div class="ticket-line"><span>SUBTOTAL</span><span>${fmtPrecio(venta.subtotal)} Bs</span></div>${venta.iva ? `<div class="ticket-line"><span>IVA (${venta.ivaPorcentaje != null ? venta.ivaPorcentaje : D.config.ivaPorcentaje}%)</span><span>${fmtPrecio(venta.iva)} Bs</span></div>` : ''}<div class="ticket-line total"><span>TOTAL</span><span>${fmtPrecio(venta.total)} Bs</span></div><div class="ticket-line"><span>PAGO</span><span>${fmtPrecio(venta.pago)} Bs</span></div>${esPagoEfectivo(venta) ? `<div class="ticket-line"><span>CAMBIO</span><span>${fmtPrecio(venta.cambio)} Bs</span></div>` : ''}${formaPagoHtml}<div class="footer"><p>¡Gracias por su compra!</p><p>${D.config.empresa.nombre}</p></div></div>`;
+    }
+    function mostrarTicket(venta, mostrarTasa = false) {
         const modal = document.createElement('div'); modal.className = 'modal-form';
-        modal.innerHTML = `<div class="modal-form-content" style="max-width:350px; text-align:center;">${ticketHtml}</div>`;
+        modal.innerHTML = `<div class="modal-form-content" style="max-width:350px; text-align:center;">${generarTicketHTML(venta, mostrarTasa)}<div class="ticket-buttons"><button class="ticket-btn btn-print" onclick="window.imprimirTicketDirecto('${venta.id}')"><i class="fas fa-print"></i> Imprimir</button><button class="ticket-btn btn-wa" onclick="window.enviarTicketPorWhatsApp('${venta.id}')"><i class="fab fa-whatsapp"></i> WhatsApp</button><button class="ticket-btn btn-img" onclick="window.descargarTicketImagen()"><i class="fas fa-download"></i> Imagen</button><button class="ticket-btn btn-copy" onclick="window.copiarTicketTexto()"><i class="fas fa-copy"></i> Copiar</button><button class="ticket-btn btn-cerrar" onclick="window.cerrarTicketModalYVolverInicio()"><i class="fas fa-times"></i> Cerrar</button></div></div>`;
         document.body.appendChild(modal);
         window.ticketActual = venta;
         window.modalTicketActual = modal;
@@ -754,16 +1077,128 @@
     }
     
     window.cerrarTicketModalYVolverInicio = () => { if(window.modalTicketActual) { window.modalTicketActual.remove(); window.modalTicketActual = null; } };
-    window.imprimirTicketDirecto = (ventaId) => { const venta = D.ventas.find(v => v.id === ventaId); if(venta) imprimirTicket(venta); };
-    window.enviarTicketPorWhatsApp = (ventaId) => { const venta = D.ventas.find(v => v.id === ventaId); if(!venta) return; const formasPago = { 'efectivo_bs':'EFECTIVO Bs','pago_movil':'PAGO MÓVIL','transferencia':'TRANSFERENCIA','tarjeta_debito':'TARJETA DÉBITO','dolares':'DÓLARES','pago_dividido':'PAGO DIVIDIDO' }; const etiqMetodo = {'efectivo_bs':'Efectivo Bs','dolares':'Dólares','tarjeta_debito':'Tarjeta Débito','transferencia':'Transferencia','pago_movil':'Pago Móvil'}; let mensaje = `🏪 *${D.config.empresa.nombre}* 🏪\n`; if(D.config.empresa.direccion) mensaje += `📍 ${D.config.empresa.direccion}\n`; if(D.config.empresa.telefono) mensaje += `📞 ${D.config.empresa.telefono}\n`; mensaje += `━━━━━━━━━━━━━━━━━━━━\n📅 ${new Date(venta.fecha).toLocaleString()}\n🧾 *${venta.id}*\n👤 Cliente: ${venta.cliente}\n━━━━━━━━━━━━━━━━━━━━\n`; venta.items.forEach(item => { mensaje += `${item.cantidad}x ${item.nombre} → ${fmtPrecio(item.subtotal)} Bs\n`; }); mensaje += `━━━━━━━━━━━━━━━━━━━━\n💰 *SUBTOTAL:* ${fmtPrecio(venta.subtotal)} Bs\n`; if(venta.iva) mensaje += `📊 *IVA:* ${fmtPrecio(venta.iva)} Bs\n`; mensaje += `💵 *TOTAL:* ${fmtPrecio(venta.total)} Bs\n💸 *PAGO:* ${fmtPrecio(venta.pago)} Bs\n🔄 *CAMBIO:* ${fmtPrecio(venta.cambio)} Bs\n`; if(venta.detallePagos) { venta.detallePagos.forEach(d => { mensaje += `└ ${etiqMetodo[d.metodo]||d.metodo}: ${fmtPrecio(d.monto)} Bs\n`; }); } else { mensaje += `💳 *FORMA DE PAGO:* ${formasPago[venta.tipoPago] || venta.tipoPago}\n`; } mensaje += `━━━━━━━━━━━━━━━━━━━━\n🙏 ¡Gracias por su compra!\n${D.config.empresa.nombre}`; const telefono = prompt("📱 Ingrese el número de teléfono (ej: 584121234567):"); if(telefono) { let numeroLimpio = telefono.replace(/[^0-9]/g, ''); if(numeroLimpio.startsWith('0')) numeroLimpio = '58' + numeroLimpio.substring(1); if(!numeroLimpio.startsWith('58')) numeroLimpio = '58' + numeroLimpio; window.open(`https://wa.me/${numeroLimpio}?text=${encodeURIComponent(mensaje)}`, '_blank'); } };
-    window.descargarTicketImagen = async () => { const ticket = document.getElementById('ticketParaImprimir'); if(!ticket) return; try { const canvas = await html2canvas(ticket, { scale: 2, backgroundColor: '#ffffff' }); const link = document.createElement('a'); link.download = `ticket_${Date.now()}.png`; link.href = canvas.toDataURL(); link.click(); } catch(e) { alert('Error al generar imagen'); } };
+    window.imprimirTicketDirecto = (ventaId) => {
+        const venta = D.ventas.find(v => v.id === ventaId);
+        if(!venta) return;
+        if (window.AndroidBridge && typeof AndroidBridge.printTicket === 'function') {
+            const html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><link rel="stylesheet" href="style.css"><style>html,body{margin:0;padding:0;background:#fff}@media print{@page{margin:8px}body{padding:0}.ticket-buttons{display:none!important}}</style></head><body>' + generarTicketHTML(venta) + '</body></html>';
+            try { AndroidBridge.printTicket(html, 'Ticket ' + venta.id); }
+            catch(e) { imprimirTicket(venta); }
+        } else {
+            imprimirTicket(venta);
+        }
+    };
+    window.enviarTicketPorWhatsApp = async (ventaId) => { const venta = D.ventas.find(v => v.id === ventaId); if(!venta) return; const formasPago = { 'efectivo_bs':'EFECTIVO Bs','pago_movil':'PAGO MÓVIL','transferencia':'TRANSFERENCIA','tarjeta_debito':'TARJETA DÉBITO','dolares':'DÓLARES','pago_dividido':'PAGO DIVIDIDO' }; const etiqMetodo = {'efectivo_bs':'Efectivo Bs','dolares':'Dólares','tarjeta_debito':'Tarjeta Débito','transferencia':'Transferencia','pago_movil':'Pago Móvil'}; let mensaje = `🏪 *${D.config.empresa.nombre}* 🏪\n`; if(D.config.empresa.direccion) mensaje += `📍 ${D.config.empresa.direccion}\n`; if(D.config.empresa.telefono) mensaje += `📞 ${D.config.empresa.telefono}\n`; mensaje += `━━━━━━━━━━━━━━━━━━━━\n📅 ${textoFechaVenta(venta)}\n🧾 *${venta.id}*\n👤 Cliente: ${venta.cliente}\n━━━━━━━━━━━━━━━━━━━━\n`; venta.items.forEach(item => { mensaje += `${item.cantidad}x ${item.nombre} → ${fmtPrecio(item.subtotal)} Bs\n`; }); mensaje += `━━━━━━━━━━━━━━━━━━━━\n💰 *SUBTOTAL:* ${fmtPrecio(venta.subtotal)} Bs\n`; if(venta.iva) mensaje += `📊 *IVA:* ${fmtPrecio(venta.iva)} Bs\n`; mensaje += `💵 *TOTAL:* ${fmtPrecio(venta.total)} Bs\n💸 *PAGO:* ${fmtPrecio(venta.pago)} Bs\n${esPagoEfectivo(venta) ? `🔄 *CAMBIO:* ${fmtPrecio(venta.cambio)} Bs\n` : ''}`; if(venta.detallePagos) { venta.detallePagos.forEach(d => { mensaje += `└ ${etiqMetodo[d.metodo]||d.metodo}: ${fmtPrecio(d.monto)} Bs\n`; }); } else { mensaje += `💳 *FORMA DE PAGO:* ${formasPago[venta.tipoPago] || venta.tipoPago}\n`; } mensaje += `━━━━━━━━━━━━━━━━━━━━\n🙏 ¡Gracias por su compra!\n${D.config.empresa.nombre}`; const telefono = await jamPrompt("📱 Ingrese el número de teléfono (ej: 584121234567):"); if(telefono) { let numeroLimpio = telefono.replace(/[^0-9]/g, ''); if(numeroLimpio.startsWith('0')) numeroLimpio = '58' + numeroLimpio.substring(1); if(!numeroLimpio.startsWith('58')) numeroLimpio = '58' + numeroLimpio; window.open(`https://wa.me/${numeroLimpio}?text=${encodeURIComponent(mensaje)}`, '_blank'); } };
+    async function capturarTicketImagen() {
+        const ticket = document.getElementById('ticketParaImprimir');
+        if(!ticket) return null;
+        try {
+            return await html2canvas(ticket, { scale: 2, backgroundColor: '#ffffff', useCORS: true });
+        } catch(e) {
+            const logo = ticket.querySelector('.logo');
+            const oculto = logo ? logo.style.display : null;
+            if (logo) logo.style.display = 'none';
+            try {
+                return await html2canvas(ticket, { scale: 2, backgroundColor: '#ffffff' });
+            } finally {
+                if (logo) logo.style.display = oculto || '';
+            }
+        }
+    }
+    window.descargarTicketImagen = async () => {
+        const ticket = document.getElementById('ticketParaImprimir');
+        if(!ticket) return;
+        try {
+            const canvas = await capturarTicketImagen();
+            if(!canvas) throw new Error('canvas vacío');
+            const nombre = `ticket_${Date.now()}.png`;
+            const dataUrl = canvas.toDataURL('image/png');
+            // 1) App nativa (APK): guardar directamente vía puente Android
+            if (window.AndroidBridge && typeof AndroidBridge.saveTicketImage === 'function') {
+                const res = await puenteResultado(AndroidBridge.saveTicketImage(dataUrl, nombre));
+                if (res && res.startsWith('ok')) {
+                    mostrarNotificacion('✅ Factura guardada en Imágenes/JAMPOS', 'success');
+                    return;
+                }
+            }
+            // 2) Compartir/Guardar con Web Share API (Android moderno / navegador)
+            if (navigator.canShare && window.File && typeof canvas.toBlob === 'function') {
+                try {
+                    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+                    const file = new File([blob], nombre, { type: 'image/png' });
+                    if (navigator.canShare({ files: [file] })) {
+                        await navigator.share({ files: [file], title: 'Factura JAM POS' });
+                        return;
+                    }
+                } catch(e) { /* el usuario canceló o no soportado */ }
+            }
+            // 3) Fallback navegador/PWA: Blob + createObjectURL (Chrome Android sí lo descarga)
+            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+            if (blob) {
+                const link = document.createElement('a');
+                link.download = nombre;
+                link.href = URL.createObjectURL(blob);
+                document.body.appendChild(link);
+                link.click();
+                setTimeout(() => { URL.revokeObjectURL(link.href); link.remove(); }, 5000);
+                mostrarNotificacion('✅ Factura descargada en Descargas', 'success');
+            } else {
+                const link = document.createElement('a');
+                link.download = nombre;
+                link.href = dataUrl;
+                link.click();
+            }
+        } catch(e) { alert('Error al generar imagen: ' + (e && e.message ? e.message : e)); }
+    };
     window.copiarTicketTexto = () => { const ticket = document.getElementById('ticketParaImprimir'); if(!ticket) return; const texto = ticket.innerText; navigator.clipboard.writeText(texto).then(() => alert('✓ Ticket copiado')).catch(() => alert('Error al copiar')); };
     
     // ==================== NAVEGACIÓN CON PERSISTENCIA ====================
+    function cacheModuleDOM(mod) {
+        if(!mod || mod === 'home') return;
+        const appRoot = document.getElementById('appRoot');
+        if(!appRoot || appRoot.children.length === 0) return;
+        let cacheEl = document.getElementById('_cache_' + mod);
+        if(!cacheEl) {
+            cacheEl = document.createElement('div');
+            cacheEl.id = '_cache_' + mod;
+            cacheEl.style.display = 'none';
+            document.body.appendChild(cacheEl);
+        }
+        while(appRoot.firstChild) cacheEl.appendChild(appRoot.firstChild);
+    }
+    function restoreModuleDOM(mod) {
+        const cacheEl = document.getElementById('_cache_' + mod);
+        if(!cacheEl || cacheEl.children.length === 0) return false;
+        const appRoot = document.getElementById('appRoot');
+        while(cacheEl.firstChild) appRoot.appendChild(cacheEl.firstChild);
+        return true;
+    }
+    function cleanModuleCache(mod) {
+        const el = document.getElementById('_cache_' + mod);
+        if(el) el.remove();
+    }
+    
     window.navigateTo = m => {
         if(volverBloqueado && currentModule !== 'home') { mostrarOverlayBloqueo(); return; }
+        if(currentModule === m) return;
         if(currentModule === 'ventas') guardarSesionVenta();
+        
+        // Cache current module DOM
+        cacheModuleDOM(currentModule);
         currentModule = m;
+        localStorage.setItem('jam_last_module', m);
+        history.pushState(null, null, location.href);
+        
+        // Try to restore cached module DOM
+        if(restoreModuleDOM(m)) {
+            if(m === 'ventas') sincronizarUIVenta();
+            if(esDesktop()) renderSidebar();
+            inyectarBotonAyudaModulo();
+            iniciarGuiaModuloSiPrimeraVez(m);
+            return;
+        }
+        
+        // Render fresh
         if(m === 'ventas') renderVentas();
         else if(m === 'inventario') renderInventario();
         else if(m === 'clientes') renderCrud('clientes', 'Clientes', ['cedula','nombre','telefono','direccion','email']);
@@ -772,6 +1207,8 @@
         else if(m === 'empleados') renderCrud('empleados', 'Empleados', ['cedula','nombre','cargo','salarioBs','fechaContrato']);
         else if(m === 'reportes') renderReportes();
         else if(m === 'config') renderConfig();
+        inyectarBotonAyudaModulo();
+        iniciarGuiaModuloSiPrimeraVez(m);
         if(esDesktop()) renderSidebar();
     };
     
@@ -782,7 +1219,15 @@
         setTimeout(() => overlay.remove(), 2000);
     }
     
-    window.backToHome = () => { if(!volverBloqueado){ if(currentModule === 'ventas') guardarSesionVenta(); renderHome(); } else mostrarOverlayBloqueo(); };
+    window.backToHome = () => {
+        if(volverBloqueado) { mostrarOverlayBloqueo(); return; }
+        if(currentModule === 'home') return;
+        if(currentModule === 'ventas') guardarSesionVenta();
+        cacheModuleDOM(currentModule);
+        currentModule = 'home'; volverBloqueado = false;
+        localStorage.setItem('jam_last_module', '');
+        renderHome();
+    };
     
     window.iniciarBloqueo = (el, nombre) => {
         if(timeoutTitulo) clearTimeout(timeoutTitulo);
@@ -848,6 +1293,7 @@
     function renderHome(){
         if(window.fechaHoraInterval) { clearInterval(window.fechaHoraInterval); window.fechaHoraInterval = null; }
         currentModule = 'home'; volverBloqueado = false;
+        document.querySelectorAll('[id^="_cache_"]').forEach(el => el.remove());
         let accent = D.config.theme;
         let mostrarDolarHtml = D.config.mostrarDolar ? 
             `<div class="flex justify-center items-baseline gap-1 info-dinamica"><span id="tasaDolarMostrar" class="text-5xl font-black" style="color:${accent}">${fmtDolar(D.config.dolarRate)}</span><span class="text-2xl font-bold" style="color:${accent}">Bs/USD</span></div>` :
@@ -855,27 +1301,33 @@
         const enDesktop = esDesktop();
         const homeGridHtml = enDesktop ? `<div class="home-grid sidebar-hidden">` : `<div class="home-grid">`;
         document.getElementById('appRoot').innerHTML = `
-            <div class="home-container">
-                <div class="mb-4 relative">
-                    <i class="fas fa-search absolute left-4 top-3.5 text-gray-400"></i>
-                    <input type="text" id="searchGlobalInput" placeholder="Buscar productos, clientes..." class="w-full pl-10 pr-4 py-3 rounded-2xl border-2 shadow-sm" style="border-color:${accent}">
-                    <div id="globalResults" class="absolute z-30 w-full mt-2 rounded-2xl shadow-xl max-h-72 overflow-auto hidden" style="border:1px solid var(--accent);"></div>
+            <div class="home-container" style="padding-top:16px">
+                <div class="mb-4">
+                    <div class="relative">
+                        <i class="fas fa-search absolute left-4 top-3.5 text-gray-400"></i>
+                        <input type="text" id="searchGlobalInput" placeholder="Buscar productos, clientes..." class="w-full pl-10 pr-12 py-3 rounded-2xl border-2 shadow-sm" style="border-color:${accent}">
+                        <button class="btn-ayuda-home" onclick="mostrarGuiaApp()" title="Guía de la app"><i class="fas fa-circle-question"></i></button>
+                        <div id="globalResults" class="absolute z-30 w-full mt-2 rounded-2xl shadow-xl max-h-72 overflow-auto hidden" style="border:1px solid var(--accent);"></div>
+                    </div>
                 </div>
                 <div class="card-bcv">
                     <div class="led-converter" onclick="mostrarConvertidor()"><i class="fas fa-exchange-alt text-sm"></i></div>
                     <p class="text-xs font-bold">${D.config.mostrarDolar ? 'TIPO DE CAMBIO (USD → VES)' : 'FECHA'}</p>
                     ${mostrarDolarHtml}
                     <p class="text-[11px] mt-1">${D.config.mostrarDolar ? 'Actualizado: ' + D.config.lastUpdate : ''}</p>
-                    <p class="text-[9px] opacity-70 mt-0.5">📡 ExchangeRate-API.com</p>
+                    <p class="text-[9px] opacity-70 mt-0.5">Tasa oficial BCV</p>
                 </div>
                 ${homeGridHtml}
                     ${MODULOS_SIDEBAR.map(m => `<button onclick="navigateTo('${m.id}')" class="main-module-btn" style="background:${accent};"><i class="fas ${m.icon}"></i><span>${m.label}</span></button>`).join('')}
                 </div>
-                <div class="text-center text-xs mt-4 opacity-60">${enDesktop ? 'Usa la barra lateral ' : ''}JAM POS v2.0</div>
+                <div class="text-center text-xs mt-4 opacity-60">${enDesktop ? 'Usa la barra lateral ' : ''}JAM POS v${APP_VERSION}</div>
             </div>
         `;
         actualizarModoLayout();
-        document.getElementById('searchGlobalInput').addEventListener('input', e => globalSearch(e.target.value));
+        const inputGlobal = document.getElementById('searchGlobalInput');
+        inputGlobal.addEventListener('input', e => globalSearch(e.target.value));
+        inputGlobal.addEventListener('focus', () => { document.body.classList.add('teclado-abierto'); if(window.scrollTo) window.scrollTo(0, 0); });
+        inputGlobal.addEventListener('blur', () => document.body.classList.remove('teclado-abierto'));
         if(!D.config.mostrarDolar) {
             const actualizarFechaSolamente = () => {
                 const infoDiv = document.querySelector('.card-bcv .info-dinamica');
@@ -891,6 +1343,8 @@
             actualizarFechaSolamente();
             window.fechaHoraInterval = setInterval(actualizarFechaSolamente, 60000);
         }
+        iniciarTutorialSiPrimeraVez();
+        if(window._pruebaInfo) mostrarBannerPrueba(window._pruebaInfo);
     }
     
     async function globalSearch(term){
@@ -901,13 +1355,16 @@
         let cli = D.clientes.filter(c => normalizeText(c.nombre).includes(norm));
         let html = '';
         prod.slice(0,5).forEach(p => {
+            const prg = preciosProducto(p);
+            const ofG = prg.tieneDesc ? `<div class="text-xs" style="color:#10b981">🏷️ Oferta: ${fmtPrecio(prg.desc.bs)} Bs / $${prg.desc.usd}</div>` : '';
             html += `<div class="global-result p-3 cursor-pointer border-b" style="border-bottom-color:var(--accent);">
                         <div class="font-bold">${escapeHtml(p.nombre)}</div>
                         <div class="text-sm flex justify-between flex-wrap">
-                            <span>💰 ${fmtPrecio(p.precioVentaBs)} Bs</span>
-                            <span>💵 $${p.precioVentaUsd}</span>
+                            <span>💰 ${fmtPrecio(prg.normalBs)} Bs</span>
+                            <span>💵 $${prg.normalUsd}</span>
                             <span>📦 Stock: ${p.stock}</span>
                         </div>
+                        ${ofG}
                         <div class="flex gap-2 mt-2">
                             <button onclick="event.stopPropagation();editarProductoDesdeBusqueda('${p.id}')" class="btn-editar-redondeado">✏️ Editar</button>
                             <button onclick="event.stopPropagation();venderProductoDesdeBusqueda('${p.id}')" class="btn-verde-redondeado">🛒 Vender</button>
@@ -916,11 +1373,19 @@
         });
         cli.slice(0,3).forEach(c => html += `<div class="global-result p-3 cursor-pointer" onclick="alert('👤 ${escapeHtml(c.nombre)} - ${escapeHtml(c.cedula||'')}')"><i class="fas fa-user mr-2"></i>${escapeHtml(c.nombre)}</div>`);
         if(!html) html = '<div class="p-3 text-center">Sin resultados</div>';
-        div.innerHTML = html; div.classList.remove('hidden');
+        let inp = document.getElementById('searchGlobalInput');
+        if(window._gsTimer) cancelAnimationFrame(window._gsTimer);
+        window._gsTimer = requestAnimationFrame(() => {
+            div.textContent = '';
+            div.insertAdjacentHTML('beforeend', html);
+            div.classList.remove('hidden');
+            if(inp && document.activeElement !== inp) inp.focus();
+            window._gsTimer = null;
+        });
         if(window._closeGlobalSearch) { document.removeEventListener('click', window._closeGlobalSearch); }
         window._closeGlobalSearch = e => {
-            let inp = document.getElementById('searchGlobalInput');
-            if(!div.contains(e.target) && e.target !== inp && !inp?.contains(e.target)){ div.classList.add('hidden'); document.removeEventListener('click', window._closeGlobalSearch); window._closeGlobalSearch = null; }
+            let inp2 = document.getElementById('searchGlobalInput');
+            if(!div.contains(e.target) && e.target !== inp2 && !inp2?.contains(e.target)){ div.classList.add('hidden'); document.removeEventListener('click', window._closeGlobalSearch); window._closeGlobalSearch = null; }
         };
         setTimeout(() => document.addEventListener('click', window._closeGlobalSearch), 100);
     }
@@ -945,13 +1410,12 @@
     async function renderInventario(){
         let bloqueado = volverBloqueado, accent = D.config.theme;
         productosSeleccionados = new Set(); selectAllChecked = false;
-        document.getElementById('appRoot').innerHTML = `<div class="page-header-fixed"><div class="module-header"><h2 id="tituloModule" class="module-title ${bloqueado?'module-title-bloqueado':''}" style="color:${accent}" onmousedown="iniciarBloqueo(this,'Inventario')" onmouseup="cancelarBloqueo()" onmouseleave="cancelarBloqueo()">Inventario</h2><div id="btnVolverModule" class="btn-back ${bloqueado?'btn-back-bloqueado':''}" onclick="${bloqueado?'':'backToHome()'}">${bloqueado?'<i class="fas fa-lock"></i> Bloqueado':'<i class="fas fa-arrow-left"></i> Volver'}</div></div></div><div class="page-container"><div class="mb-3 relative"><i class="fas fa-search absolute left-3 top-3 text-gray-400"></i><input type="text" id="searchInv" placeholder="Buscar producto..." class="pl-9 pr-3 py-2 border rounded-xl w-full"></div><div class="mb-3"><label class="text-xs font-semibold">📷 Código de barras</label><div class="flex gap-2"><input type="text" id="barcodeInvInput" placeholder="Escanee o escriba código..." class="border rounded-xl p-2 flex-1" autocomplete="off"><button id="btnScanInv" class="btn-redondeado px-3" style="background:var(--accent,#3b82f6);color:#fff" title="Escanear con cámara">📷</button></div></div><div class="batch-toolbar"><label class="flex items-center gap-2 text-sm"><input type="checkbox" id="selectAllCheckbox" class="select-all-checkbox" onchange="toggleSelectAll(this.checked)"> Seleccionar todo</label><button id="nuevoProducto" class="btn-azul-redondeado btn-redondeado py-2 px-4">+ Nuevo</button><button id="btnEditarLote" class="btn-azul-redondeado btn-redondeado py-2 px-4" onclick="editarSeleccionLote()" style="display:none">✏️ Editar selección</button><span id="batchCount" class="batch-count"></span></div><div id="listaProductos" class="scroll-area"></div></div>`;
+        document.getElementById('appRoot').innerHTML = `<div class="page-header-fixed"><div class="module-header"><h2 id="tituloModule" class="module-title ${bloqueado?'module-title-bloqueado':''}" style="color:${accent}" onmousedown="iniciarBloqueo(this,'Inventario')" onmouseup="cancelarBloqueo()" onmouseleave="cancelarBloqueo()">Inventario</h2><div id="btnVolverModule" class="btn-back ${bloqueado?'btn-back-bloqueado':''}" onclick="${bloqueado?'':'backToHome()'}">${bloqueado?'<i class="fas fa-lock"></i> Bloqueado':'<i class="fas fa-arrow-left"></i> Volver'}</div></div></div><div class="page-container"><div class="mb-3"><div class="buscador"><i class="fas fa-search icono-busqueda"></i><input type="text" id="searchInv" placeholder="Buscar producto o código de barras..." class="border-2 rounded-xl p-2 w-full" style="border-color:${accent}" autocomplete="off"><button id="btnScanInv" class="btn-icon-cuadrado" title="Escanear con cámara">📷</button></div></div><div class="batch-toolbar"><label class="flex items-center gap-2 text-sm"><input type="checkbox" id="selectAllCheckbox" class="select-all-checkbox" onchange="toggleSelectAll(this.checked)"> Seleccionar todo</label><button id="nuevoProducto" class="btn-azul-redondeado btn-redondeado py-2 px-4">+ Nuevo</button><button id="btnEditarLote" class="btn-azul-redondeado btn-redondeado py-2 px-4" onclick="editarSeleccionLote()" style="display:none">✏️ Editar selección</button><span id="batchCount" class="batch-count"></span></div><div id="listaProductos" class="scroll-area"></div></div>`;
         if(volverBloqueado) document.getElementById('btnVolverModule').onclick = () => mostrarOverlayBloqueo();
         document.getElementById('searchInv').addEventListener('input', e => renderListaProductos(e.target.value.toLowerCase()));
         document.getElementById('searchInv').addEventListener('keydown', e => { if(e.key === 'Enter') buscarPorCodigoInventario(e.target.value.trim()); });
-        document.getElementById('barcodeInvInput').addEventListener('keydown', e => { if(e.key === 'Enter') buscarPorCodigoInventario(e.target.value.trim()); });
-        if(!('ontouchstart' in window)) setTimeout(() => document.getElementById('barcodeInvInput')?.focus(), 300);
-        document.getElementById('btnScanInv').onclick = () => abrirEscanerCamara('barcodeInvInput', cod => { document.getElementById('barcodeInvInput').value = cod; buscarPorCodigoInventario(cod); });
+        if(!('ontouchstart' in window)) setTimeout(() => document.getElementById('searchInv')?.focus(), 300);
+        document.getElementById('btnScanInv').onclick = () => abrirEscanerCamara('searchInv', cod => { document.getElementById('searchInv').value = cod; buscarPorCodigoInventario(cod); });
         document.getElementById('nuevoProducto').onclick = () => mostrarFormProducto(null);
         renderListaProductos('');
     }
@@ -962,7 +1426,7 @@
         let cont = document.getElementById('listaProductos'); if(!cont) return;
         cont.innerHTML = filt.map(p => {
             let checked = productosSeleccionados.has(p.id);
-            return `<div class="product-card"><div class="flex items-start gap-2"><input type="checkbox" class="product-checkbox mt-1" data-id="${p.id}" ${checked?'checked':''} onchange="toggleProductoSeleccionado('${p.id}',this.checked)"><div class="flex-1"><div class="flex justify-between flex-wrap"><span class="font-bold">${escapeHtml(p.nombre)}</span><span class="text-xs">${escapeHtml(p.codigo||'')}</span></div><div class="text-sm">💰 ${fmtPrecio(p.precioVentaBs)} Bs / $${p.precioVentaUsd} | 📦 Stock: ${p.stock}</div><div class="text-xs break-words">🏷️ ${escapeHtml(p.categoria||'')} | 🚚 ${escapeHtml(p.proveedor||'—')}</div><div class="flex gap-2 mt-2"><button onclick="mostrarFormProducto('${p.id}')" class="btn-editar-redondeado">✏️ Editar</button><button onclick="copiarProducto('${p.id}')" class="btn-redondeado" style="background:var(--accent,#3b82f6);color:#fff;padding:4px 10px;font-size:12px">📋 Copiar</button><button onclick="eliminarProducto('${p.id}')" class="btn-eliminar-redondeado">🗑️ Eliminar</button></div></div></div></div>`;
+            return `<div class="product-card"><div class="flex items-start gap-2"><input type="checkbox" class="product-checkbox mt-1" data-id="${p.id}" ${checked?'checked':''} onchange="toggleProductoSeleccionado('${p.id}',this.checked)"><div class="flex-1"><div class="flex justify-between flex-wrap"><span class="font-bold">${escapeHtml(p.nombre)}</span><span class="text-xs">${escapeHtml(p.codigo||'')}</span></div><div class="text-sm">💰 ${fmtPrecio(preciosProducto(p).normalBs)} Bs / $${preciosProducto(p).normalUsd} | 📦 Stock: ${p.stock}</div>${tieneDescuentoProducto(p) ? `<div class="text-sm" style="color:#10b981">🏷️ Oferta: ${fmtPrecio(preciosProducto(p).desc.bs)} Bs / $${preciosProducto(p).desc.usd} <span class="text-xs">(-${typeof p.porcentajeDescuento === 'number' ? p.porcentajeDescuento : 0}%)</span></div>` : ''}<div class="text-xs break-words">🏷️ ${escapeHtml(p.categoria||'')} | 🚚 ${escapeHtml(p.proveedor||'—')}</div><div class="flex gap-2 mt-2"><button onclick="mostrarFormProducto('${p.id}')" class="btn-editar-redondeado">✏️ Editar</button><button onclick="copiarProducto('${p.id}')" class="btn-redondeado" style="background:var(--accent,#3b82f6);color:#fff;padding:4px 10px;font-size:12px">📋 Copiar</button><button onclick="eliminarProducto('${p.id}')" class="btn-eliminar-redondeado">🗑️ Eliminar</button></div></div></div></div>`;
         }).join('');
         actualizarToolbarBatch();
     }
@@ -1022,42 +1486,159 @@
         modal.onclick = e => { if(e.target === modal) modal.remove(); };
     };
     
+    // ==================== PRECIOS CENTRALES DEL PRODUCTO ====================
+    // Toda la matemática de precios pasa por aquí para que CUADRE en todos los
+    // módulos (inventario, ventas, ticket, WhatsApp, reportes).
+    // Reglas:
+    //   - El costo se ingresa en USD; el costo en Bs se deriva con la tasa del día.
+    //   - Precio normal USD = costo USD × (1 + ganancia%). Bs = USD × tasa.
+    //   - Si hay descuento: precio oferta USD = normal USD × (1 - descuento%).
+    function calcGananciaProducto(p){
+        if(p && typeof p.porcentajeGanancia === 'number' && p.porcentajeGanancia > 0) return p.porcentajeGanancia;
+        const c = parseFloat(p && p.costoRealUsd) || 0, v = parseFloat(p && p.precioVentaUsd) || 0;
+        if(c > 0 && v > 0) return Math.round((v - c) / c * 100);
+        return 0;
+    }
+    function tieneDescuentoProducto(p){
+        if(!p) return false;
+        if(typeof p.porcentajeDescuento === 'number' && p.porcentajeDescuento > 0) return true;
+        return parseFloat(p.precioDescuentoUsd) > 0;
+    }
+    function precioDescuentoProducto(p, tasa){
+        tasa = tasa || (D.config && D.config.dolarRate) || 1;
+        const usd = parseFloat(p && p.precioDescuentoUsd);
+        if(usd > 0) return { usd: usd, bs: parseFloat(p.precioDescuentoBs) > 0 ? p.precioDescuentoBs : Math.round(usd * tasa * 100) / 100 };
+        const normal = parseFloat(p && p.precioVentaUsd) || 0;
+        const pct = parseFloat(p && p.porcentajeDescuento) || 0;
+        if(normal > 0 && pct > 0){ const d = Math.round(normal * (1 - pct / 100) * 100) / 100; return { usd: d, bs: Math.round(d * tasa * 100) / 100 }; }
+        return null;
+    }
+    function preciosProducto(p, tasa){
+        tasa = tasa || (D.config && D.config.dolarRate) || 1;
+        const costoUsd = parseFloat(p && p.costoRealUsd) || 0;
+        const costoBs = parseFloat(p && p.costoRealBs) > 0 ? p.costoRealBs : Math.round(costoUsd * tasa * 100) / 100;
+        const normalUsd = parseFloat(p && p.precioVentaUsd) || 0;
+        const normalBs = parseFloat(p && p.precioVentaBs) > 0 ? p.precioVentaBs : (normalUsd > 0 ? Math.round(normalUsd * tasa * 100) / 100 : 0);
+        const desc = precioDescuentoProducto(p, tasa);
+        return {
+            costoUsd, costoBs,
+            normalUsd, normalBs,
+            ganancia: calcGananciaProducto(p),
+            desc, tieneDesc: !!desc
+        };
+    }
+    
     async function mostrarFormProducto(id, desdeBusqueda = false){
         let prod = id ? D.productos.find(p => p.id === id) : null;
         let esNuevo = !prod;
+        const tasa = D.config.dolarRate || 1;
+        const prIni = prod ? preciosProducto(prod, tasa) : { costoUsd:0, costoBs:0, normalUsd:0, normalBs:0, desc:null };
+        const ganIni = prod ? (prIni.ganancia || 30) : 30;
+        const descPct = prod ? (typeof prod.porcentajeDescuento === 'number' ? prod.porcentajeDescuento : 0) : 0;
+        const descUsdIni = prIni.desc ? prIni.desc.usd : 0;
+        const descBsIni = prIni.desc ? prIni.desc.bs : 0;
         let modal = document.createElement('div'); modal.className = 'modal-form';
-        modal.innerHTML = `<div class="modal-form-content"><h3 class="text-xl font-bold mb-4">${esNuevo ? 'Nuevo Producto' : 'Editar Producto'}</h3><div class="mb-3"><label>Nombre</label><input id="nombre" value="${escapeHtml(prod?.nombre||'')}" class="border rounded-xl p-2 w-full"></div><div class="mb-3"><label>📷 Código de barras</label><div class="flex gap-2"><input id="codigo" value="${escapeHtml(prod?.codigo||'')}" class="border rounded-xl p-2 flex-1"><button id="btnScanProducto" class="btn-redondeado px-3" style="background:var(--accent,#3b82f6);color:#fff" title="Escanear con cámara">📷</button></div></div><div class="mb-3"><label>Categoría</label><input id="categoria" value="${escapeHtml(prod?.categoria||'')}" class="border rounded-xl p-2 w-full"></div><div class="mb-3"><label>Proveedor</label><input id="proveedor" value="${escapeHtml(prod?.proveedor||'')}" class="border rounded-xl p-2 w-full"></div><div class="mb-3"><label>Stock</label><input type="number" id="stock" value="${prod?.stock||0}" class="border rounded-xl p-2 w-full"></div><div class="mb-3"><label>Precio de Compra (Bs)</label><input type="text" id="compraBs" value="${fmtPrecio(prod?.costoRealBs||0)}" class="border rounded-xl p-2 w-full"></div><div class="mb-3"><label>Precio de Compra (USD)</label><input type="number" id="compraUsd" step="any" value="${prod?.costoRealUsd||''}" class="border rounded-xl p-2 w-full"></div><div class="mb-3"><label>Precio Venta (Bs)</label><input type="text" id="ventaBs" value="${fmtPrecio(prod?.precioVentaBs||0)}" class="border rounded-xl p-2 w-full"></div><div class="mb-3"><label>Precio Venta (USD)</label><input type="number" id="ventaUsd" step="any" value="${prod?.precioVentaUsd||''}" class="border rounded-xl p-2 w-full"></div><div class="flex gap-3 mt-4"><button id="guardarBtn" class="btn-azul-redondeado btn-redondeado flex-1 py-2 font-bold">Guardar</button><button id="cancelarBtn" class="btn-redondeado flex-1 py-2 bg-gray-200">Cancelar</button></div></div>`;
+        modal.innerHTML = `<div class="modal-form-content" style="max-width:420px"><h3 class="text-xl font-bold mb-4">${esNuevo ? 'Nuevo Producto' : 'Editar Producto'}</h3>
+            <div class="mb-3"><label>Nombre</label><input id="nombre" value="${escapeHtml(prod?.nombre||'')}" class="border rounded-xl p-2 w-full"></div>
+            <div class="mb-3"><label>📷 Código de barras</label><div class="flex gap-2"><input id="codigo" value="${escapeHtml(prod?.codigo||'')}" class="border-2 rounded-xl p-2 flex-1" style="border-color:var(--accent,#3b82f6)"><button id="btnScanProducto" class="btn-icon-cuadrado" title="Escanear con cámara">📷</button></div></div>
+            <div class="mb-3"><label>Categoría</label><input id="categoria" value="${escapeHtml(prod?.categoria||'')}" class="border rounded-xl p-2 w-full"></div>
+            <div class="mb-3"><label>Proveedor</label><input id="proveedor" value="${escapeHtml(prod?.proveedor||'')}" class="border rounded-xl p-2 w-full"></div>
+            <div class="mb-3"><label>Stock</label><input type="number" id="stock" value="${prod?.stock||0}" class="border rounded-xl p-2 w-full"></div>
+            <div class="mb-3"><label>💵 Costo del producto (USD)</label><input type="number" id="compraUsd" step="any" min="0" value="${prod?.costoRealUsd||''}" placeholder="Ej: 3.00" class="border rounded-xl p-2 w-full"></div>
+            <div class="mb-3"><label>💰 % de Ganancia</label><input type="range" id="gananciaRange" min="5" max="100" step="1" value="${ganIni}" class="w-full"><input type="number" id="gananciaInput" step="any" min="5" max="100" value="${ganIni}" class="border rounded-xl p-2 w-full"></div>
+            <div class="mb-3"><label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="descOn" ${descPct > 0 ? 'checked' : ''}> <span>🏷️ Aplicar descuento al producto</span></label><div id="descDiv" style="${descPct > 0 ? 'display:block' : 'display:none'}"><label>% de Descuento</label><input type="number" id="descuentoInput" step="any" min="0" max="99.99" value="${descPct || ''}" placeholder="Ej: 10" class="border rounded-xl p-2 w-full"></div></div>
+            <div class="rounded-xl p-3 mb-3" style="background:rgba(128,128,128,0.08)">
+                <p class="font-bold text-sm mb-2" style="color:var(--accent)">💲 Precios calculados <span class="text-xs opacity-60">(tasa: 1 USD = ${fmtDolar(tasa)} Bs)</span></p>
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                    <div><label class="opacity-70">Costo en Bs</label><input type="text" id="compraBs" value="${fmtPrecio(prIni.costoBs)}" class="border rounded p-1 w-full"></div>
+                    <div><label class="opacity-70">Precio normal USD</label><input type="number" id="ventaUsd" step="any" min="0" value="${prIni.normalUsd || ''}" class="border rounded p-1 w-full"></div>
+                    <div><label class="opacity-70">Precio normal Bs</label><input type="text" id="ventaBs" value="${fmtPrecio(prIni.normalBs)}" class="border rounded p-1 w-full"></div>
+                    <div><label class="opacity-70">Precio oferta USD</label><input type="number" id="descUsd" step="any" min="0" value="${descUsdIni || ''}" class="border rounded p-1 w-full"></div>
+                    <div><label class="opacity-70">Precio oferta Bs</label><input type="text" id="descBs" value="${fmtPrecio(descBsIni)}" class="border rounded p-1 w-full"></div>
+                    <div class="flex items-end"><button id="recalcBtn" class="btn-redondeado py-1 px-3 text-xs" style="border:1px solid var(--accent,#3b82f6)">↺ Recalcular</button></div>
+                </div>
+                <p id="margenInfo" class="text-xs mt-2 opacity-80"></p>
+                <p class="text-[10px] opacity-60 mt-1">Se calculan solos con el costo y los %; puede ajustarlos a mano. "↺ Recalcular" los vuelve a la fórmula.</p>
+            </div>
+            <div class="flex gap-3 mt-4"><button id="guardarBtn" class="btn-azul-redondeado btn-redondeado flex-1 py-2 font-bold">Guardar</button><button id="cancelarBtn" class="btn-redondeado flex-1 py-2 bg-gray-200">Cancelar</button></div></div>`;
         document.body.appendChild(modal);
         document.getElementById('cancelarBtn').onclick = () => modal.remove();
         document.getElementById('btnScanProducto').onclick = () => abrirEscanerCamara('codigo', cod => { document.getElementById('codigo').value = cod; });
-        let ventaBs = document.getElementById('ventaBs'), ventaUsd = document.getElementById('ventaUsd'), compraBs = document.getElementById('compraBs'), compraUsd = document.getElementById('compraUsd');
-        let tasa = () => D.config.dolarRate;
-        ventaBs.oninput = () => { let bs = parseBs(ventaBs.value); if(bs > 0) ventaUsd.value = (bs / tasa()).toFixed(2); };
-        ventaUsd.oninput = () => { let usd = parseFloat(ventaUsd.value); if(!isNaN(usd) && usd > 0) ventaBs.value = fmtPrecio(usd * tasa()); };
-        compraBs.oninput = () => { let bs = parseBs(compraBs.value); if(bs > 0) compraUsd.value = (bs / tasa()).toFixed(2); };
-        compraUsd.oninput = () => { let usd = parseFloat(compraUsd.value); if(!isNaN(usd) && usd > 0) compraBs.value = fmtPrecio(usd * tasa()); };
+        const compraUsd = document.getElementById('compraUsd'), compraBs = document.getElementById('compraBs');
+        const ventaUsd = document.getElementById('ventaUsd'), ventaBs = document.getElementById('ventaBs');
+        const descUsd = document.getElementById('descUsd'), descBs = document.getElementById('descBs');
+        const gananciaInput = document.getElementById('gananciaInput'), gananciaRange = document.getElementById('gananciaRange');
+        const descOn = document.getElementById('descOn'), descuentoInput = document.getElementById('descuentoInput');
+        const descDiv = document.getElementById('descDiv'), recalcBtn = document.getElementById('recalcBtn');
+        let manual = { costo:false, venta:false, desc:false };
+        const tRedondeo = (v) => Math.round(v * 100) / 100;
+        function recalcular(){
+            const tasaV = D.config.dolarRate || 1;
+            const costoUsdVal = parseFloat(compraUsd.value) || 0;
+            let ganVal = parseFloat(gananciaInput.value) || 0;
+            if(ganVal < 0) ganVal = 0;
+            let descVal = descOn.checked ? (parseFloat(descuentoInput.value) || 0) : 0;
+            if(descVal < 0) descVal = 0; if(descVal >= 100) descVal = 99.99;
+            if(!manual.costo) compraBs.value = costoUsdVal > 0 ? fmtPrecio(tRedondeo(costoUsdVal * tasaV)) : '';
+            const precioUsd = costoUsdVal > 0 ? tRedondeo(costoUsdVal * (1 + ganVal / 100)) : 0;
+            if(!manual.venta){
+                ventaUsd.value = precioUsd > 0 ? precioUsd.toFixed(2) : '';
+                ventaBs.value = precioUsd > 0 ? fmtPrecio(tRedondeo(precioUsd * tasaV)) : '';
+            }
+            if(!manual.desc){
+                const dUsd = (precioUsd > 0 && descVal > 0) ? tRedondeo(precioUsd * (1 - descVal / 100)) : 0;
+                descUsd.value = dUsd > 0 ? dUsd.toFixed(2) : '';
+                descBs.value = dUsd > 0 ? fmtPrecio(tRedondeo(dUsd * tasaV)) : '';
+            }
+            descDiv.style.display = descOn.checked ? 'block' : 'none';
+            const cUsd = parseFloat(compraUsd.value) || 0;
+            const vUsd = parseFloat(ventaUsd.value) || 0;
+            const dUsd2 = parseFloat(descUsd.value) || 0;
+            let margenNormal = cUsd > 0 ? Math.round((vUsd - cUsd) / cUsd * 100) : 0;
+            let margenOferta = (cUsd > 0 && dUsd2 > 0) ? Math.round((dUsd2 - cUsd) / cUsd * 100) : 0;
+            const info = document.getElementById('margenInfo');
+            if(info) info.innerHTML = `Ganancia normal: <b>${margenNormal}%</b>${descOn.checked && dUsd2 > 0 ? ` | Ganancia con oferta: <b>${margenOferta}%</b>` : ''}`;
+        }
+        compraUsd.oninput = () => { manual = { costo:false, venta:false, desc:false }; recalcular(); };
+        gananciaInput.oninput = () => { gananciaRange.value = gananciaInput.value; manual.venta = false; manual.desc = false; recalcular(); };
+        gananciaRange.oninput = () => { gananciaInput.value = gananciaRange.value; manual.venta = false; manual.desc = false; recalcular(); };
+        descuentoInput.oninput = () => { manual.desc = false; recalcular(); };
+        descOn.onchange = () => { manual.desc = false; if(descOn.checked && !descuentoInput.value) descuentoInput.value = 10; recalcular(); };
+        compraBs.oninput = () => { manual.costo = true; recalcular(); };
+        ventaBs.oninput = () => { manual.venta = true; const bs = parseBs(ventaBs.value); if(bs > 0) ventaUsd.value = (bs / (D.config.dolarRate || 1)).toFixed(2); recalcular(); };
+        ventaUsd.oninput = () => { manual.venta = true; const usd = parseFloat(ventaUsd.value); if(!isNaN(usd) && usd > 0) ventaBs.value = fmtPrecio(tRedondeo(usd * (D.config.dolarRate || 1))); recalcular(); };
+        descBs.oninput = () => { manual.desc = true; const bs = parseBs(descBs.value); if(bs > 0) descUsd.value = (bs / (D.config.dolarRate || 1)).toFixed(2); recalcular(); };
+        descUsd.oninput = () => { manual.desc = true; const usd = parseFloat(descUsd.value); if(!isNaN(usd) && usd > 0) descBs.value = fmtPrecio(tRedondeo(usd * (D.config.dolarRate || 1))); recalcular(); };
+        recalcBtn.onclick = () => { manual = { costo:false, venta:false, desc:false }; recalcular(); };
+        recalcular();
         document.getElementById('guardarBtn').onclick = async () => {
-            let precioVentaBs = parseBs(ventaBs.value);
-            let precioVentaUsd = parseFloat(ventaUsd.value) || 0;
-            let costoRealBs = parseBs(compraBs.value);
+            const tasaV = D.config.dolarRate || 1;
             let costoRealUsd = parseFloat(compraUsd.value) || 0;
-            if(precioVentaBs <= 0 && precioVentaUsd > 0) precioVentaBs = precioVentaUsd * tasa();
-            else if(precioVentaUsd <= 0 && precioVentaBs > 0) precioVentaUsd = precioVentaBs / tasa();
-            precioVentaUsd = parseFloat(precioVentaUsd.toFixed(2));
-            if(costoRealBs <= 0 && costoRealUsd > 0) costoRealBs = costoRealUsd * tasa();
-            else if(costoRealUsd <= 0 && costoRealBs > 0) costoRealUsd = costoRealBs / tasa();
-            costoRealUsd = parseFloat(costoRealUsd.toFixed(2));
+            let costoRealBs = parseBs(compraBs.value);
+            if(costoRealBs <= 0 && costoRealUsd > 0) costoRealBs = tRedondeo(costoRealUsd * tasaV);
+            let precioVentaUsd = parseFloat(ventaUsd.value) || 0;
+            let precioVentaBs = parseBs(ventaBs.value);
+            if(precioVentaBs <= 0 && precioVentaUsd > 0) precioVentaBs = tRedondeo(precioVentaUsd * tasaV);
+            else if(precioVentaUsd <= 0 && precioVentaBs > 0) precioVentaUsd = tRedondeo(precioVentaBs / tasaV);
+            let porcentajeGanancia = parseFloat(gananciaInput.value) || 0;
+            let porcentajeDescuento = descOn.checked ? (parseFloat(descuentoInput.value) || 0) : 0;
+            if(porcentajeDescuento >= 100) porcentajeDescuento = 99.99; if(porcentajeDescuento < 0) porcentajeDescuento = 0;
+            let precioDescuentoUsd = parseFloat(descUsd.value) || 0;
+            let precioDescuentoBs = parseBs(descBs.value);
+            if(precioDescuentoUsd <= 0 && porcentajeDescuento > 0 && precioVentaUsd > 0) precioDescuentoUsd = tRedondeo(precioVentaUsd * (1 - porcentajeDescuento / 100));
+            if(precioDescuentoBs <= 0 && precioDescuentoUsd > 0) precioDescuentoBs = tRedondeo(precioDescuentoUsd * tasaV);
+            precioVentaUsd = tRedondeo(precioVentaUsd); costoRealUsd = tRedondeo(costoRealUsd); precioDescuentoUsd = tRedondeo(precioDescuentoUsd);
             if(!document.getElementById('nombre').value.trim()) { alert('El nombre del producto es obligatorio'); return; }
             if(precioVentaBs <= 0) { alert('El precio de venta debe ser mayor a 0'); return; }
             let nombre = capitalizeWords(document.getElementById('nombre').value.trim());
-            let nuevo = { id: esNuevo ? 'p'+Date.now() : prod.id, nombre, codigo: document.getElementById('codigo').value, categoria: document.getElementById('categoria').value, proveedor: document.getElementById('proveedor').value, stock: parseInt(document.getElementById('stock').value) || 0, precioVentaBs, precioVentaUsd, costoRealBs, costoRealUsd };
+            let nuevo = { id: esNuevo ? 'p'+Date.now() : prod.id, nombre, codigo: document.getElementById('codigo').value, categoria: document.getElementById('categoria').value, proveedor: document.getElementById('proveedor').value, stock: parseInt(document.getElementById('stock').value) || 0, precioVentaBs, precioVentaUsd, costoRealBs, costoRealUsd, porcentajeGanancia, porcentajeDescuento, precioDescuentoUsd, precioDescuentoBs, tasaRegistro: tasaV };
             await saveItem('productos', nuevo);
             modal.remove();
             if(desdeBusqueda) renderHome(); else renderInventario();
         };
     }
     
-    window.eliminarProducto = async id => { if(confirm('¿Eliminar producto?')){ await deleteItem('productos', id); D.productos = D.productos.filter(p => p.id !== id); renderInventario(); } };
+    window.eliminarProducto = async id => { if(await jamConfirm('¿Eliminar producto?')){ await deleteItem('productos', id); D.productos = D.productos.filter(p => p.id !== id); renderInventario(); } };
     
     window.copiarProducto = (id) => {
         let p = D.productos.find(x => x.id === id);
@@ -1066,9 +1647,10 @@
         let hoy = new Date().toLocaleDateString();
         let saludo = h < 12 ? '¡Buenos días' : h < 18 ? '¡Buenas tardes' : '¡Buenas noches';
         let hayStock = p.stock > 0;
-        let bsPrecio = fmtPrecio(p.precioVentaBs);
-        let usdPrecio = p.precioVentaUsd ? '$' + p.precioVentaUsd + ' USD' : '';
-        let msg = `${saludo}, estimado cliente! 🌟\n\n${hayStock ? '📦 SÍ tenemos en existencia:' : '❌ Por ahora NO tenemos en stock este producto. Le avisaremos cuando se reponga.'}\n\n📌 *${p.nombre.toUpperCase()}*\n${p.codigo ? '🔖 Código: ' + p.codigo + '\n' : ''}${hayStock ? '💰 *Precio por unidad:*' : '💰 *Precio de referencia:*'} ${bsPrecio} Bs  |  ${usdPrecio}\n📅 Precio en Bs válido solo para el ${hoy} (sujeto a cambios tasa BCV).\n💵 El precio en USD se mantiene fijo.\n\n${hayStock ? '✅ Por favor confirme su pedido para gestionarlo con anticipación. Le enviaremos confirmación una vez verificado el pago. 🙏' : ''}`;
+        const pr = preciosProducto(p);
+        let bsPrecio = fmtPrecio(pr.normalBs);
+        let usdPrecio = pr.normalUsd ? '$' + pr.normalUsd + ' USD' : '';
+        let msg = `${saludo}, estimado cliente! 🌟\n\n${hayStock ? '📦 SÍ tenemos en existencia:' : '❌ Por ahora NO tenemos en stock este producto. Le avisaremos cuando se reponga.'}\n\n📌 *${p.nombre.toUpperCase()}*\n${p.codigo ? '🔖 Código: ' + p.codigo + '\n' : ''}${hayStock ? '💰 *Precio por unidad:*' : '💰 *Precio de referencia:*'} ${bsPrecio} Bs  |  ${usdPrecio}\n${pr.tieneDesc ? `🏷️ *OFERTA:* ${fmtPrecio(pr.desc.bs)} Bs | $${pr.desc.usd} USD (-${typeof p.porcentajeDescuento === 'number' ? p.porcentajeDescuento : 0}%)\n` : ''}📅 Precio en Bs válido solo para el ${hoy} (sujeto a cambios tasa BCV).\n💵 El precio en USD se mantiene fijo.\n\n${hayStock ? '✅ Por favor confirme su pedido para gestionarlo con anticipación. Le enviaremos confirmación una vez verificado el pago. 🙏' : ''}`;
         navigator.clipboard.writeText(msg).then(() => mostrarNotificacion('✅ Copiado al portapapeles', 'success')).catch(() => {});
     };
     
@@ -1076,7 +1658,7 @@
     async function renderCrud(store, titulo, campos){
         let bloqueado = volverBloqueado, accent = D.config.theme;
         let items = await getAll(store); D[store] = items;
-        document.getElementById('appRoot').innerHTML = `<div class="page-header-fixed"><div class="module-header"><h2 id="tituloModule" class="module-title ${bloqueado?'module-title-bloqueado':''}" style="color:${accent}" onmousedown="iniciarBloqueo(this,'${titulo}')" onmouseup="cancelarBloqueo()" onmouseleave="cancelarBloqueo()">${titulo}</h2><div id="btnVolverModule" class="btn-back ${bloqueado?'btn-back-bloqueado':''}" onclick="${bloqueado?'':'backToHome()'}">${bloqueado?'<i class="fas fa-lock"></i> Bloqueado':'<i class="fas fa-arrow-left"></i> Volver'}</div></div></div><div class="page-container"><div class="mb-3 relative"><i class="fas fa-search absolute left-3 top-3 text-gray-400"></i><input type="text" id="searchCrud" placeholder="Buscar..." class="pl-9 pr-3 py-2 border rounded-xl w-full"></div><button id="agregarBtn" class="btn-azul-redondeado btn-redondeado mb-4 py-2 px-4">+ Agregar ${titulo}</button><div id="listaCrud" class="scroll-area"></div></div>`;
+        document.getElementById('appRoot').innerHTML = `<div class="page-header-fixed"><div class="module-header"><h2 id="tituloModule" class="module-title ${bloqueado?'module-title-bloqueado':''}" style="color:${accent}" onmousedown="iniciarBloqueo(this,'${titulo}')" onmouseup="cancelarBloqueo()" onmouseleave="cancelarBloqueo()">${titulo}</h2><div id="btnVolverModule" class="btn-back ${bloqueado?'btn-back-bloqueado':''}" onclick="${bloqueado?'':'backToHome()'}">${bloqueado?'<i class="fas fa-lock"></i> Bloqueado':'<i class="fas fa-arrow-left"></i> Volver'}</div></div></div><div class="page-container"><div class="mb-3 relative"><i class="fas fa-search absolute left-3 top-3 text-gray-400"></i><input type="text" id="searchCrud" placeholder="Buscar..." class="pl-9 pr-3 py-2 border-2 rounded-xl w-full" style="border-color:${accent}"></div><button id="agregarBtn" class="btn-azul-redondeado btn-redondeado mb-4 py-2 px-4">+ Agregar ${titulo}</button><div id="listaCrud" class="scroll-area"></div></div>`;
         if(volverBloqueado) document.getElementById('btnVolverModule').onclick = () => mostrarOverlayBloqueo();
         let search = document.getElementById('searchCrud'), agregar = document.getElementById('agregarBtn');
         let renderLista = filtro => {
@@ -1088,8 +1670,8 @@
                 let detalles = '';
                 if(store === 'clientes') detalles = `<div class="text-xs text-gray-500 mt-1">📞 ${escapeHtml(i.telefono||'')} | ✉️ ${escapeHtml(i.email||'')}</div>`;
                 else if(store === 'proveedores') detalles = `<div class="text-xs text-gray-500 mt-1">📞 ${escapeHtml(i.telefono||'')} | 👤 ${escapeHtml(i.contacto||'')}</div>`;
-                else if(store === 'gastos') detalles = `<div class="text-xs text-gray-500 mt-1">💰 ${fmtPrecio(i.montoBs||0)} Bs | 📅 ${escapeHtml(i.fecha||'')}</div>`;
-                else if(store === 'empleados') detalles = `<div class="text-xs text-gray-500 mt-1">💼 ${escapeHtml(i.cargo||'')} | 💵 ${fmtPrecio(i.salarioBs||0)} Bs</div>`;
+                else if(store === 'gastos') detalles = `<div class="text-xs text-gray-500 mt-1">💰 ${fmtPrecio(i.montoBs||0)} Bs | 📅 ${escapeHtml(fmtFechaDisplay(i.fecha)||'')}</div>`;
+                else if(store === 'empleados') detalles = `<div class="text-xs text-gray-500 mt-1">💼 ${escapeHtml(i.cargo||'')} | 💵 ${fmtPrecio(i.salarioBs||0)} Bs | 📅 ${escapeHtml(fmtFechaDisplay(i.fechaContrato)||'')}</div>`;
                 return `<div class="client-card" data-id="${i.id}"><div class="font-bold break-words">${escapeHtml((i[campos[0]]||'Sin nombre').toString())}</div>${detalles}<div class="flex gap-2 mt-2"><button class="btn-editar-item btn-editar-redondeado">✏️ Editar</button><button class="btn-eliminar-item btn-eliminar-redondeado">🗑️ Eliminar</button></div></div>`;
             }).join('');
             document.querySelectorAll('.btn-editar-item').forEach((btn, idx) => { let it = filt[idx]; btn.onclick = () => window.mostrarFormCrud(store, it.id, campos, false); });
@@ -1101,7 +1683,7 @@
     }
     
     async function eliminarItemCrud(store, id){
-        if(confirm('¿Eliminar este elemento?')){
+        if(await jamConfirm('¿Eliminar este elemento?')){
             await deleteItem(store, id);
             D[store] = D[store].filter(i => i.id !== id);
             if(store === 'clientes') renderCrud('clientes','Clientes',['cedula','nombre','telefono','direccion','email']);
@@ -1113,6 +1695,234 @@
     
     // ==================== REPORTES (Dashboard KPIs) ====================
     function msToDateStr(ms){ let d = new Date(ms); return d.getFullYear()+'-'+(d.getMonth()+1).toString().padStart(2,'0')+'-'+d.getDate().toString().padStart(2,'0'); }
+    const KEY_HISTORIAL_TASA = 'jam_pos_historial_tasa';
+    function cargarHistorialTasa(){ try { return JSON.parse(localStorage.getItem(KEY_HISTORIAL_TASA)) || []; } catch(e) { return []; } }
+    function guardarHistorialTasa(arr){ try { localStorage.setItem(KEY_HISTORIAL_TASA, JSON.stringify(arr)); } catch(e) {} }
+    function horaActual(){ return new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }); }
+    function registrarCambioTasa(tasa){
+        if(!(tasa > 0)) return false;
+        let arr = cargarHistorialTasa();
+        let ultimo = arr.length ? arr[arr.length - 1] : null;
+        const hoy = msToDateStr(Date.now());
+        let nuevo = false;
+        if(ultimo && Math.abs(tasa - ultimo.tasa) < 0.01){
+            if(ultimo.fecha === hoy){
+                ultimo.hora = horaActual();
+                guardarHistorialTasa(arr);
+            }
+        } else {
+            arr.push({ fecha: hoy, hora: horaActual(), tasa: tasa });
+            guardarHistorialTasa(arr);
+            nuevo = true;
+        }
+        if(tasa > 0) registrarTasaDia(tasa, hoy, horaActual()).catch(() => {});
+        return nuevo;
+    }
+    
+    // ==================== TASA DIARIA (calendario inmutable) ====================
+    // Cada día tiene UN valor de tasa. El del día de HOY se puede ajustar durante
+    // la jornada; en cuanto el día se completa (o se fija manualmente) queda
+    // INMUTABLE para siempre en el calendario.
+    const KEY_TASA_DIARIA = 'jam_pos_tasa_diaria';
+    let cacheTasaDiaria = [];
+    function hoyISO(){ return msToDateStr(Date.now()); }
+    async function cargarTasaDiaria(){
+        try { const arr = await loadFromIDB('tasa_diaria'); if(Array.isArray(arr) && arr.length) return arr; } catch(e) {}
+        return loadFromStorage(KEY_TASA_DIARIA, []);
+    }
+    async function guardarTasaDiaria(arr){
+        try { await saveToIDB('tasa_diaria', arr); } catch(e) {}
+        try { saveToStorage(KEY_TASA_DIARIA, arr); } catch(e) {}
+        cacheTasaDiaria = arr.slice();
+    }
+    function refrescarCacheTasaDiaria(){ cacheTasaDiaria = D.tasaDiaria || []; }
+    // Rellena cada día sin registro desde la primera tasa hasta HOY con el
+    // último valor conocido (registro diario completo). Los días impresos
+    // quedan fijada:true; solo HOY puede quedar editable.
+    function completarRegistroDiario(arr, hoy){
+        if(!Array.isArray(arr) || !arr.length) return arr;
+        hoy = hoy || hoyISO();
+        const porFecha = {};
+        arr.forEach(r => { porFecha[r.fecha] = r; });
+        const fechas = Object.keys(porFecha).sort();
+        const primero = fechas[0];
+        const cursor = new Date(primero + 'T00:00:00');
+        const fin = new Date(hoy + 'T00:00:00');
+        if(cursor.getTime() > fin.getTime()) return arr;
+        let ultimoValor = 0;
+        let ultimaHora = '';
+        let cambio = false;
+        const nuevos = [];
+        while(cursor.getTime() <= fin.getTime()){
+            const iso = msToDateStr(cursor.getTime());
+            const existente = porFecha[iso];
+            if(existente){
+                if(existente.tasa > 0){ ultimoValor = existente.tasa; ultimaHora = existente.hora || ''; }
+            } else if(ultimoValor > 0){
+                nuevos.push({ id: iso, fecha: iso, tasa: ultimoValor, hora: ultimaHora, fijada: iso !== hoy });
+                cambio = true;
+            }
+            cursor.setDate(cursor.getDate() + 1);
+        }
+        if(cambio) arr = arr.concat(nuevos).sort((a,b) => a.fecha < b.fecha ? -1 : 1);
+        return arr;
+    }
+    async function migrarTasaDiaria(){
+        let arr = await cargarTasaDiaria();
+        let cambio = false;
+        if(!arr.length){
+            let hist = cargarHistorialTasa();
+            let porDia = {};
+            hist.forEach(h => { if(h && h.fecha && h.tasa > 0) porDia[h.fecha] = { fecha: h.fecha, tasa: h.tasa, hora: h.hora || '' }; });
+            Object.keys(porDia).sort().forEach(f => { arr.push({ id: f, fecha: f, tasa: Math.round(porDia[f].tasa * 100) / 100, hora: porDia[f].hora, fijada: true }); });
+            cambio = true;
+        }
+        const hoy = hoyISO();
+        if(!arr.find(x => x.fecha === hoy)){
+            let tasaHoy = (D.config && D.config.dolarRate > 0) ? D.config.dolarRate : 0;
+            if(tasaHoy <= 0 && arr.length){
+                const ultimo = arr[arr.length - 1];
+                if(ultimo && ultimo.tasa > 0) tasaHoy = ultimo.tasa;
+            }
+            if(tasaHoy > 0){ arr.push({ id: hoy, fecha: hoy, tasa: Math.round(tasaHoy * 100) / 100, hora: horaActual(), fijada: false }); cambio = true; }
+        }
+        const antes = arr.length;
+        arr = completarRegistroDiario(arr, hoy);
+        if(arr.length !== antes) cambio = true;
+        arr.forEach(r => { if(r.fecha < hoy && !r.fijada){ r.fijada = true; cambio = true; } });
+        if(cambio) await guardarTasaDiaria(arr);
+        D.tasaDiaria = arr;
+        return arr;
+    }
+    async function registrarTasaDia(tasa, fechaISO, hora){
+        if(!(tasa > 0)) return false;
+        fechaISO = fechaISO || hoyISO();
+        let arr = await cargarTasaDiaria();
+        let existente = arr.find(x => x.fecha === fechaISO);
+        const val = Math.round(tasa * 100) / 100;
+        if(existente){
+            if(existente.fijada) return false;
+            if(existente.tasa > 0 && Math.abs(existente.tasa - val) < 0.001){ existente.hora = hora || existente.hora; await guardarTasaDiaria(arr); return false; }
+            existente.tasa = val;
+            existente.hora = hora || existente.hora;
+            existente.fijada = false;
+            await guardarTasaDiaria(arr);
+            return true;
+        }
+        arr.push({ id: fechaISO, fecha: fechaISO, tasa: val, hora: hora || '', fijada: false });
+        arr.sort((a,b) => a.fecha < b.fecha ? -1 : 1);
+        await guardarTasaDiaria(arr);
+        return true;
+    }
+    async function fijarTasaDia(fechaISO){
+        fechaISO = fechaISO || hoyISO();
+        let arr = await cargarTasaDiaria();
+        let existente = arr.find(x => x.fecha === fechaISO);
+        if(existente){
+            if(existente.fijada) return false;
+            existente.fijada = true;
+            await guardarTasaDiaria(arr);
+            return true;
+        }
+        if(fechaISO === hoyISO() && D.config.dolarRate > 0){
+            arr.push({ id: fechaISO, fecha: fechaISO, tasa: Math.round(D.config.dolarRate * 100) / 100, hora: horaActual(), fijada: true });
+            arr.sort((a,b) => a.fecha < b.fecha ? -1 : 1);
+            await guardarTasaDiaria(arr);
+            return true;
+        }
+        return false;
+    }
+    function tasaParaFecha(fechaISO){
+        let r = cacheTasaDiaria.find(x => x.fecha === fechaISO);
+        if(r) return { tasa: r.tasa, fijada: r.fijada, hora: r.hora, directo: true };
+        return { tasa: 0, fijada: false, hora: '', directo: false };
+    }
+    async function importarTasaDiariaDesde(lista){
+        let arr = await cargarTasaDiaria();
+        let cont = 0;
+        (lista || []).forEach(r => {
+            if(!r || !r.fecha) return;
+            const fecha = aFechaISO(r.fecha) || String(r.fecha);
+            const tasa = parseFloat(r.tasa);
+            if(!(tasa > 0) || !/^\d{4}-\d{2}-\d{2}$/.test(fecha)) return;
+            const ex = arr.find(x => x.fecha === fecha);
+            if(!ex){
+                arr.push({ id: fecha, fecha, tasa: Math.round(tasa * 100) / 100, hora: r.hora || '', fijada: !!r.fijada || fecha < hoyISO() });
+                cont++;
+            }
+        });
+        arr.sort((a,b) => a.fecha < b.fecha ? -1 : 1);
+        const antes = arr.length;
+        arr = completarRegistroDiario(arr, hoyISO());
+        if(cont > 0 || arr.length !== antes) await guardarTasaDiaria(arr);
+        D.tasaDiaria = arr;
+        return cont;
+    }
+    function agregarTasaHistorial(tasa, fechaISO, hora){
+        if(!(tasa > 0)) return false;
+        if(!fechaISO) return false;
+        let arr = cargarHistorialTasa();
+        let duplicado = arr.some(h => h.fecha === fechaISO && Math.abs(Number(h.tasa) - tasa) < 0.01);
+        if(duplicado) return false;
+        arr.push({ fecha: fechaISO, hora: hora || '--:--', tasa: tasa });
+        arr.sort((a,b) => a.fecha === b.fecha ? 0 : (a.fecha < b.fecha ? -1 : 1));
+        guardarHistorialTasa(arr);
+        return true;
+    }
+    function importarHistorialTasaDesde(historial){
+        let cont = 0;
+        (historial || []).forEach(h => {
+            if(!h) return;
+            let tasa = parseFloat(h.tasa);
+            let fecha = aFechaISO(h.fecha);
+            if(!fecha && String(h.fecha||'').match(/^\d{4}-\d{2}-\d{2}/)) fecha = h.fecha;
+            if(tasa > 0 && fecha){
+                if(agregarTasaHistorial(tasa, fecha, h.hora || '')) cont++;
+            }
+        });
+        return cont;
+    }
+    function aplicarConfigInteligente(configBackup, timestampBackup){
+        const prev = Object.assign({}, D.config);
+        const tasaVigente = parseFloat(prev.dolarRate);
+        const tasaBackup = parseFloat(configBackup && configBackup.dolarRate);
+        const fechaVigente = aFechaISO(prev.lastUpdate) || msToDateStr(Date.now());
+        const fechaBackup = aFechaISO(configBackup && configBackup.lastUpdate) || aFechaISO(timestampBackup) || '';
+        if(tasaBackup > 0 && fechaBackup) agregarTasaHistorial(tasaBackup, fechaBackup, configBackup.lastUpdate);
+        D.config = Object.assign({}, prev, configBackup || {});
+        const backupEsMasNueva = !!(tasaBackup > 0 && fechaBackup && fechaBackup > fechaVigente);
+        let estado = '';
+        if(backupEsMasNueva){
+            if(tasaVigente > 0) agregarTasaHistorial(tasaVigente, fechaVigente, prev.lastUpdate);
+            D.config.dolarRate = tasaBackup;
+            if(!(configBackup.tasaManualValue > 0)) D.config.tasaManualValue = tasaBackup;
+            estado = `💱 Tasa: se aplicó la del archivo (${fmtDolar(tasaBackup)}, más nueva que la vigente ${fmtDolar(tasaVigente)})`;
+        } else {
+            D.config.dolarRate = tasaVigente > 0 ? tasaVigente : (tasaBackup > 0 ? tasaBackup : D.config.dolarRate);
+            D.config.tasaManualValue = prev.tasaManualValue > 0 ? prev.tasaManualValue : D.config.dolarRate;
+            D.config.tasaManual = prev.tasaManual;
+            D.config.lastUpdate = prev.lastUpdate;
+            estado = `💱 Tasa: se conservó la vigente (${fmtDolar(D.config.dolarRate)}); la del archivo (${fmtDolar(tasaBackup > 0 ? tasaBackup : D.config.dolarRate)}) quedó en el historial`;
+        }
+        saveToStorage(STORAGE_KEYS.config, D.config);
+        return estado;
+    }
+    function aFechaISO(v){
+        if(!v) return '';
+        let s = String(v);
+        let lim = s.indexOf('T'); if(lim !== -1) s = s.slice(0, lim);
+        if(/^\d{4}-\d{1,2}-\d{1,2}/.test(s)){ let p = s.split(/[-\/]/); return p[0] + '-' + String(p[1]).padStart(2,'0') + '-' + String(p[2]).padStart(2,'0'); }
+        let m = s.match(/(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})/);
+        if(m){ let aa = m[3].length === 2 ? '20' + m[3] : m[3]; return aa + '-' + String(m[2]).padStart(2,'0') + '-' + String(m[1]).padStart(2,'0'); }
+        let t = new Date(s).getTime();
+        return isNaN(t) ? '' : msToDateStr(t);
+    }
+    function fmtFechaDisplay(v){
+        if(!v) return '';
+        let s = String(v);
+        if(/^\d{4}-\d{2}-\d{2}$/.test(s)){ let p = s.split('-'); return p[2] + '/' + p[1] + '/' + p[0]; }
+        return s;
+    }
     function generarDiasSemana(){
         let dias = [];
         for(let i=6; i>=0; i--){
@@ -1149,7 +1959,8 @@
                 let y = H - 10 - barH;
                 ctx.fillStyle = accent;
                 ctx.beginPath();
-                ctx.roundRect(x, y, barW, barH, [4,4,0,0]);
+                if (ctx.roundRect) ctx.roundRect(x, y, barW, barH, [4,4,0,0]);
+                else ctx.rect(x, y, barW, barH);
                 ctx.fill();
                 ctx.fillStyle = getComputedStyle(document.body).color;
                 ctx.font = '9px sans-serif';
@@ -1173,11 +1984,10 @@
         let ventasHoy = ventas.filter(v => msToDateStr(v.timestamp || new Date(v.fecha).getTime()) === hoy);
         let totalHoy = ventasHoy.reduce((a,b)=>a+(b.total||0),0);
         let gananciaHoy = ventasHoy.reduce((a,b)=>a+(b.gananciaTotal||0),0);
-        let gastosHoy = D.gastos.reduce((a,b)=>a+(b.montoBs||0),0);
+        let gastosHoy = D.gastos.filter(g => { let t = g.timestamp || new Date(g.fecha).getTime(); return !isNaN(t) && msToDateStr(t) === hoy; }).reduce((a,b)=>a+(b.montoBs||0),0);
         let utilidadHoy = gananciaHoy - gastosHoy;
         let clientesUnicos = new Set(ventas.map(v => v.clienteId)).size;
         let stockBajo = D.productos.filter(p => p.stock < 5).length;
-        let formasPago = { 'efectivo_bs':'EFECTIVO Bs','pago_movil':'PAGO MÓVIL','transferencia':'TRANSFERENCIA','tarjeta_debito':'TARJETA DÉBITO','dolares':'DÓLARES','pago_dividido':'PAGO DIVIDIDO' };
         let bloqueado = volverBloqueado, accent = D.config.theme;
         document.getElementById('appRoot').innerHTML = `
             <div class="page-header-fixed"><div class="module-header"><h2 id="tituloModule" class="module-title ${bloqueado?'module-title-bloqueado':''}" style="color:${accent}" onmousedown="iniciarBloqueo(this,'Reportes')" onmouseup="cancelarBloqueo()" onmouseleave="cancelarBloqueo()">Reportes</h2><div id="btnVolverModule" class="btn-back ${bloqueado?'btn-back-bloqueado':''}" onclick="${bloqueado?'':'backToHome()'}">${bloqueado?'<i class="fas fa-lock"></i> Bloqueado':'<i class="fas fa-arrow-left"></i> Volver'}</div></div></div>
@@ -1195,16 +2005,314 @@
                     <div class="kpi-card ${stockBajo > 0 ? 'kpi-low-stock' : ''}"><div class="kpi-icon">⚠️</div><div class="kpi-value">${stockBajo}</div><div class="kpi-label">Stock bajo (&lt;5)</div></div>
                 </div>
                 <div class="chart-container"><canvas id="chartVentas"></canvas></div>
-                <h3 class="font-bold mb-2">Últimas ventas</h3>
-                <div class="max-h-64 overflow-auto">${ventas.slice().reverse().map(v => `<div class="border rounded-xl p-3 mb-2 cursor-pointer hover:opacity-80" style="border-color:var(--accent)" onclick="window.mostrarTicketDesdeReporte('${v.id}')"><div class="flex justify-between items-start"><div><b>${escapeHtml(v.id)}</b></div><div class="text-xs opacity-60">${escapeHtml(v.fecha)}</div></div><div class="text-sm mt-1">👤 ${escapeHtml(v.cliente)}</div><div class="flex justify-between items-center mt-1"><span class="text-sm font-bold" style="color:var(--accent)">${fmtPrecio(v.total)} Bs</span><span class="text-xs">${formasPago[v.tipoPago] || v.tipoPago}</span></div><div class="text-xs mt-1 opacity-60">${v.items.map(i=>`${escapeHtml(i.nombre)} x${i.cantidad}`).join(', ')}</div></div>`).join('')}</div>
+                <h3 class="font-bold mb-2">Registro de ventas</h3>
+                <div class="flex gap-2 mb-2">
+                    <div class="buscador" style="flex:1">
+                        <i class="fas fa-search icono-busqueda"></i>
+                        <input id="buscarVentas" type="search" placeholder="🔍 Buscar por fecha, artículo o cliente..." oninput="window.onBuscarVentasTexto()" class="w-full" autocomplete="off">
+                        <button id="btnCalendarioVentas" class="btn-icon-cuadrado" title="Ver ventas por fecha" onclick="window.abrirCalendarioVentas()"><i class="fas fa-calendar-alt"></i></button>
+                    </div>
+                </div>
+                <div class="text-xs opacity-60 mb-2" id="contadorVentas">${ventas.length} venta(s)</div>
+                <div id="listaVentasReporte" class="max-h-64 overflow-auto">${ventas.slice().reverse().map(v => ventaCardReporte(v)).join('')}</div>
+                <h3 class="font-bold mt-4 mb-2">💱 Historial de la tasa del dólar</h3>
+                <div class="flex gap-2 mb-2">
+                    <div class="buscador" style="flex:1">
+                        <i class="fas fa-search icono-busqueda"></i>
+                        <input id="buscarHistTasa" type="search" placeholder="🔍 Buscar por fecha..." oninput="window.onBuscarHistTasaTexto()" class="w-full" autocomplete="off">
+                        <button id="btnCalendarioTasa" class="btn-icon-cuadrado" title="Ver cambios de tasa por fecha" onclick="window.abrirCalendarioTasa()"><i class="fas fa-calendar-alt"></i></button>
+                    </div>
+                </div>
+                <div class="text-xs opacity-60 mb-2" id="contadorHistTasa">${cargarHistorialTasa().length} cambio(s) de tasa</div>
+                <div id="listaHistTasa" class="max-h-64 overflow-auto">${renderTarjetasHistTasa()}</div>
             </div>`;
         if(volverBloqueado) document.getElementById('btnVolverModule').onclick = () => mostrarOverlayBloqueo();
         renderGraficoVentas(ventas);
     }
     
+    const formasPagoGlobal = { 'efectivo_bs':'EFECTIVO Bs','pago_movil':'PAGO MÓVIL','transferencia':'TRANSFERENCIA','tarjeta_debito':'TARJETA DÉBITO','dolares':'DÓLARES','pago_dividido':'PAGO DIVIDIDO' };
+    function ventaCardReporte(v){
+        return `<div class="border rounded-xl p-3 mb-2 cursor-pointer hover:opacity-80" style="border-color:var(--accent)" onclick="window.mostrarTicketDesdeReporte('${v.id}')"><div class="flex justify-between items-start"><div><b>${escapeHtml(v.id)}</b></div><div class="text-xs opacity-60">${escapeHtml(v.fecha)}</div></div><div class="text-sm mt-1">👤 ${escapeHtml(v.cliente)}</div><div class="flex justify-between items-center mt-1"><span class="text-sm font-bold" style="color:var(--accent)">${fmtPrecio(v.total)} Bs</span><span class="text-xs">${formasPagoGlobal[v.tipoPago] || v.tipoPago}</span></div>${v.dolarRate ? `<div class="text-xs mt-1 opacity-60">💲 Tasa del día: 1 USD = ${fmtDolar(v.dolarRate)} Bs</div>` : ''}<div class="text-xs mt-1 opacity-60">${(v.items||[]).map(i=>`${escapeHtml(i.nombre)} x${i.cantidad}`).join(', ')}</div></div>`;
+    }
+    let filtroCalendario = null;
+    const mesNombre = m => ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'][m];
+    function isoFechaVenta(v){
+        if(v.timestamp) return msToDateStr(v.timestamp);
+        return aFechaISO(v.fecha);
+    }
+    window.filtrarVentasReporte = () => {
+        const input = document.getElementById('buscarVentas');
+        const lista = document.getElementById('listaVentasReporte');
+        const contador = document.getElementById('contadorVentas');
+        const btnCal = document.getElementById('btnCalendarioVentas');
+        if(!lista) return;
+        let q = (input ? input.value : '').toLowerCase().trim();
+        let base = D.ventas;
+        if(filtroCalendario){
+            base = D.ventas.filter(v => {
+                let iso = isoFechaVenta(v);
+                if(!iso) return false;
+                return filtroCalendario.tipo === 'dia' ? iso === filtroCalendario.valor : iso.startsWith(filtroCalendario.valor);
+            });
+        }
+        let result;
+        if(filtroCalendario || !q) result = base.slice().reverse();
+        else result = base.filter(v => {
+            let hayFecha = String(v.fecha||'').toLowerCase().includes(q);
+            let hayCliente = String(v.cliente||'').toLowerCase().includes(q);
+            let hayItem = (v.items||[]).some(i => String(i.nombre||'').toLowerCase().includes(q));
+            let hayId = String(v.id||'').toLowerCase().includes(q);
+            return hayFecha || hayCliente || hayItem || hayId;
+        }).reverse();
+        lista.innerHTML = result.map(v => ventaCardReporte(v)).join('');
+        if(contador) contador.innerText = result.length + ' venta(s)';
+        if(btnCal) btnCal.style.background = filtroCalendario ? (D.config.theme || '#3b82f6') : '';
+    };
+    window.onBuscarVentasTexto = () => { if(filtroCalendario) filtroCalendario = null; window.filtrarVentasReporte(); };
+    window.limpiarBuscarVentas = () => {
+        filtroCalendario = null;
+        const input = document.getElementById('buscarVentas');
+        if(input) input.value = '';
+        window.filtrarVentasReporte();
+    };
+    window.aplicarFiltroDia = (iso) => {
+        filtroCalendario = { tipo:'dia', valor: iso };
+        const input = document.getElementById('buscarVentas');
+        if(input) input.value = iso;
+        window.filtrarVentasReporte();
+        const modal = document.getElementById('modalCalendarioVentas');
+        if(modal) modal.remove();
+    };
+    window.aplicarFiltroMes = (prefix, etiqueta) => {
+        filtroCalendario = { tipo:'mes', valor: prefix };
+        const input = document.getElementById('buscarVentas');
+        if(input) input.value = etiqueta;
+        window.filtrarVentasReporte();
+        const modal = document.getElementById('modalCalendarioVentas');
+        if(modal) modal.remove();
+    };
+    window.quitarFiltroFecha = () => {
+        filtroCalendario = null;
+        const input = document.getElementById('buscarVentas');
+        if(input) input.value = '';
+        window.filtrarVentasReporte();
+        const modal = document.getElementById('modalCalendarioVentas');
+        if(modal) modal.remove();
+    };
+    function renderCalendarioVentas(){
+        const modal = document.getElementById('modalCalendarioVentas');
+        if(!modal) return;
+        const a = window._calYear, m = window._calMonth;
+        const primerDia = new Date(a, m, 1).getDay();
+        const numDias = new Date(a, m + 1, 0).getDate();
+        const prefijo = a + '-' + String(m + 1).padStart(2, '0');
+        let ventasMes = D.ventas.filter(v => isoFechaVenta(v).startsWith(prefijo));
+        let totalMes = ventasMes.reduce((s, v) => s + (v.total || 0), 0);
+        const semana = ['Do','Lu','Ma','Mi','Ju','Vi','Sá'];
+        let celdas = semana.map(d => `<div class="cal-cabecera">${d}</div>`).join('');
+        for(let i = 0; i < primerDia; i++) celdas += `<div class="cal-vacio"></div>`;
+        for(let d = 1; d <= numDias; d++){
+            const iso = prefijo + '-' + String(d).padStart(2, '0');
+            const n = ventasMes.filter(v => isoFechaVenta(v) === iso).length;
+            celdas += `<button class="cal-dia ${n > 0 ? 'cal-dia-venta' : ''}" onclick="window.aplicarFiltroDia('${iso}')"><span class="cal-dia-num">${d}</span>${n > 0 ? `<span class="cal-badge">${n}</span>` : ''}</button>`;
+        }
+        modal.innerHTML = `<div class="modal-form-content" style="max-width:340px">
+            <h3 class="font-bold text-lg mb-1" style="color:${D.config.theme}">📅 Ventas por fecha</h3>
+            <div class="cal-nav"><button onclick="window._calMonth--;if(window._calMonth<0){window._calMonth=11;window._calYear--;}renderCalendarioVentas()">◀</button><div class="cal-titulo">${mesNombre(m)} ${a}</div><button onclick="window._calMonth++;if(window._calMonth>11){window._calMonth=0;window._calYear++;}renderCalendarioVentas()">▶</button></div>
+            <div class="cal-nav cal-nav-ano"><button onclick="window._calYear--;renderCalendarioVentas()">◀ Año</button><div class="cal-titulo">${ventasMes.length} venta(s) · ${fmtPrecio(totalMes)} Bs</div><button onclick="window._calYear++;renderCalendarioVentas()">Año ▶</button></div>
+            <div class="cal-grid">${celdas}</div>
+            <div class="flex gap-2 mt-3">
+                <button class="btn-azul-redondeado btn-redondeado flex-1 py-2 text-sm" onclick="window.aplicarFiltroMes('${prefijo}','${mesNombre(m)} ${a}')">📆 Ver todo ${mesNombre(m)}</button>
+                <button class="btn-redondeado flex-1 py-2 bg-gray-200 text-sm" onclick="window.quitarFiltroFecha()">🗑 Quitar</button>
+            </div>
+            <button class="w-full mt-2 py-2 rounded-xl bg-gray-200" onclick="document.getElementById('modalCalendarioVentas').remove()">Cerrar</button>
+        </div>`;
+    }
+    window.abrirCalendarioVentas = () => {
+        const ahora = new Date();
+        window._calYear = ahora.getFullYear();
+        window._calMonth = ahora.getMonth();
+        const modal = document.createElement('div');
+        modal.className = 'modal-form';
+        modal.id = 'modalCalendarioVentas';
+        modal.onclick = e => { if(e.target === modal) modal.remove(); };
+        document.body.appendChild(modal);
+        renderCalendarioVentas();
+    };
+    
+    // ==================== HISTORIAL TASA DEL DÓLAR ====================
+    let filtroTasaCalendario = null;
+    function tarjetaHistTasa(h){
+        return `<div class="border rounded-xl p-3 mb-2" style="border-color:var(--accent)"><div class="flex justify-between items-center"><span class="text-sm font-bold" style="color:var(--accent)">💲 1 USD = ${fmtDolar(h.tasa)} Bs</span><span class="text-xs opacity-60">📅 ${fmtFechaDisplay(h.fecha)} · 🕐 ${h.hora || ''}</span></div></div>`;
+    }
+    function baseHistTasa(){
+        let hist = cargarHistorialTasa();
+        if(filtroTasaCalendario){
+            return hist.filter(h => filtroTasaCalendario.tipo === 'dia' ? h.fecha === filtroTasaCalendario.valor : h.fecha.startsWith(filtroTasaCalendario.valor));
+        }
+        return hist;
+    }
+    function renderTarjetasHistTasa(){
+        let base = baseHistTasa();
+        if(base.length === 0) return `<div class="text-sm opacity-60 text-center py-4">Sin registros de cambio de tasa. La tasa se registra aquí cada vez que cambia (mínimo un céntimo).</div>`;
+        return base.slice().reverse().map(tarjetaHistTasa).join('');
+    }
+    window.filtrarHistTasa = () => {
+        const input = document.getElementById('buscarHistTasa');
+        const lista = document.getElementById('listaHistTasa');
+        const contador = document.getElementById('contadorHistTasa');
+        const btnCal = document.getElementById('btnCalendarioTasa');
+        if(!lista) return;
+        let q = (input ? input.value : '').toLowerCase().trim();
+        let hist = cargarHistorialTasa();
+        let base = filtroTasaCalendario ? hist.filter(h => filtroTasaCalendario.tipo === 'dia' ? h.fecha === filtroTasaCalendario.valor : h.fecha.startsWith(filtroTasaCalendario.valor)) : hist;
+        let result = base;
+        if(!filtroTasaCalendario && q) result = base.filter(h => (h.fecha||'').includes(q));
+        lista.innerHTML = result.length ? result.slice().reverse().map(tarjetaHistTasa).join('') : `<div class="text-sm opacity-60 text-center py-4">Sin registros.</div>`;
+        if(contador) contador.innerText = result.length + ' cambio(s) de tasa';
+        if(btnCal) btnCal.style.background = filtroTasaCalendario ? (D.config.theme || '#3b82f6') : '';
+    };
+    window.onBuscarHistTasaTexto = () => { if(filtroTasaCalendario) filtroTasaCalendario = null; window.filtrarHistTasa(); };
+    window.aplicarFiltroTasaDia = (iso) => {
+        filtroTasaCalendario = { tipo:'dia', valor: iso };
+        const input = document.getElementById('buscarHistTasa');
+        if(input) input.value = iso;
+        window.filtrarHistTasa();
+        const modal = document.getElementById('modalCalendarioTasa');
+        if(modal) modal.remove();
+    };
+    window.aplicarFiltroTasaMes = (prefix, etiqueta) => {
+        filtroTasaCalendario = { tipo:'mes', valor: prefix };
+        const input = document.getElementById('buscarHistTasa');
+        if(input) input.value = etiqueta;
+        window.filtrarHistTasa();
+        const modal = document.getElementById('modalCalendarioTasa');
+        if(modal) modal.remove();
+    };
+    window.quitarFiltroTasa = () => {
+        filtroTasaCalendario = null;
+        const input = document.getElementById('buscarHistTasa');
+        if(input) input.value = '';
+        window.filtrarHistTasa();
+        const modal = document.getElementById('modalCalendarioTasa');
+        if(modal) modal.remove();
+    };
+    function renderCalendarioTasa(){
+        const modal = document.getElementById('modalCalendarioTasa');
+        if(!modal) return;
+        const a = window._calTasaYear, m = window._calTasaMonth;
+        const primerDia = new Date(a, m, 1).getDay();
+        const numDias = new Date(a, m + 1, 0).getDate();
+        const prefijo = a + '-' + String(m + 1).padStart(2, '0');
+        const hoy = hoyISO();
+        let registradosMes = cacheTasaDiaria.filter(x => x.fecha.startsWith(prefijo));
+        let diasConTasa = new Set(registradosMes.map(h => h.fecha));
+        const semana = ['Do','Lu','Ma','Mi','Ju','Vi','Sá'];
+        let celdas = semana.map(d => `<div class="cal-cabecera">${d}</div>`).join('');
+        for(let i = 0; i < primerDia; i++) celdas += `<div class="cal-vacio"></div>`;
+        let prevTasa = 0;
+        for(let d = 1; d <= numDias; d++){
+            const iso = prefijo + '-' + String(d).padStart(2, '0');
+            const info = tasaParaFecha(iso);
+            const conTasa = info.tasa > 0;
+            const esHoy = iso === hoy;
+            const clase = conTasa ? 'cal-dia-venta' : '';
+            const candado = info.fijada ? '<span class="cal-lock">🔒</span>' : '';
+            const etiquetaHoy = esHoy ? '<span class="cal-hoy">HOY</span>' : '';
+            let flecha = '';
+            if(conTasa){
+                if(prevTasa > 0 && info.tasa > prevTasa) flecha = '<span class="cal-flecha cal-flecha-up">▲</span>';
+                else if(prevTasa > 0 && info.tasa < prevTasa) flecha = '<span class="cal-flecha cal-flecha-down">▼</span>';
+                prevTasa = info.tasa;
+            }
+            celdas += `<button class="cal-dia ${clase} ${esHoy ? 'cal-dia-hoy' : ''}" onclick="window.verTasaDia('${iso}')"><span class="cal-dia-num">${d}</span>${conTasa ? `<span class="cal-tasa">${flecha}${fmtDolar(info.tasa)}</span>${candado}` : ''}${etiquetaHoy}</button>`;
+        }
+        modal.innerHTML = `<div class="modal-form-content" style="max-width:340px">
+            <h3 class="font-bold text-lg mb-1" style="color:${D.config.theme}">💱 Tasa del dólar por fecha</h3>
+            <p class="text-xs opacity-70 mb-2">Cada día imprime su propia tasa. Los días fijados (🔒) son inamovibles para siempre.</p>
+            <div class="cal-nav"><button onclick="window._calTasaMonth--;if(window._calTasaMonth<0){window._calTasaMonth=11;window._calTasaYear--;}renderCalendarioTasa()">◀</button><div class="cal-titulo">${mesNombre(m)} ${a}</div><button onclick="window._calTasaMonth++;if(window._calTasaMonth>11){window._calTasaMonth=0;window._calTasaYear++;}renderCalendarioTasa()">▶</button></div>
+            <div class="cal-nav cal-nav-ano"><button onclick="window._calTasaYear--;renderCalendarioTasa()">◀ Año</button><div class="cal-titulo">${diasConTasa.size} día(s) con tasa</div><button onclick="window._calTasaYear++;renderCalendarioTasa()">Año ▶</button></div>
+            <div class="cal-grid">${celdas}</div>
+            <div class="flex gap-2 mt-3">
+                <button class="btn-azul-redondeado btn-redondeado flex-1 py-2 text-sm" onclick="window.aplicarFiltroTasaMes('${prefijo}','${mesNombre(m)} ${a}')">📆 Ver todo ${mesNombre(m)}</button>
+                <button class="btn-redondeado flex-1 py-2 bg-gray-200 text-sm" onclick="window.quitarFiltroTasa()">🗑 Quitar</button>
+            </div>
+            <button class="w-full mt-2 py-2 rounded-xl bg-gray-200" onclick="document.getElementById('modalCalendarioTasa').remove()">Cerrar</button>
+        </div>`;
+    }
+    window.verTasaDia = async (iso) => {
+        const info = tasaParaFecha(iso);
+        const d = new Date(iso + 'T12:00:00');
+        const fechaLegible = isNaN(d.getTime()) ? iso : d.toLocaleDateString('es-ES', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+        const hoy = hoyISO();
+        const sinTasa = info.tasa <= 0;
+        let variacion = '';
+        if(!sinTasa){
+            const prev = new Date(iso + 'T12:00:00');
+            prev.setDate(prev.getDate() - 1);
+            const infoPrev = tasaParaFecha(msToDateStr(prev.getTime()));
+            if(infoPrev.tasa > 0){
+                const diff = info.tasa - infoPrev.tasa;
+                if(diff > 0.001) variacion = `<div class="text-sm mt-2" style="color:#ef4444">▲ Aumentó ${fmtDolar(diff)} Bs/USD vs el día anterior</div>`;
+                else if(diff < -0.001) variacion = `<div class="text-sm mt-2" style="color:#10b981">▼ Bajó ${fmtDolar(-diff)} Bs/USD vs el día anterior</div>`;
+                else variacion = `<div class="text-xs opacity-60 mt-2">Igual que el día anterior</div>`;
+            }
+        }
+        let detalle = document.createElement('div'); detalle.className = 'modal-form';
+        detalle.id = 'modalDetalleTasa';
+        detalle.innerHTML = `<div class="modal-form-content" style="max-width:320px">
+            <h3 class="font-bold text-lg mb-1" style="color:${D.config.theme}">💱 Tasa del día</h3>
+            <p class="text-sm capitalize opacity-80 mb-2">${fechaLegible}</p>
+            <div class="text-center py-3">
+                ${sinTasa ? `<div class="text-sm opacity-70 py-4">Este día no tiene tasa impresa.</div>` : `<div class="text-4xl font-black" style="color:${D.config.theme}">${fmtDolar(info.tasa)}</div>
+                <div class="text-xs opacity-60">Bs/USD</div>
+                <div class="mt-2 text-sm">${info.fijada ? '<span style="color:#10b981">🔒 Impresa (inamovible)</span>' : '<span style="color:#f59e0b">🕓 HOY editable (aún puede cambiar)</span>'}</div>
+                ${info.hora ? `<div class="text-xs opacity-60 mt-1">Imprimida a las ${escapeHtml(info.hora)}</div>` : ''}
+                ${variacion}`}
+            </div>
+            <div class="flex flex-col gap-2">
+                ${iso === hoy && !info.fijada ? `<button id="fijarHoyBtn" class="btn-azul-redondeado btn-redondeado w-full py-2 font-bold">🔒 Fijar tasa del día</button>` : ''}
+                <button id="verHistBtn" class="btn-redondeado w-full py-2 bg-gray-200">📆 Ver cambios de este día en el historial</button>
+            </div>
+            <button id="cerrarDetTasa" class="w-full mt-2 py-2 rounded-xl bg-gray-200">Cerrar</button>
+        </div>`;
+        document.body.appendChild(detalle);
+        const cerrar = () => { if(document.getElementById('modalDetalleTasa')) detalle.remove(); };
+        detalle.querySelector('#cerrarDetTasa').onclick = cerrar;
+        detalle.querySelector('#verHistBtn').onclick = () => { cerrar(); window.aplicarFiltroTasaDia(iso); };
+        const fijarBtn = document.getElementById('fijarHoyBtn');
+        if(fijarBtn){
+            fijarBtn.onclick = async () => {
+                const ok = await fijarTasaDia(iso);
+                cerrar();
+                if(ok){
+                    D.tasaDiaria = await cargarTasaDiaria();
+                    refrescarCacheTasaDiaria();
+                    renderCalendarioTasa();
+                    mostrarNotificacion('🔒 Tasa del día fijada. Ya no se modificará.', 'success');
+                } else {
+                    mostrarNotificacion('ℹ️ La tasa del día ya estaba fijada', 'info');
+                }
+            };
+        }
+        detalle.onclick = e => { if(e.target === detalle) cerrar(); };
+    };
+    window.abrirCalendarioTasa = () => {
+        refrescarCacheTasaDiaria();
+        const ahora = new Date();
+        window._calTasaYear = ahora.getFullYear();
+        window._calTasaMonth = ahora.getMonth();
+        const modal = document.createElement('div');
+        modal.className = 'modal-form';
+        modal.id = 'modalCalendarioTasa';
+        modal.onclick = e => { if(e.target === modal) modal.remove(); };
+        document.body.appendChild(modal);
+        renderCalendarioTasa();
+    };
+    
     window.mostrarTicketDesdeReporte = (ventaId) => {
         let venta = D.ventas.find(v => v.id === ventaId);
-        if(venta) mostrarTicket(venta);
+        if(venta) mostrarTicket(venta, true);
     };
     window.mostrarDetalleCliente = (clienteId) => {
         if (!clienteId) return;
@@ -1218,14 +2326,89 @@
     };
     
     // ==================== RESPALDO Y RESTAURACIÓN ====================
+    function esAppNativa() { return !!(window.AndroidBridge); }
+    function utf8ToBase64(str) {
+        const bytes = new TextEncoder().encode(str);
+        let binary = '';
+        for (let i = 0; i < bytes.length; i += 0x8000) {
+            binary += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+        }
+        return btoa(binary);
+    }
+    function base64ToUtf8(b64) {
+        const binary = atob(b64);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        return new TextDecoder().decode(bytes);
+    }
+    let carpetaNativa = null;
+    let carpetaAccionPendiente = null;
+    async function leerCarpetaNativa() {
+        if (!esAppNativa()) return;
+        try {
+            const info = await puenteResultado(AndroidBridge.getCarpetaInfo());
+            if (info) {
+                const idx = info.indexOf('|');
+                carpetaNativa = idx >= 0
+                    ? { nombre: info.slice(0, idx), uri: info.slice(idx + 1) }
+                    : { nombre: info, uri: info };
+            }
+        } catch (e) { carpetaNativa = null; }
+    }
+    window.carpetaSeleccionadaCallback = function (nombre, uri) {
+        const accion = carpetaAccionPendiente;
+        carpetaAccionPendiente = null;
+        if (uri) {
+            carpetaNativa = { nombre: nombre || 'Carpeta', uri: uri };
+            actualizarUICarpeta();
+            mostrarNotificacion('✅ Carpeta configurada: ' + (nombre || 'carpeta') + '/JAMPOS', 'success');
+            if (accion) setTimeout(accion, 200);
+        } else {
+            mostrarNotificacion('⚠️ No se eligió carpeta', 'info');
+        }
+    };
+    function asegurarCarpetaNativa(accion) {
+        if (!esAppNativa()) { accion(); return; }
+        if (carpetaNativa && carpetaNativa.uri) { accion(); return; }
+        carpetaAccionPendiente = accion;
+        mostrarNotificacion('Primero elija una carpeta donde JAM POS guardará sus archivos', 'info');
+        try { AndroidBridge.elegirCarpeta(); } catch (e) { carpetaAccionPendiente = null; accion(); }
+    }
+    function actualizarUICarpeta() {
+        if (!esAppNativa()) return;
+        const estado = document.getElementById('carpetaEstado');
+        if (estado) {
+            estado.innerHTML = carpetaNativa && carpetaNativa.uri
+                ? '✅ Carpeta activa: <b>' + escapeHtml(carpetaNativa.nombre) + '/JAMPOS</b>. Ahí se guardan tickets y respaldos.'
+                : 'ℹ️ Sin carpeta configurada. Elija una carpeta para guardar tickets y respaldos (se creará la subcarpeta JAMPOS).';
+        }
+        const btn = document.getElementById('elegirCarpetaBtn');
+        if (btn) btn.innerText = carpetaNativa && carpetaNativa.uri ? '📂 Cambiar carpeta' : '📂 Elegir carpeta';
+    }
     async function obtenerTodosLosDatos(){
         let stores = ['productos','clientes','proveedores','gastos','empleados','ventas'];
-        let data = { config: D.config, timestamp: new Date().toISOString(), version: '1.0' };
+        let data = { config: D.config, timestamp: new Date().toISOString(), version: '0.1' };
         for (const s of stores) { data[s] = await getAll(s); }
+        data.historialTasa = cargarHistorialTasa();
+        data.tasaDiaria = await cargarTasaDiaria();
         return data;
     }
     async function exportarBackupJSON(){
         let data = await obtenerTodosLosDatos();
+        if (esAppNativa()) {
+            asegurarCarpetaNativa(async () => {
+                try {
+                    const nombre = `jampos_backup_${new Date().toISOString().slice(0,10)}.json`;
+                    const res = await puenteResultado(AndroidBridge.guardarArchivo(nombre, 'application/json', utf8ToBase64(JSON.stringify(data, null, 2))));
+                    if (res && res.startsWith('ok')) {
+                        mostrarNotificacion('✅ Backup JSON guardado en ' + (carpetaNativa ? carpetaNativa.nombre : 'carpeta') + '/JAMPOS/' + nombre, 'success');
+                    } else {
+                        mostrarNotificacion('❌ No se pudo exportar: ' + (res || 'error desconocido'), 'error');
+                    }
+                } catch (e) { mostrarNotificacion('❌ Error al exportar: ' + e.message, 'error'); }
+            });
+            return;
+        }
         let blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
         let url = URL.createObjectURL(blob);
         let a = document.createElement('a'); a.href = url;
@@ -1233,25 +2416,55 @@
         a.click(); URL.revokeObjectURL(url);
         mostrarNotificacion('✅ Backup JSON descargado', 'success');
     }
+    function celdaCSV(v){
+        if(v === null || v === undefined) return '';
+        let str = (typeof v === 'object') ? JSON.stringify(v) : String(v);
+        if(str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) str = '"' + str.replace(/"/g, '""') + '"';
+        return str;
+    }
     async function exportarBackupCSV(){
         let data = await obtenerTodosLosDatos();
-        let csvLines = ['# JAM POS - Exportación CSV', `# Generado: ${data.timestamp}`, ''];
+        let csvLines = ['\uFEFF# JAM POS - Exportación CSV', `# Generado: ${data.timestamp}`, ''];
         let stores = ['productos','clientes','proveedores','gastos','empleados','ventas'];
         stores.forEach(s => {
             if(data[s].length === 0) return;
+            let headersSet = new Set();
+            data[s].forEach(item => Object.keys(item).forEach(k => headersSet.add(k)));
+            let headers = Array.from(headersSet);
             csvLines.push(`# === ${s.toUpperCase()} ===`);
-            csvLines.push(Object.keys(data[s][0]).join(','));
+            csvLines.push(headers.join(','));
             data[s].forEach(item => {
-                let row = Object.values(item).map(v => {
-                    if(v === null || v === undefined) return '';
-                    let str = String(v);
-                    if(str.includes(',') || str.includes('"') || str.includes('\n')) str = '"' + str.replace(/"/g, '""') + '"';
-                    return str;
-                }).join(',');
-                csvLines.push(row);
+                csvLines.push(headers.map(h => celdaCSV(item[h])).join(','));
             });
             csvLines.push('');
         });
+        let historialTasa = cargarHistorialTasa();
+        if(historialTasa.length){
+            csvLines.push('# === HISTORIALTASA ===');
+            csvLines.push('fecha,hora,tasa');
+            historialTasa.forEach(h => { csvLines.push(celdaCSV(h.fecha) + ',' + celdaCSV(h.hora) + ',' + celdaCSV(h.tasa)); });
+            csvLines.push('');
+        }
+        if(data.tasaDiaria && data.tasaDiaria.length){
+            csvLines.push('# === TASADIARIA ===');
+            csvLines.push('fecha,hora,tasa,fijada');
+            data.tasaDiaria.forEach(h => { csvLines.push(celdaCSV(h.fecha) + ',' + celdaCSV(h.hora || '') + ',' + celdaCSV(h.tasa) + ',' + celdaCSV(h.fijada ? 1 : 0)); });
+            csvLines.push('');
+        }
+        if (esAppNativa()) {
+            asegurarCarpetaNativa(async () => {
+                try {
+                    const nombre = `jampos_export_${new Date().toISOString().slice(0,10)}.csv`;
+                    const res = await puenteResultado(AndroidBridge.guardarArchivo(nombre, 'text/csv', utf8ToBase64(csvLines.join('\n'))));
+                    if (res && res.startsWith('ok')) {
+                        mostrarNotificacion('✅ CSV guardado en ' + (carpetaNativa ? carpetaNativa.nombre : 'carpeta') + '/JAMPOS/' + nombre, 'success');
+                    } else {
+                        mostrarNotificacion('❌ No se pudo exportar: ' + (res || 'error desconocido'), 'error');
+                    }
+                } catch (e) { mostrarNotificacion('❌ Error al exportar: ' + e.message, 'error'); }
+            });
+            return;
+        }
         let blob = new Blob([csvLines.join('\n')], {type: 'text/csv;charset=utf-8;'});
         let url = URL.createObjectURL(blob);
         let a = document.createElement('a'); a.href = url;
@@ -1259,73 +2472,179 @@
         a.click(); URL.revokeObjectURL(url);
         mostrarNotificacion('✅ CSV exportado (ábralo con Excel)', 'success');
     }
+    async function importarDesdeCarpeta(){
+        if (!esAppNativa()) { alert('Esta opción solo está disponible en la app Android.'); return; }
+        if (!(carpetaNativa && carpetaNativa.uri)) {
+            carpetaAccionPendiente = importarDesdeCarpeta;
+            mostrarNotificacion('Primero elija una carpeta de la que importar', 'info');
+            try { AndroidBridge.elegirCarpeta(); } catch (e) { alert('No se pudo abrir el selector de carpeta'); }
+            return;
+        }
+        let lista = [];
+        try { lista = JSON.parse(await puenteResultado(AndroidBridge.listarArchivos()) || '[]'); } catch (e) { lista = []; }
+        const jsonFiles = lista.filter(f => /\.json$/i.test(f));
+        const csvFiles = lista.filter(f => /\.(csv|txt)$/i.test(f));
+        if (jsonFiles.length === 0 && csvFiles.length === 0) {
+            alert('No hay archivos de respaldo en la carpeta ' + (carpetaNativa ? carpetaNativa.nombre : 'JAMPOS') + '/JAMPOS');
+            return;
+        }
+        let mensaje = 'Archivos disponibles:\n';
+        if (jsonFiles.length) mensaje += '\n📦 JSON:\n' + jsonFiles.map(f => '  ' + f).join('\n');
+        if (csvFiles.length) mensaje += '\n📊 CSV:\n' + csvFiles.map(f => '  ' + f).join('\n');
+        mensaje += '\n\nEscriba el nombre exacto del archivo a importar:';
+        const nombre = await jamPrompt(mensaje);
+        if (!nombre) return;
+        let contenido = null;
+        try { contenido = await puenteResultado(AndroidBridge.leerArchivo(nombre)); } catch (e) {}
+        if (!contenido || contenido === 'null') { alert('No se encontró el archivo: ' + nombre); return; }
+        try {
+            const texto = base64ToUtf8(contenido);
+            const file = new File([texto], nombre, { type: /\.json$/i.test(nombre) ? 'application/json' : 'text/csv' });
+            if (/\.json$/i.test(nombre)) importarBackupJSON(file);
+            else importarBackupCSV(file);
+        } catch (e) { alert('Error al leer el archivo: ' + e.message); }
+    }
+    function combinarImportacion(destino, nuevos, campoNombre = null){
+        let existentes = Array.isArray(destino) ? destino.slice() : [];
+        let porId = new Map(), porCodigo = new Map(), porNombre = new Map();
+        const keyCod = c => c != null ? String(c).toLowerCase() : '';
+        existentes.forEach(x => {
+            if(!x) return;
+            if(x.id) porId.set(x.id, true);
+            if(x.codigo) porCodigo.set(keyCod(x.codigo), true);
+            if(campoNombre && !x.codigo && x[campoNombre]) porNombre.set(keyCod(x[campoNombre]), true);
+        });
+        let agregados = 0, omitidos = 0, nuevosItems = [];
+        (nuevos || []).forEach(item => {
+            if(!item) return;
+            let esNombre = campoNombre && !item.codigo && item[campoNombre];
+            let duplicado = !!(item.id && porId.has(item.id))
+                || !!(item.codigo && porCodigo.has(keyCod(item.codigo)))
+                || !!(esNombre && porNombre.has(keyCod(item[campoNombre])));
+            if(duplicado){ omitidos++; return; }
+            let nuevo = Object.assign({}, item);
+            if(!nuevo.id) nuevo.id = 'imp' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+            existentes.push(nuevo);
+            nuevosItems.push(nuevo);
+            porId.set(nuevo.id, true);
+            if(nuevo.codigo) porCodigo.set(keyCod(nuevo.codigo), true);
+            if(esNombre) porNombre.set(keyCod(nuevo[campoNombre]), true);
+            agregados++;
+        });
+        return { lista: existentes, nuevos: nuevosItems, agregados: agregados, omitidos: omitidos };
+    }
     function importarBackupJSON(file){
         let reader = new FileReader();
         reader.onload = async function(e){
             try {
                 let data = JSON.parse(e.target.result);
-                if(!data.config || !data.productos) { alert('Archivo JSON no válido'); return; }
+                if(!data || typeof data !== 'object') { alert('Archivo JSON no válido'); return; }
                 let stores = ['productos','clientes','proveedores','gastos','empleados','ventas'];
-                let confirmacion = confirm(`¿Restaurar datos? Se sobrescribirán ${data.productos.length} productos, ${data.ventas.length} ventas y más.`);
+                let resumen = stores.filter(s => data[s] && Array.isArray(data[s]) && data[s].length).map(s => `  • ${s}: ${data[s].length} registros`);
+                if(resumen.length === 0) { alert('El archivo no contiene registros que integrar'); return; }
+                let confirmacion = await jamConfirm(`¿INTEGRAR datos del archivo?\nSe agregarán los registros que no existan ya en el teléfono:\n${resumen.join('\n')}\n\n✅ Los datos actuales (ventas, artículos, gastos...) NO se borrarán.`);
                 if(!confirmacion) return;
+                let resumenFinal = [];
                 for(let s of stores){
-                    if(data[s]) {
-                        D[s] = data[s];
-                        if (DATA_STORES.includes(s)) await saveToIDB(s, data[s]);
-                        else localStorage.setItem(STORAGE_KEYS[s], JSON.stringify(data[s]));
+                    if(data[s] && Array.isArray(data[s]) && data[s].length){
+                        let campoNombre = s === 'productos' ? 'nombre' : null;
+                        let r = combinarImportacion(D[s], data[s], campoNombre);
+                        D[s] = r.lista;
+                        if (DATA_STORES.includes(s)) await addToIDB(s, r.nuevos);
+                        else localStorage.setItem(STORAGE_KEYS[s], JSON.stringify(r.lista));
+                        resumenFinal.push(`${s}: +${r.agregados} | ${r.omitidos} duplicado(s) omitido(s)`);
                     }
                 }
-                if(data.config) { D.config = data.config; saveToStorage(STORAGE_KEYS.config, D.config); }
-                mostrarNotificacion('✅ Datos restaurados correctamente', 'success');
+                if(data.historialTasa && Array.isArray(data.historialTasa)){
+                    let nHist = importarHistorialTasaDesde(data.historialTasa);
+                    if(nHist > 0) resumenFinal.push(`historial de tasa: +${nHist} día(s) con tasa`);
+                }
+                if(data.tasaDiaria && Array.isArray(data.tasaDiaria)){
+                    let nTd = await importarTasaDiariaDesde(data.tasaDiaria);
+                    if(nTd > 0) resumenFinal.push(`tasa diaria: +${nTd} día(s)`);
+                }
+                let aplicaConfig = false;
+                if(data.config){
+                    aplicaConfig = await jamConfirm('Los registros se integraron correctamente.\n\n¿Restaurar también la configuración del archivo (empresa, tasa del dólar, tema)?\nPulsa NO para conservar la configuración actual.\n\n💡 Tasa del dólar INTELIGENTE: si la del archivo es MÁS ANTIGUA que la vigente, se conserva la vigente y la del archivo pasa al historial (no se sobrepone).');
+                }
+                if(aplicaConfig){
+                    const tasaInfo = aplicarConfigInteligente(data.config, data.timestamp);
+                    if(tasaInfo) resumenFinal.push(tasaInfo);
+                }
+                mostrarNotificacion('✅ Integración completada\n' + resumenFinal.join('\n'), 'success');
                 if(currentModule === 'home') renderHome(); else renderConfig();
             } catch(err) { alert('Error al leer el archivo: ' + err.message); }
         };
         reader.readAsText(file);
+    }
+    const CAMPOS_NUMERICOS_CSV = new Set(['stock','cantidad','precioVentaBs','precioVentaUsd','costoRealBs','costoRealUsd','precioUnitario','costoUnitario','subtotal','ganancia','gananciaTotal','total','pago','cambio','monto','dolarRate','iva','ivaPorcentaje','timestamp','salario','tasa']);
+    function parsearValorCSV(campo, val){
+        if(val === '' ) return '';
+        let v = val.trim();
+        if(v[0] === '[' || v[0] === '{'){
+            try { return JSON.parse(v); } catch(e) { return val; }
+        }
+        if(CAMPOS_NUMERICOS_CSV.has(campo) && /^-?\d+(\.\d+)?$/.test(v)) return Number(v);
+        if(v === 'true') return true;
+        if(v === 'false') return false;
+        return val;
+    }
+    function parsearBackupCSV(text){
+        let data = { config: null, productos: [], clientes: [], proveedores: [], gastos: [], empleados: [], ventas: [], historialTasa: [], tasaDiaria: [] };
+        let storeMap = { 'PRODUCTOS':'productos','CLIENTES':'clientes','PROVEEDORES':'proveedores','GASTOS':'gastos','EMPLEADOS':'empleados','VENTAS':'ventas','HISTORIALTASA':'historialTasa','TASADIARIA':'tasaDiaria' };
+        let currentStore = null, headers = null;
+        for(let line of text.split('\n')){
+            line = line.trim();
+            if(line === '' || line.startsWith('# JAM POS') || line.startsWith('# Generado')) continue;
+            let sectionMatch = line.match(/^# ===\s*(\w+)\s*===/);
+            if(sectionMatch){
+                currentStore = storeMap[sectionMatch[1]] || null;
+                headers = null;
+                continue;
+            }
+            if(!currentStore) continue;
+            if(line.startsWith('#')) continue;
+            if(!headers) { headers = line.split(',').map(h => h.trim()); continue; }
+            let row = {};
+            let values = parseCSVLine(line);
+            headers.forEach((h, i) => {
+                row[h] = parsearValorCSV(h, (values[i] !== undefined) ? values[i] : '');
+            });
+            data[currentStore].push(row);
+        }
+        return data;
     }
     function importarBackupCSV(file){
         let reader = new FileReader();
         reader.onload = async function(e){
             try {
                 let text = e.target.result.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-                let lines = text.split('\n');
-                let data = { config: null, productos: [], clientes: [], proveedores: [], gastos: [], empleados: [], ventas: [] };
-                let storeMap = { 'PRODUCTOS':'productos','CLIENTES':'clientes','PROVEEDORES':'proveedores','GASTOS':'gastos','EMPLEADOS':'empleados','VENTAS':'ventas' };
-                let currentStore = null, headers = null;
+                let data = parsearBackupCSV(text);
                 let stores = ['productos','clientes','proveedores','gastos','empleados','ventas'];
-                for(let line of lines){
-                    line = line.trim();
-                    if(line === '' || line.startsWith('# JAM POS') || line.startsWith('# Generado')) continue;
-                    let sectionMatch = line.match(/^# ===\s*(\w+)\s*===/);
-                    if(sectionMatch){
-                        currentStore = storeMap[sectionMatch[1]] || null;
-                        headers = null;
-                        continue;
-                    }
-                    if(!currentStore) continue;
-                    if(line.startsWith('#')) continue;
-                    if(!headers) { headers = line.split(',').map(h => h.trim()); continue; }
-                    let row = {};
-                    let values = parseCSVLine(line);
-                    headers.forEach((h, i) => {
-                        let val = values[i] || '';
-                        if(val === 'true') val = true;
-                        else if(val === 'false') val = false;
-                        else if(val !== '' && !isNaN(val) && val.indexOf(',') === -1) val = Number(val);
-                        row[h] = val;
-                    });
-                    data[currentStore].push(row);
-                }
                 let totalItems = stores.reduce((s,store) => s + data[store].length, 0);
                 if(totalItems === 0) { alert('No se encontraron datos en el archivo CSV'); return; }
-                if(!confirm(`¿Restaurar datos desde CSV? Se cargarán:\n${stores.filter(s=>data[s].length).map(s=>`  • ${s}: ${data[s].length} registros`).join('\n')}`)) return;
+                let resumen = stores.filter(s=>data[s].length).map(s=>`  • ${s}: ${data[s].length} registros`);
+                if(!(await jamConfirm(`¿INTEGRAR datos desde CSV?\nSe agregarán los registros que no existan ya:\n${resumen.join('\n')}\n\n✅ Los datos actuales del teléfono NO se borrarán.`))) return;
+                let resumenFinal = [];
                 for(let s of stores){
                     if(data[s].length) {
-                        D[s] = data[s];
-                        if (DATA_STORES.includes(s)) await saveToIDB(s, data[s]);
-                        else localStorage.setItem(STORAGE_KEYS[s], JSON.stringify(data[s]));
+                        let campoNombre = s === 'productos' ? 'nombre' : null;
+                        let r = combinarImportacion(D[s], data[s], campoNombre);
+                        D[s] = r.lista;
+                        if (DATA_STORES.includes(s)) await addToIDB(s, r.nuevos);
+                        else localStorage.setItem(STORAGE_KEYS[s], JSON.stringify(r.lista));
+                        resumenFinal.push(`${s}: +${r.agregados} | ${r.omitidos} duplicado(s) omitido(s)`);
                     }
                 }
-                mostrarNotificacion('✅ Datos restaurados desde CSV correctamente', 'success');
+                if(data.historialTasa && Array.isArray(data.historialTasa)){
+                    let nHist = importarHistorialTasaDesde(data.historialTasa);
+                    if(nHist > 0) resumenFinal.push(`historial de tasa: +${nHist} día(s) con tasa`);
+                }
+                if(data.tasaDiaria && Array.isArray(data.tasaDiaria)){
+                    let nTd = await importarTasaDiariaDesde(data.tasaDiaria);
+                    if(nTd > 0) resumenFinal.push(`tasa diaria: +${nTd} día(s)`);
+                }
+                mostrarNotificacion('✅ Integración completada\n' + resumenFinal.join('\n'), 'success');
                 if(currentModule === 'home') renderHome(); else renderConfig();
             } catch(err) { alert('Error al leer el archivo CSV: ' + err.message); }
         };
@@ -1367,6 +2686,7 @@
             let nombres = bajos.slice(0,3).map(p => `${escapeHtml(p.nombre)} (${p.stock})`).join(', ');
             let msj = `⚠️ ${bajos.length} producto(s) con stock bajo: ${nombres}${bajos.length > 3 ? ` y ${bajos.length-3} más` : ''}`;
             mostrarNotificacion(msj, 'error');
+            mostrarNotificacionNativa('Stock bajo', `${bajos.length} producto(s) con stock bajo`, 'stock-bajo');
             if(D.config.sonidoAlertas) reproducirSonidoAlerta();
         }
     }
@@ -1375,17 +2695,21 @@
         let diff = Math.abs(tasaNueva - tasaAnterior);
         if(diff > 0.5){
             mostrarNotificacion(`💱 La tasa USD cambió: ${fmtDolar(tasaAnterior)} → ${fmtDolar(tasaNueva)} Bs`, 'info');
+            mostrarNotificacionNativa('Tasa USD actualizada', `${fmtDolar(tasaAnterior)} → ${fmtDolar(tasaNueva)} Bs`, 'tasa');
             if(D.config.sonidoAlertas) reproducirSonidoAlerta();
         }
     }
-    let _tasaAnterior = D.config.dolarRate;
 
     
     // ==================== CONFIGURACIÓN ====================
     async function renderConfig(){
         let colores = ['#3b82f6','#8b5cf6','#10b981','#f59e0b','#ef4444','#ec4899','#000000','#22c55e','#a855f7','#f97316','#ff69b4','#00ced1'];
-        let fondos = [{id:'light',nombre:'Blanco'},{id:'gray',nombre:'Grisáceo'},{id:'dark',nombre:'Negro'}];
         let bloqueado = volverBloqueado, accent = D.config.theme;
+        const filaOpcion = (icono, nombre, desc, id, checked) => `
+            <label class="opcion-fila">
+                <span class="opcion-izq"><span class="opcion-icono">${icono}</span><span class="opcion-nombre">${nombre}${desc ? `<span class="opcion-desc">${desc}</span>` : ''}</span></span>
+                <span class="switch"><input type="checkbox" id="${id}" ${checked?'checked':''}><span class="slider"></span></span>
+            </label>`;
         let html = `
             <div class="page-header-fixed"><div class="module-header"><h2 id="tituloModule" class="module-title ${bloqueado?'module-title-bloqueado':''}" style="color:${accent}" onmousedown="iniciarBloqueo(this,'Configuración')" onmouseup="cancelarBloqueo()" onmouseleave="cancelarBloqueo()">Configuración</h2><div id="btnVolverModule" class="btn-back ${bloqueado?'btn-back-bloqueado':''}" onclick="${bloqueado?'':'backToHome()'}">${bloqueado?'<i class="fas fa-lock"></i> Bloqueado':'<i class="fas fa-arrow-left"></i> Volver'}</div></div></div>
             <div class="page-container">
@@ -1395,7 +2719,7 @@
                         <div class="bg-gray-100 dark:bg-gray-800 p-3 rounded-lg mb-3">
                             <div class="flex justify-between items-center">
                                 <span class="font-semibold">API activa:</span>
-                                <span class="text-xs font-mono">ExchangeRate-API.com</span>
+                                <span class="text-xs font-mono">BCV</span>
                             </div>
                             <div class="flex justify-between items-center mt-2">
                                 <span>Tasa actual:</span>
@@ -1414,7 +2738,10 @@
                                 <button id="guardarTasaManualBtn" class="btn-azul-redondeado btn-redondeado py-2 px-4">Fijar</button>
                             </div>
                             <button id="actualizarTasaInternetBtn" class="btn-redondeado py-2 px-4" style="background:#3b82f6; color:white;">
-                                🌐 Actualizar desde Internet (ExchangeRate-API)
+                                🌐 Actualizar tasa desde Internet
+                            </button>
+                            <button id="fijarTasaDiaBtn" class="btn-redondeado py-2 px-4" style="background:#10b981; color:white;">
+                                🔒 Fijar tasa del día (inmutable en el calendario)
                             </button>
                             <div class="text-xs text-gray-500 mt-2">
                                 ℹ️ La API se actualiza automáticamente. ${!D.config.tasaManual ? '✅ Modo AUTOMÁTICO activado' : '🔒 Modo MANUAL activado'}
@@ -1422,12 +2749,30 @@
                         </div>
                     </div>
                 </div></div>
-                <div class="config-section"><button id="btnToggleOpciones" class="btn-azul-redondeado btn-redondeado w-full mb-2 py-2">⚙️ Opciones generales</button><div id="panelOpciones" style="display:none;" class="mt-2 config-inner"><div class="flex flex-wrap justify-center gap-4"><label class="flex items-center gap-2"><span class="font-semibold">IVA (${D.config.ivaPorcentaje}%)</span><input type="checkbox" id="toggleIVA" ${D.config.ivaActivo?'checked':''}></label><label class="flex items-center gap-2"><span class="font-semibold">Prevenir cierre</span><input type="checkbox" id="togglePrevenirCierre" ${D.config.prevenirCierre?'checked':''}></label><label class="flex items-center gap-2"><span class="font-semibold">Mostrar Dólar</span><input type="checkbox" id="toggleMostrarDolar" ${D.config.mostrarDolar?'checked':''}></label><label class="flex items-center gap-2"><span class="font-semibold">🌓 Auto oscuro</span><input type="checkbox" id="toggleAutoOscuro" ${D.config.autoOscuro?'checked':''}></label></div><p class="text-xs text-center mt-2 opacity-60">Al activar, el fondo oscuro se sincroniza automáticamente con el modo del sistema</p><hr class="my-3 opacity-20"><h4 class="font-bold text-sm mb-2 text-center">🔔 Alertas inteligentes</h4><div class="flex flex-wrap justify-center gap-4"><label class="flex items-center gap-2"><span class="font-semibold">Stock bajo</span><input type="checkbox" id="toggleAlertaStock" ${D.config.alertaStockBajo?'checked':''}></label><label class="flex items-center gap-2"><span class="font-semibold">Cambio tasa USD</span><input type="checkbox" id="toggleAlertaTasa" ${D.config.alertaTasa?'checked':''}></label><label class="flex items-center gap-2"><span class="font-semibold">🔊 Sonido</span><input type="checkbox" id="toggleSonidoAlertas" ${D.config.sonidoAlertas?'checked':''}></label></div><p class="text-xs text-center mt-2 opacity-60">Las alertas aparecen como notificaciones al iniciar y al realizar acciones clave</p></div></div></div>
+                <div class="config-section"><button id="btnToggleOpciones" class="btn-azul-redondeado btn-redondeado w-full mb-2 py-2">⚙️ Opciones generales</button><div id="panelOpciones" style="display:none;" class="mt-2 config-inner">
+                    <div class="grupo-opciones">
+                        <div class="grupo-opciones-titulo">💳 Facturación</div>
+                        ${filaOpcion('📊','IVA', 'Aplicar ' + D.config.ivaPorcentaje + '% sobre el subtotal de cada venta', 'toggleIVA', D.config.ivaActivo)}
+                        ${filaOpcion('💰','Mostrar dólar', 'Mostrar la tasa USD en la pantalla principal', 'toggleMostrarDolar', D.config.mostrarDolar)}
+                        ${filaOpcion('🔒','Prevenir cierre', 'Confirmar antes de salir de un módulo', 'togglePrevenirCierre', D.config.prevenirCierre)}
+                    </div>
+                    <div class="grupo-opciones">
+                        <div class="grupo-opciones-titulo">🌗 Apariencia</div>
+                        ${filaOpcion('🌓','Modo oscuro automático', 'Se sincroniza con el modo del sistema', 'toggleAutoOscuro', D.config.autoOscuro)}
+                        ${filaOpcion('🌙','Fondo oscuro', 'Activar el tema oscuro manualmente', 'toggleFondoOscuro', D.config.backgroundMode==='dark')}
+                    </div>
+                    <div class="grupo-opciones">
+                        <div class="grupo-opciones-titulo">🔔 Alertas inteligentes</div>
+                        ${filaOpcion('📦','Stock bajo', 'Notificar cuando hay productos con stock bajo', 'toggleAlertaStock', D.config.alertaStockBajo)}
+                        ${filaOpcion('💱','Cambio de tasa USD', 'Notificar cuando cambia la tasa del dólar', 'toggleAlertaTasa', D.config.alertaTasa)}
+                        ${filaOpcion('🔊','Sonido', 'Reproducir sonido cuando se emite una alerta', 'toggleSonidoAlertas', D.config.sonidoAlertas)}
+                    </div>
+                    <p class="text-xs text-center mt-3 opacity-60">Las alertas aparecen como notificaciones al iniciar y al realizar acciones clave</p>
+                </div></div>
                 <div class="config-section"><button id="btnToggleSeguridad" class="btn-azul-redondeado btn-redondeado w-full mb-2 py-2">🔒 Seguridad (PIN)</button><div id="panelSeguridad" style="display:none;" class="mt-2 config-inner"><div class="mb-2"><label>PIN de acceso (4 dígitos, dejar vacío para deshabilitar)</label><input type="password" id="pinInput" value="${escapeHtml(D.config.pin)}" maxlength="4" pattern="[0-9]*" inputmode="numeric" class="border rounded-xl p-2 w-full text-center text-2xl tracking-widest" placeholder="****"></div><button id="guardarPinBtn" class="btn-azul-redondeado btn-redondeado w-full py-2">🔐 Guardar PIN</button><p class="text-xs text-center mt-2 opacity-60">${D.config.pin ? '✅ PIN activo. Se pedirá al abrir la app.' : 'ℹ️ Sin PIN. Cualquiera puede acceder.'}</p></div></div>
                 <div class="config-section"><button id="btnToggleColores" class="btn-azul-redondeado btn-redondeado w-full mb-2 py-2">🎨 Temas de color</button><div id="panelColores" style="display:none;" class="mt-2 config-inner"><div class="flex flex-wrap justify-center gap-2" id="paletaColores"></div></div></div>
-                <div class="config-section"><button id="btnToggleFondos" class="btn-azul-redondeado btn-redondeado w-full mb-2 py-2">🖌️ Fondos de contraste</button><div id="panelFondos" style="display:none;" class="mt-2 config-inner"><div class="flex justify-center gap-4 flex-wrap">${fondos.map(f => `<div class="bg-option ${D.config.backgroundMode===f.id?'selected':''}" style="background:${f.id==='light'?'#ffffff':f.id==='gray'?'#2c2c2c':'#000000'}; border:2px solid var(--accent);" data-mode="${f.id}"><div class="text-center text-xs" style="color:${f.id==='light'?'#000':'#fff'}">${f.nombre}</div></div>`).join('')}</div></div></div>
-                <div class="config-section"><button id="btnToggleBackup" class="btn-azul-redondeado btn-redondeado w-full mb-2 py-2">💾 Copia de seguridad</button><div id="panelBackup" style="display:none;" class="mt-2 config-inner"><div class="flex flex-col gap-3"><button id="exportJsonBtn" class="btn-redondeado py-2 px-4" style="background:#3b82f6;color:#fff">📥 Exportar todo (JSON)</button><button id="exportCsvBtn" class="btn-redondeado py-2 px-4" style="background:#10b981;color:#fff">📥 Exportar todo (CSV / Excel)</button><button id="importJsonBtn" class="btn-redondeado py-2 px-4" style="background:#8b5cf6;color:#fff">📤 Importar desde JSON</button><button id="importCsvBtn" class="btn-redondeado py-2 px-4" style="background:#f59e0b;color:#fff">📤 Importar desde CSV / Excel</button><input type="file" id="importFileInput" accept=".json" style="display:none"><input type="file" id="importCsvFileInput" accept=".csv,.xlsx,.xls,.txt" style="display:none"><p class="text-xs text-center mt-2 opacity-60">Los archivos CSV se abren directamente en Excel</p></div></div></div>
-                <div class="mt-4 text-xs text-center">💰 POS Profesional - Datos locales</div>
+                <div class="config-section"><button id="btnToggleBackup" class="btn-azul-redondeado btn-redondeado w-full mb-2 py-2">💾 Copia de seguridad</button><div id="panelBackup" style="display:none;" class="mt-2 config-inner"><div class="flex flex-col gap-3">${esAppNativa() ? `<div class="rounded-xl p-3" style="background:rgba(14,165,233,0.08);border:1px solid rgba(14,165,233,0.3)"><p class="text-sm font-semibold mb-1">📁 Carpeta de la aplicación</p><p id="carpetaEstado" class="text-xs opacity-70 mb-2">ℹ️ Elija una carpeta para guardar tickets y respaldos (se creará la subcarpeta JAMPOS).</p><button id="elegirCarpetaBtn" class="btn-redondeado py-2 px-4 w-full" style="background:#0ea5e9;color:#fff">📂 Elegir carpeta</button></div>` : `<p class="text-xs text-center opacity-60">💡 En la app Android podrás elegir una carpeta donde guardar los archivos.</p>`}<button id="exportJsonBtn" class="btn-redondeado py-2 px-4" style="background:#3b82f6;color:#fff">📥 Exportar todo (JSON)</button><button id="exportCsvBtn" class="btn-redondeado py-2 px-4" style="background:#10b981;color:#fff">📥 Exportar todo (CSV / Excel)</button><button id="importJsonBtn" class="btn-redondeado py-2 px-4" style="background:#8b5cf6;color:#fff">📤 Importar desde JSON</button><button id="importCsvBtn" class="btn-redondeado py-2 px-4" style="background:#f59e0b;color:#fff">📤 Importar desde CSV / Excel</button>${esAppNativa() ? `<button id="importCarpetaBtn" class="btn-redondeado py-2 px-4" style="background:#14b8a6;color:#fff">📂 Importar desde la carpeta JAMPOS</button>` : ''}<input type="file" id="importFileInput" accept=".json" style="display:none"><input type="file" id="importCsvFileInput" accept=".csv,.xlsx,.xls,.txt" style="display:none"><p class="text-xs text-center mt-2 opacity-60">Los archivos CSV se abren directamente en Excel</p></div></div></div>
+                <div class="mt-4 text-xs text-center">💰 POS Profesional</div>
             </div>
         `;
         document.getElementById('appRoot').innerHTML = html;
@@ -1439,7 +2784,6 @@
         toggle('btnToggleOpciones', 'panelOpciones');
         toggle('btnToggleSeguridad', 'panelSeguridad');
         toggle('btnToggleColores', 'panelColores');
-        toggle('btnToggleFondos', 'panelFondos');
         toggle('btnToggleBackup', 'panelBackup');
         
         const modoManualCheck = document.getElementById('modoManualCheck');
@@ -1448,11 +2792,23 @@
         const guardarTasaManualBtn = document.getElementById('guardarTasaManualBtn');
         const actualizarInternetBtn = document.getElementById('actualizarTasaInternetBtn');
         
-        modoManualCheck.addEventListener('change', (e) => {
+        document.getElementById('fijarTasaDiaBtn').onclick = async () => {
+            const ok = await fijarTasaDia(hoyISO());
+            if(ok){
+                D.tasaDiaria = await cargarTasaDiaria();
+                refrescarCacheTasaDiaria();
+                mostrarNotificacion('🔒 Tasa del día fijada. Quedará inmutable en el calendario.', 'success');
+            } else {
+                mostrarNotificacion('ℹ️ La tasa del día ya estaba fijada', 'info');
+            }
+        };
+        
+        modoManualCheck.addEventListener('change', async (e) => {
             D.config.tasaManual = e.target.checked;
             if (e.target.checked) {
                 D.config.dolarRate = D.config.tasaManualValue;
                 D.config.lastUpdate = new Date().toLocaleDateString() + " (Manual)";
+                registrarCambioTasa(D.config.dolarRate);
                 tasaManualDiv.style.display = 'flex';
             } else {
                 tasaManualDiv.style.display = 'none';
@@ -1461,6 +2817,7 @@
             saveConfig();
             document.getElementById('tasaActualDisplay').innerText = fmtDolar(D.config.dolarRate);
             actualizarInfoCard();
+            await recalcularPreciosPorTasa();
         });
         
         document.getElementById('guardarPinBtn').onclick = () => {
@@ -1472,17 +2829,19 @@
             mostrarNotificacion(pin ? '🔒 PIN guardado. Se pedirá al abrir la app.' : '🔓 PIN eliminado. Acceso sin restricciones.', 'success');
         };
 
-        guardarTasaManualBtn.onclick = () => {
+        guardarTasaManualBtn.onclick = async () => {
             const nuevoValor = parseFloat(tasaManualInput.value);
             if (!isNaN(nuevoValor) && nuevoValor > 0) {
                 D.config.tasaManualValue = nuevoValor;
                 if (D.config.tasaManual) {
                     D.config.dolarRate = nuevoValor;
                     D.config.lastUpdate = new Date().toLocaleDateString() + " (Manual)";
+                    registrarCambioTasa(nuevoValor);
                 }
                 saveConfig();
                 document.getElementById('tasaActualDisplay').innerText = fmtDolar(D.config.dolarRate);
                 actualizarInfoCard();
+                await recalcularPreciosPorTasa();
                 mostrarNotificacion(`Tasa manual establecida en ${fmtDolar(nuevoValor)} Bs/USD`, 'success');
             } else {
                 alert("Ingrese un valor numérico válido (mayor a 0)");
@@ -1492,13 +2851,13 @@
         actualizarInternetBtn.onclick = async () => {
             const wasManual = D.config.tasaManual;
             if (wasManual) D.config.tasaManual = false;
-            mostrarNotificacion("Actualizando tasa desde ExchangeRate-API...", 'info');
+            mostrarNotificacion("Actualizando tasa desde internet...", 'info');
             await actualizarTasa(true);
             if (wasManual) {
-                const mantenerManual = confirm("Se ha obtenido una tasa actualizada desde internet. ¿Desea seguir usando tasa MANUAL?");
+                const mantenerManual = await jamConfirm("Se ha obtenido una tasa actualizada desde internet. ¿Desea seguir usando tasa MANUAL?");
                 if (mantenerManual) {
                     D.config.tasaManual = true;
-                    const usarNueva = confirm(`La tasa obtenida es ${fmtDolar(D.config.dolarRate)}. ¿Desea actualizar la tasa manual a este valor?`);
+                    const usarNueva = await jamConfirm(`La tasa obtenida es ${fmtDolar(D.config.dolarRate)}. ¿Desea actualizar la tasa manual a este valor?`);
                     if (usarNueva) {
                         D.config.tasaManualValue = D.config.dolarRate;
                     }
@@ -1524,24 +2883,22 @@
         };
         
         let paleta = document.getElementById('paletaColores');
-        colores.forEach(c => { let circle = document.createElement('div'); circle.className = 'color-circle'; circle.style.backgroundColor = c; circle.onclick = async () => { D.config.theme = c; if(esOscuro(c)) D.config.backgroundMode = 'light'; await saveConfig(); renderConfig(); }; paleta.appendChild(circle); });
-        
-        document.querySelectorAll('.bg-option').forEach(opt => { opt.onclick = async () => { 
-            D.config.autoOscuro = false;
-            let nuevo = opt.getAttribute('data-mode'); 
-            if(esOscuro(D.config.theme) && nuevo === 'dark') return; 
-            D.config.backgroundMode = nuevo; 
-            await saveConfig(); 
-            renderConfig(); 
-        }; });
+        colores.forEach(c => { let circle = document.createElement('div'); circle.className = 'color-circle'; circle.style.backgroundColor = c; circle.onclick = async () => { D.config.theme = c; await saveConfig(); renderConfig(); }; paleta.appendChild(circle); });
         
         document.getElementById('toggleIVA').onchange = async e => { D.config.ivaActivo = e.target.checked; await saveConfig(); };
         document.getElementById('togglePrevenirCierre').onchange = async e => { D.config.prevenirCierre = e.target.checked; await saveConfig(); };
-        document.getElementById('toggleMostrarDolar').onchange = async e => { D.config.mostrarDolar = e.target.checked; await saveConfig(); renderHome(); };
+        document.getElementById('toggleMostrarDolar').onchange = async e => { D.config.mostrarDolar = e.target.checked; await saveConfig(); actualizarInfoCard(); };
         document.getElementById('toggleAutoOscuro').onchange = async e => { 
             D.config.autoOscuro = e.target.checked; 
-            if(D.config.autoOscuro) { aplicarModoSistema(); if(currentModule === 'home') renderHome(); else renderConfig(); }
-            else { await saveConfig(); renderConfig(); }
+            if(D.config.autoOscuro) aplicarModoSistema();
+            await saveConfig();
+            document.getElementById('toggleFondoOscuro').checked = D.config.backgroundMode === 'dark';
+        };
+        document.getElementById('toggleFondoOscuro').onchange = async e => {
+            D.config.autoOscuro = false;
+            D.config.backgroundMode = e.target.checked ? 'dark' : 'light';
+            document.getElementById('toggleAutoOscuro').checked = false;
+            await saveConfig();
         };
         document.getElementById('toggleAlertaStock').onchange = async e => { D.config.alertaStockBajo = e.target.checked; await saveConfig(); };
         document.getElementById('toggleAlertaTasa').onchange = async e => { D.config.alertaTasa = e.target.checked; await saveConfig(); };
@@ -1552,13 +2909,21 @@
         document.getElementById('importFileInput').onchange = e => { if(e.target.files[0]) importarBackupJSON(e.target.files[0]); };
         document.getElementById('importCsvBtn').onclick = () => document.getElementById('importCsvFileInput').click();
         document.getElementById('importCsvFileInput').onchange = e => { if(e.target.files[0]) importarBackupCSV(e.target.files[0]); };
+        const elegirCarpetaBtn = document.getElementById('elegirCarpetaBtn');
+        if (elegirCarpetaBtn) elegirCarpetaBtn.onclick = () => {
+            if (!esAppNativa()) return;
+            try { AndroidBridge.elegirCarpeta(); } catch (e) { alert('No se pudo abrir el selector de carpeta'); }
+        };
+        const importCarpetaBtn = document.getElementById('importCarpetaBtn');
+        if (importCarpetaBtn) importCarpetaBtn.onclick = importarDesdeCarpeta;
+        actualizarUICarpeta();
     }
     
     // ==================== SERVICE WORKER Y PWA ====================
     (function setupPWA() {
         var esTauri = window.__TAURI__ !== undefined || navigator.userAgent.includes('Tauri');
         if (!esTauri && 'serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js').catch(function(err) {
+            navigator.serviceWorker.register('sw.js').catch(function(err) {
                 console.log('SW registration failed (non-critical):', err);
             });
         }
@@ -1617,15 +2982,311 @@
             }
         });
     }
-// ==================== INICIALIZACIÓN ====================
-    loadAllData();
-    if(D.config.pin && D.config.pin.length === 4) {
-        if(!sessionStorage.getItem('jam_pin_authed')) askPin(() => { renderHome(); actualizarTasa(false); });
-        else { renderHome(); actualizarTasa(false); }
-    } else {
-        renderHome();
-        actualizarTasa(false);
+// ==================== GUÍA DE LA APP Y TUTORIAL ====================
+    const APP_VERSION = '0.1';
+    const APP_NOMBRE = 'JAM POS';
+    const APP_TAGLINE = 'Tienda Profesional';
+    const MODULOS_GUIA = [
+        { icon: 'fa-shopping-cart', nombre: 'Ventas', uso: 'Registra ventas buscando por nombre o código de barras, elige el tipo de pago, aplica descuentos y genera el ticket de la venta.' },
+        { icon: 'fa-boxes', nombre: 'Inventario', uso: 'Administra tus productos: precios en Bs y USD, stock mínimo, categorías, escaneo de código de barras e imágenes.' },
+        { icon: 'fa-users', nombre: 'Clientes', uso: 'Lleva tu cartera de clientes con cédula, teléfono, saldo pendiente y historial de compras.' },
+        { icon: 'fa-truck', nombre: 'Proveedores', uso: 'Registra tus proveedores, tiempos de entrega y datos de contacto para tus compras.' },
+        { icon: 'fa-coins', nombre: 'Gastos', uso: 'Registra los gastos del negocio y clasifícalos por categoría para controlar tus costos.' },
+        { icon: 'fa-user-tie', nombre: 'Empleados', uso: 'Gestiona tu personal: cédula, cargo, salario en Bs y fecha de contratación.' },
+        { icon: 'fa-chart-line', nombre: 'Reportes', uso: 'Consulta tus estadísticas: total de ventas, ticket promedio, gráficos y calendario de ventas.' },
+        { icon: 'fa-palette', nombre: 'Config', uso: 'Personaliza el tema y colores, configura la empresa, la tasa de cambio, impresión y la copia de seguridad.' }
+    ];
+
+    function inyectarBotonAyudaModulo() {
+        const header = document.querySelector('.module-header');
+        if(!header) return;
+        if(header.querySelector('.btn-ayuda-modulo')) return;
+        const btn = document.createElement('button');
+        btn.className = 'btn-ayuda-modulo';
+        btn.title = 'Guía de la app';
+        btn.innerHTML = '<i class="fas fa-circle-question"></i>';
+        btn.onclick = () => {
+            const g = GUIA_MODULOS[currentModule];
+            if(g) iniciarTutorial(g.pasos, g.clave);
+            else mostrarGuiaApp();
+        };
+        const titulo = header.querySelector('.module-title');
+        if(titulo) {
+            let grupo = header.querySelector('.module-header-izq');
+            if(!grupo) {
+                grupo = document.createElement('div');
+                grupo.className = 'module-header-izq';
+                titulo.parentNode.insertBefore(grupo, titulo);
+            }
+            grupo.appendChild(titulo);
+            grupo.appendChild(btn);
+        } else {
+            header.insertBefore(btn, header.firstChild);
+        }
     }
+
+    function mostrarGuiaApp() {
+        if (document.querySelector('.tuto-overlay')) return;
+        const accent = D.config.theme;
+        const versionTxt = `Versión ${APP_VERSION}`;
+        const modulosHtml = MODULOS_GUIA.map(m =>
+            `<div class="guia-item"><i class="fas ${m.icon}"></i><div><strong>${m.nombre}</strong><small>${m.uso}</small></div></div>`
+        ).join('');
+        const fondo = document.createElement('div');
+        fondo.className = 'guia-fondo';
+        fondo.innerHTML = `
+            <div class="guia-caja">
+                <div class="guia-titulo" style="color:${accent}"><i class="fas fa-circle-question"></i>Guía de la aplicación</div>
+                <div class="guia-version">${APP_NOMBRE} · ${APP_TAGLINE} · ${versionTxt}</div>
+                <div class="guia-fila"><span>Nombre</span><span>${APP_NOMBRE}</span></div>
+                <div class="guia-fila"><span>Versión</span><span>${APP_VERSION}</span></div>
+                <div class="guia-fila"><span>Tipo de cambio</span><span>${D.config.mostrarDolar ? 'Tasa BCV (Bs/USD)' : 'Desactivado'}</span></div>
+                <div class="guia-fila"><span>Empresa</span><span>${D.config.empresa?.nombre || '—'}</span></div>
+                <div class="guia-seccion">
+                    <h4>Cómo usar los módulos</h4>
+                    <div class="guia-lista">${modulosHtml}</div>
+                </div>
+                <div class="guia-botones">
+                    <button class="guia-boton-secundario" onclick="cerrarGuiaApp()">Cerrar</button>
+                    <button class="guia-boton-primario" style="background:${accent}" onclick="cerrarGuiaApp();iniciarTutorial()">Ver recorrido interactivo</button>
+                </div>
+            </div>`;
+        document.body.appendChild(fondo);
+        window.cerrarGuiaApp = () => fondo.remove();
+    }
+
+    const GUIA_HOME = [
+        { sel: null, titulo: 'Bienvenido a JAM POS', texto: 'Tu tienda profesional: gestiona ventas, inventario, clientes y más, todo desde este dispositivo.' },
+        { sel: '#searchGlobalInput', titulo: 'Búsqueda rápida', texto: 'Escribe aquí para buscar productos, clientes y proveedores desde cualquier parte.' },
+        { sel: '.card-bcv', titulo: 'Tipo de cambio', texto: 'Muestra la tasa oficial del dólar (BCV). Toca el icono de intercambio para usar el convertidor USD ⇄ Bs.' },
+        { sel: '.home-grid', titulo: 'Tus módulos', texto: 'Cada botón abre un módulo: Ventas, Inventario, Clientes, Proveedores, Gastos, Empleados, Reportes y Configuración.' },
+        { sel: '.btn-ayuda-home', titulo: 'Guía de la app', texto: 'Este botón abre la guía completa con la versión, los datos de la empresa y cómo usar cada módulo.' },
+        { sel: null, titulo: '¡Listo!', texto: 'Ya conoces lo esencial. Explora cada módulo cuando quieras, y vuelve a la guía cuando lo necesites.' }
+    ];
+    const GUIA_VENTAS = [
+        { sel: '#clienteInput', titulo: '1. El cliente', texto: 'Escribe el nombre o la cédula del cliente y toca la sugerencia para seleccionarlo. Usa el botón "+" para crear uno nuevo al instante.' },
+        { sel: '#buscarProducto', titulo: '2. Buscar productos', texto: 'Escribe el nombre o el código de barras. Toca un resultado para agregarlo al carrito; con Enter y un código se agrega directo.' },
+        { sel: '#btnScanVentas', titulo: '3. Escáner con cámara', texto: 'Toca la cámara para escanear un código de barras y agregar el producto automáticamente.' },
+        { sel: '#carritoLista', titulo: '4. Carrito', texto: 'Aquí ves lo agregado: cambia cantidades, quita productos y mira el subtotal, IVA y total en tiempo real.' },
+        { sel: '#tipoPago', titulo: '5. Tipo de pago', texto: 'Elige cómo paga el cliente: efectivo en Bs, dólares, tarjeta, transferencia, pago móvil o pago dividido (varios métodos en una venta).' },
+        { sel: '#finalizarVenta', titulo: '6. Finalizar venta', texto: 'Al finalizar se genera el TICKET virtual: puedes guardarlo como imagen, imprimirlo o reenviarlo. Con efectivo en Bs puedes calcular el cambio.' },
+        { sel: null, titulo: '¡Listo!', texto: 'Con eso dominas Ventas. Haz tu primera venta cuando quieras; el ticket te da imagen e impresión.' }
+    ];
+    const GUIA_INVENTARIO = [
+        { sel: '#searchInv', titulo: '1. Buscar en inventario', texto: 'Escribe el nombre o el código de barras para filtrar tus productos al instante. Con Enter y un código se agrega o busca directo.' },
+        { sel: '#btnScanInv', titulo: '2. Escáner', texto: 'Toca la cámara para escanear un código de barras y encontrar el producto al instante.' },
+        { sel: '#nuevoProducto', titulo: '3. Nuevo producto', texto: 'Abre el formulario completo: nombre, código de barras, categoría, proveedor, stock, y precios de compra y venta.' },
+        { sel: null, titulo: '4. Conversión Bs ⇄ USD', texto: 'En el formulario de producto los precios se convierten SOLOS: escribe un precio en Bs y el campo en USD se rellena con la tasa del día (y viceversa). Compra y venta se convierten por separado.' },
+        { sel: '.product-card', titulo: '5. Tus productos', texto: 'Cada tarjeta muestra precios en Bs y USD, stock y categoría. Toca ✏️ Editar, 📋 Copiar o 🗑️ Eliminar según necesites.' },
+        { sel: '#selectAllCheckbox', titulo: '6. Selección en lote', texto: 'Marca varios productos y pulsa "✏️ Editar selección" para cambiar precios, categoría, proveedor o stock de todos a la vez.' },
+        { sel: null, titulo: '¡Listo!', texto: 'Ya sabes manejar inventario y sus conversiones. ¡Agrega tu primer producto!' }
+    ];
+    const GUIA_REPORTES = [
+        { sel: '.kpi-grid', titulo: '1. Indicadores', texto: 'Aquí ves de un vistazo: ventas de hoy, ganancia, utilidad, ventas totales, gastos y stock bajo. Todo en Bs.' },
+        { sel: '#chartVentas', titulo: '2. Gráfico', texto: 'Gráfica de tus ventas en el tiempo para detectar tendencias de un vistazo.' },
+        { sel: '#buscarVentas', titulo: '3. Buscar ventas', texto: 'Escribe para filtrar por fecha, artículo, cliente o número de venta. También puedes usar el calendario de la derecha.' },
+        { sel: '#btnCalendarioVentas', titulo: '4. Calendario', texto: 'Abre un calendario para ver las ventas de un día o de un mes específicos.' },
+        { sel: '#listaVentasReporte', titulo: '5. Detalle de venta', texto: 'Toca cualquier venta para ver su ticket completo: cliente, productos, total y forma de pago.' },
+        { sel: null, titulo: '¡Listo!', texto: 'Con Reportes controlas tu negocio: ganancias, gastos, ventas por día y más.' }
+    ];
+    const GUIA_MODULOS = {
+        ventas: { clave: 'jam_guia_ventas_visto', pasos: GUIA_VENTAS },
+        inventario: { clave: 'jam_guia_inventario_visto', pasos: GUIA_INVENTARIO },
+        reportes: { clave: 'jam_guia_reportes_visto', pasos: GUIA_REPORTES }
+    };
+
+    function iniciarTutorial(pasos, claveVisto) {
+        if (document.querySelector('.tuto-overlay') || document.querySelector('.guia-fondo')) return;
+        const accent = D.config.theme;
+        const fondo = document.createElement('div');
+        fondo.className = 'tuto-overlay';
+        const resalto = document.createElement('div');
+        resalto.className = 'tuto-resalto';
+        const burbuja = document.createElement('div');
+        burbuja.className = 'tuto-burbuja';
+        burbuja.innerHTML = `<div class="tuto-flecha"></div><h3></h3><p></p><div class="tuto-botones"><button class="tuto-saltar">Saltar</button><button class="tuto-siguiente" style="background:${accent}">Siguiente</button></div><div class="tuto-contador"></div>`;
+        fondo.appendChild(resalto);
+        fondo.appendChild(burbuja);
+        document.body.appendChild(fondo);
+
+        let paso = 0;
+        const pintar = () => {
+            const p = pasos[paso];
+            burbuja.querySelector('h3').textContent = p.titulo;
+            burbuja.querySelector('p').textContent = p.texto;
+            burbuja.querySelector('.tuto-contador').textContent = `${paso + 1} de ${pasos.length}`;
+            burbuja.querySelector('.tuto-siguiente').textContent = paso === pasos.length - 1 ? 'Terminar' : 'Siguiente';
+            if (p.sel) {
+                const el = document.querySelector(p.sel);
+                if (el) {
+                    const r = el.getBoundingClientRect();
+                    resalto.style.display = 'block';
+                    resalto.style.left = (r.left - 6) + 'px';
+                    resalto.style.top = (r.top - 6) + 'px';
+                    resalto.style.width = (r.width + 12) + 'px';
+                    resalto.style.height = (r.height + 12) + 'px';
+                } else {
+                    resalto.style.display = 'none';
+                }
+            } else {
+                resalto.style.display = 'none';
+            }
+        };
+        const marcarVisto = () => { if(claveVisto) localStorage.setItem(claveVisto, '1'); };
+        const siguiente = () => {
+            paso++;
+            if (paso >= pasos.length) { fondo.remove(); marcarVisto(); return; }
+            pintar();
+        };
+        burbuja.querySelector('.tuto-saltar').onclick = () => { fondo.remove(); marcarVisto(); };
+        burbuja.querySelector('.tuto-siguiente').onclick = siguiente;
+        pintar();
+    }
+
+    function iniciarTutorialSiPrimeraVez() {
+        if(localStorage.getItem('jam_tutorial_visto')) {
+            setTimeout(() => {
+                if(currentModule === 'home') {
+                    const btn = document.querySelector('.btn-ayuda-home');
+                    const inp = document.getElementById('searchGlobalInput');
+                    if(btn) btn.classList.add('oculto');
+                    if(inp) inp.classList.add('sin-ayuda');
+                }
+            }, 400);
+            return;
+        }
+        setTimeout(() => {
+            if(currentModule === 'home' && document.querySelector('.home-grid')) iniciarTutorial(GUIA_HOME, 'jam_tutorial_visto');
+        }, 600);
+    }
+
+    function iniciarGuiaModuloSiPrimeraVez(mod) {
+        const g = GUIA_MODULOS[mod];
+        if(!g || localStorage.getItem(g.clave)) return;
+        setTimeout(() => {
+            if(currentModule === mod) iniciarTutorial(g.pasos, g.clave);
+        }, 500);
+    }
+// ==================== VERSIÓN DE PRUEBA (CANDADO) ====================
+    // URL del backend de candado (dejar '' = solo candado offline).
+    // Ej.: 'https://tu-servicio.onrender.com'
+    const JAM_SERVER_PRUEBA = '';
+    window._pruebaInfo = null;
+
+    function mostrarBloqueoPrueba() {
+        if(document.querySelector('.prueba-bloqueo')) return;
+        const fondo = document.createElement('div');
+        fondo.className = 'prueba-bloqueo';
+        fondo.innerHTML = `<div class="prueba-bloqueo-caja">
+            <div class="prueba-bloqueo-icono">🔒</div>
+            <h2>Periodo de prueba finalizado</h2>
+            <p>Este dispositivo ya usó su periodo de prueba de <b>3 días</b> de JAM POS.</p>
+            <p class="prueba-bloqueo-detalle">Para seguir usando la aplicación necesitas la versión completa.</p>
+            <button class="prueba-bloqueo-btn" onclick="if(window.AndroidBridge&&AndroidBridge.cerrarApp)AndroidBridge.cerrarApp()">Cerrar</button>
+        </div>`;
+        document.body.appendChild(fondo);
+    }
+
+    function mostrarBannerPrueba(info) {
+        if(!info || info.bloqueada) return;
+        window._pruebaInfo = info;
+        const home = document.querySelector('.home-container');
+        if(!home) return;
+        const existente = document.querySelector('.prueba-banner');
+        if(existente) existente.remove();
+        const b = document.createElement('div');
+        b.className = 'prueba-banner';
+        b.innerHTML = `<span>🔒 Versión de prueba — <b>${info.diasRestantes}</b> día(s) restantes</span><button onclick="this.parentElement.remove()">✕</button>`;
+        home.prepend(b);
+    }
+
+    async function sincronizarPrueba(info) {
+        if(!JAM_SERVER_PRUEBA) {
+            if(info.bloqueada) mostrarBloqueoPrueba();
+            else mostrarBannerPrueba(info);
+            return;
+        }
+        try {
+            const device = (window.AndroidBridge && AndroidBridge.deviceId) ? AndroidBridge.deviceId() : 'desconocido';
+            let res = await fetch(JAM_SERVER_PRUEBA + '/prueba?device=' + encodeURIComponent(device));
+            let data = await res.json();
+            let fechaInicio = data.fechaInicio ? Number(data.fechaInicio) : 0;
+            if(!fechaInicio && info.fechaInicio) {
+                res = await fetch(JAM_SERVER_PRUEBA + '/prueba', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ device, fechaInicio: info.fechaInicio })
+                });
+                data = await res.json();
+                fechaInicio = data.fechaInicio ? Number(data.fechaInicio) : info.fechaInicio;
+            }
+            const efectiva = (fechaInicio && fechaInicio < info.fechaInicio) ? fechaInicio : info.fechaInicio;
+            const serverNow = data.serverNow ? Number(data.serverNow) : Date.now();
+            const ahoraRef = Math.abs(serverNow - Date.now()) > 3600000 ? serverNow : Date.now();
+            const dias = Math.floor((ahoraRef - efectiva) / 86400000);
+            const bloqueada = dias >= 3;
+            const nuevoInfo = { bloqueada, diasRestantes: bloqueada ? 0 : (3 - dias), fechaInicio: efectiva, tamper: info.tamper };
+            if(bloqueada) { window._pruebaInfo = null; mostrarBloqueoPrueba(); }
+            else mostrarBannerPrueba(nuevoInfo);
+        } catch(e) {
+            if(info.bloqueada) mostrarBloqueoPrueba();
+            else mostrarBannerPrueba(info);
+        }
+    }
+
+    function verificarPruebaInicio() {
+        if(!window.AndroidBridge || typeof AndroidBridge.esVersionPrueba !== 'function') return false;
+        let esPrueba = false;
+        try { esPrueba = !!AndroidBridge.esVersionPrueba(); } catch(e) {}
+        if(!esPrueba) return false;
+        let info = { bloqueada: false, diasRestantes: 3, fechaInicio: 0, tamper: false };
+        try { info = JSON.parse(AndroidBridge.verificarPrueba()); } catch(e) {}
+        sincronizarPrueba(info);
+        if(info.bloqueada) { mostrarBloqueoPrueba(); return true; }
+        window._pruebaInfo = info;
+        return false;
+    }
+// ==================== INICIALIZACIÓN ====================
+    // Bloquear orientación vertical cuando está instalado como PWA (standalone).
+    // En navegador normal no aplica (screen.orientation.lock solo funciona en
+    // pantalla completa / standalone) para no molestar al usuario.
+    function bloquearOrientacionVertical() {
+        if (window.matchMedia('(display-mode: standalone)').matches && screen.orientation && screen.orientation.lock) {
+            screen.orientation.lock('portrait').catch(function(){});
+        }
+    }
+    bloquearOrientacionVertical();
+    // Bloquear menú contextual, selección y copia de texto (feeling nativo).
+    (function bloquearCopiadoYSeleccion() {
+        const editable = t => t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable);
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.addEventListener('selectstart', e => { if(!editable(e.target)) e.preventDefault(); });
+        document.addEventListener('copy', e => { if(!editable(e.target)) e.preventDefault(); });
+        document.addEventListener('cut', e => { if(!editable(e.target)) e.preventDefault(); });
+        document.addEventListener('dragstart', e => e.preventDefault());
+    })();
+    loadAllData().then(() => {
+        if(verificarPruebaInicio()) return;
+        const lastModule = localStorage.getItem('jam_last_module');
+        if(lastModule && lastModule !== 'home' && lastModule !== '' && window.navigateTo) {
+            if(D.config.pin && D.config.pin.length === 4) {
+                if(!sessionStorage.getItem('jam_pin_authed')) askPin(() => { renderHome(); window.navigateTo(lastModule); actualizarTasa(false); });
+                else { renderHome(); setTimeout(() => window.navigateTo(lastModule), 50); actualizarTasa(false); }
+            } else {
+                renderHome();
+                setTimeout(() => window.navigateTo(lastModule), 50);
+                actualizarTasa(false);
+            }
+            return;
+        }
+        if(D.config.pin && D.config.pin.length === 4) {
+            if(!sessionStorage.getItem('jam_pin_authed')) askPin(() => { renderHome(); actualizarTasa(false); });
+            else { renderHome(); actualizarTasa(false); }
+        } else {
+            renderHome();
+            actualizarTasa(false);
+        }
+    });
     
     // Detectar cambio de tamaño (rotación, resize escritorio)
     let resizeTimer;
@@ -1633,6 +3294,6 @@
         clearTimeout(resizeTimer);
         resizeTimer = setTimeout(() => {
             actualizarModoLayout();
-            if(currentModule === 'home') renderHome();
+            if(currentModule === 'home' && document.activeElement?.id !== 'searchGlobalInput') renderHome();
         }, 300);
     });
