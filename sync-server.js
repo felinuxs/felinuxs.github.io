@@ -1,6 +1,5 @@
-﻿// sync-server.js — Servidor central de sincronizacion con HTTPS
+﻿// sync-server.js — Servidor central de sincronizacion
 const http = require('http');
-const https = require('https');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -89,7 +88,9 @@ function mergeAll(remote) {
     return { ok: true, stats: stats, total: { added: totalAdded, updated: totalUpdated, skipped: totalSkipped } };
 }
 
-function handler(req, res) {
+const ip = (() => { for (const n of Object.values(os.networkInterfaces())) for (const net of n) if (net.family==='IPv4' && !net.internal) return net.address; return '127.0.0.1'; })();
+
+http.createServer((req, res) => {
     res.setHeader('Access-Control-Allow-Origin','*');
     res.setHeader('Access-Control-Allow-Methods','GET,POST,OPTIONS');
     res.setHeader('Access-Control-Allow-Headers','Content-Type');
@@ -120,31 +121,6 @@ function handler(req, res) {
     }
 
     const f = path.join(__dirname, req.url==='/' ? 'index.html' : req.url);
-    const m = {'.html':'text/html','.js':'text/javascript','.css':'text/css','.json':'application/json','.png':'image/png','.svg':'image/svg+xml','.woff2':'font/woff2','.woff':'font/woff','.ttf':'font/ttf'};
+    const m = {'.html':'text/html','.js':'text/javascript','.css':'text/css','.json':'application/json','.png':'image/png','.svg':'image/svg+xml'};
     fs.readFile(f, (e,d) => { if(e) return res.writeHead(404).end(); res.writeHead(200,{'Content-Type':m[path.extname(f)]||'text/plain'}).end(d); });
-}
-
-const ip = (() => { for (const n of Object.values(os.networkInterfaces())) for (const net of n) if (net.family==='IPv4' && !net.internal) return net.address; return '127.0.0.1'; })();
-
-// HTTP
-http.createServer(handler).listen(PORT, '0.0.0.0', () => {
-    console.log('\n  JAM POS Sync HTTP  -> http://'+ip+':'+PORT);
-});
-
-// HTTPS (si existe cert.pfx)
-const pfxPath = path.join(__dirname, 'cert.pfx');
-if (fs.existsSync(pfxPath)) {
-    try {
-        const pfx = fs.readFileSync(pfxPath);
-        https.createServer({pfx:pfx,passphrase:'jampos2027'}, handler).listen(PORT+1, '0.0.0.0', () => {
-            console.log('  JAM POS Sync HTTPS -> https://'+ip+':'+(PORT+1));
-            console.log('\n  NOTA: El navegador mostrara un aviso de certificado.');
-            console.log('  Chrome: Avanzado -> Continuar a ... (no seguro)');
-            console.log('  Safari: Avanzado -> Continuar\n');
-        });
-    } catch(e) {
-        console.log('  HTTPS no disponible:', e.message);
-    }
-} else {
-    console.log('\n  Para HTTPS, ejecuta: powershell -ExecutionPolicy Bypass -File gen-cert.ps1');
-}
+}).listen(PORT, '0.0.0.0', () => console.log('\n  JAM POS Sync listo en http://'+ip+':'+PORT+'\n'));
