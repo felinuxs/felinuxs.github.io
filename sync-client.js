@@ -13,8 +13,9 @@ function getUrl(){return _url;}
 async function setupPrincipal(name){
     _name=name;_key=_key||makeKey();
     var base='http://'+(location.hostname||location.host||'localhost')+':3000';
-    try{var r=await fetch(base+'/ip');var d=await r.json();if(d.ok&&d.ip){_url='http://'+d.ip+':3000';}else{_url=base;}}
-    catch(e){_url=base;}
+    console.log('[SYNC] Probando servidor en: '+base);
+    try{var r=await fetch(base+'/ip',{signal:AbortSignal.timeout(5000)});var d=await r.json();if(d.ok&&d.ip){_url='http://'+d.ip+':3000';console.log('[SYNC] Servidor encontrado en: '+_url);}else{_url=base;}}
+    catch(e){_url=base;console.log('[SYNC] Servidor no encontrado en '+base+'. Usando URL base.');}
     localStorage.setItem('jam_sync_url',_url);
     localStorage.setItem('jam_sync_name',_name);
     localStorage.setItem('jam_sync_key',_key);
@@ -78,19 +79,29 @@ function scanFallbackFile(){
 var STORES=['productos','ventas','clientes','proveedores','gastos','empleados'];
 
 async function bidirectionalSync(){
-    if(!_url)return{ok:false,msg:'Sin URL'};
+    if(!_url)return{ok:false,msg:'Sin URL configurada. Configura el sync primero.'};
     var getDatos=window.jamGetAllDatos;
     var combinar=window.jamCombinarImportacion;
     var saveIDB=window.jamSaveIDB;
-    if(!getDatos||!combinar)return{ok:false,msg:'App no lista (recarga la pagina)'};
+    if(!getDatos||!combinar)return{ok:false,msg:'App no lista. Recarga la pagina.'};
+    console.log('[SYNC] URL destino: '+_url);
     try{
+        var ping=null;
+        try{ping=await fetch(_url+'/ip',{signal:AbortSignal.timeout(5000)});ping=await ping.json();}catch(e){
+            console.log('[SYNC] Ping fallo:',e.message);
+            var msg='No se pudo contactar el servidor en '+_url+'. ';
+            if(e.name==='TypeError')msg+='Verifica que node sync-server.js este corriendo en la PC principal.';
+            else if(e.name==='AbortError')msg+='El servidor tardo demasiado en responder.';
+            else msg+='Error: '+e.message;
+            return{ok:false,msg:msg};
+        }
         var localData=await getDatos();
         console.log('[SYNC] POST '+_url+'/sync — productos:'+(localData.productos||[]).length+' ventas:'+(localData.ventas||[]).length+' bytes:'+JSON.stringify(localData).length);
-        var r=await fetch(_url+'/sync',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(localData)});
+        var r=await fetch(_url+'/sync',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(localData),signal:AbortSignal.timeout(15000)});
         var serverResult=await r.json();
         console.log('[SYNC] POST resultado:',JSON.stringify(serverResult));
         if(!serverResult.ok)return{ok:false,msg:serverResult.err||'Error del servidor'};
-        var serverStore=await fetch(_url+'/pull').then(function(res){return res.json();});
+        var serverStore=await fetch(_url+'/pull',{signal:AbortSignal.timeout(10000)}).then(function(res){return res.json();});
         console.log('[SYNC] GET /pull productos:'+(serverStore.productos||[]).length+' ventas:'+(serverStore.ventas||[]).length);
         var d=window.D;
         if(!d)return{ok:false,msg:'Datos no disponibles'};
@@ -113,9 +124,13 @@ async function bidirectionalSync(){
         return{ok:true,added:totalAdded,skipped:totalSkipped};
     }catch(e){
         console.log('[SYNC] ERROR:',e.message);
+        var msg2='Error sync: ';
+        if(e.name==='TypeError')msg2+='No se pudo conectar con '+_url+'. Verifica que el servidor este corriendo.';
+        else if(e.name==='AbortError')msg2+='El servidor tardo demasiado. Intenta de nuevo.';
+        else msg2+=e.message;
         var notify2=typeof mostrarNotificacion==='function'?mostrarNotificacion:null;
-        if(notify2)notify2('Error sync: '+e.message,'error');
-        return{ok:false,msg:e.message};
+        if(notify2)notify2(msg2,'error');
+        return{ok:false,msg:msg2};
     }
 }
 
