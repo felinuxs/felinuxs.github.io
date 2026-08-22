@@ -215,6 +215,7 @@
     async function saveItem(store, item) {
         const key = STORAGE_KEYS[store];
         if (DATA_STORES.includes(store)) {
+            item.updatedAt = Date.now();
             D[store] = D[store] || [];
             const i = D[store].findIndex(x => x.id === item.id);
             if (i !== -1) D[store][i] = item; else D[store].push(item);
@@ -249,13 +250,19 @@
     let D = {
         productos: [], clientes: [], proveedores: [], gastos: [], empleados: [], ventas: [],
         config: { 
-            key:'mainConfig', theme:'#3b82f6', dolarRate:67.85, lastUpdate:new Date().toLocaleDateString(), 
+            key:'mainConfig', theme:'#3b82f6', dolarRate:777.42, lastUpdate:new Date().toLocaleDateString(), 
             ivaActivo:false, ivaPorcentaje:16, usarMargen:false, backgroundMode:'light', autoOscuro:true, prevenirCierre:true,
-            mostrarDolar: true, tasaManual: false, tasaManualValue: 67.85,
+            mostrarDolar: true, tasaManual: false, tasaManualValue: 777.42,
             empresa: { nombre:'JAM POS', direccion:'', telefono:'', rif:'', logo:'' },
             alertaStockBajo: true, alertaTasa: true, sonidoAlertas: true
         }
     };
+    window.D = D;
+    window.jamSaveIDB = async function(store, data) { await saveToIDB(store, data); };
+    window.jamLoadIDB = async function(store) { return await loadFromIDB(store); };
+    window.jamLoadAll = async function() { await loadAllData(); };
+    window.jamGetAllDatos = async function() { return await obtenerTodosLosDatos(); };
+    window.jamCombinarImportacion = function(dest, src, campo) { return combinarImportacion(dest, src, campo); };
     let currentModule = 'home', volverBloqueado = false, timeoutTitulo = null;
     let carrito = [], tipoPago = 'pago_movil', clienteSeleccionadoId = null, clienteInputText = '', totalVenta = 0;
     let productosSeleccionados = new Set(), selectAllChecked = false;
@@ -295,7 +302,7 @@
         if(D.config.mostrarDolar === undefined) D.config.mostrarDolar = true;
         if(D.config.prevenirCierre === undefined) D.config.prevenirCierre = true;
         if(D.config.tasaManual === undefined) D.config.tasaManual = false;
-        if(!D.config.tasaManualValue) D.config.tasaManualValue = D.config.dolarRate || 67.85;
+        if(!D.config.tasaManualValue) D.config.tasaManualValue = D.config.dolarRate || 777.42;
         if(D.config.autoOscuro === undefined) D.config.autoOscuro = true;
         if(D.config.ivaActivo === undefined) D.config.ivaActivo = false;
         
@@ -412,7 +419,7 @@
             saveConfig();
             if(forzar) mostrarNotificacion(`Tasa actualizada: ${fmtDolar(tasaNueva)} Bs/USD`, 'success');
             notificarTasaActualizada(tasaPrevia, tasaNueva);
-        } else if(!D.config.dolarRate) D.config.dolarRate = 67.85;
+        } else if(!D.config.dolarRate) D.config.dolarRate = 777.42;
         actualizarDisplayTasa();
         recalcularPreciosPorTasa();
     }
@@ -547,7 +554,7 @@
                         <div class="buscador">
                             <i class="fas fa-search icono-busqueda"></i>
                             <input type="text" id="buscarProducto" placeholder="Buscar por nombre o código de barras..." class="border-2 rounded-xl p-2 w-full" style="border-color:${accent}" autocomplete="off">
-                            <button id="btnScanVentas" class="btn-icon-cuadrado" title="Escanear con cámara">📷</button>
+                            <button id="btnScanVentas" class="btn-icon-cuadrado" title="Escanear con cámara"><i class="fas fa-camera"></i></button>
                         </div>
                         <div id="sugerencias" class="hidden"></div>
                     </div>
@@ -1088,7 +1095,34 @@
             imprimirTicket(venta);
         }
     };
-    window.enviarTicketPorWhatsApp = async (ventaId) => { const venta = D.ventas.find(v => v.id === ventaId); if(!venta) return; const formasPago = { 'efectivo_bs':'EFECTIVO Bs','pago_movil':'PAGO MÓVIL','transferencia':'TRANSFERENCIA','tarjeta_debito':'TARJETA DÉBITO','dolares':'DÓLARES','pago_dividido':'PAGO DIVIDIDO' }; const etiqMetodo = {'efectivo_bs':'Efectivo Bs','dolares':'Dólares','tarjeta_debito':'Tarjeta Débito','transferencia':'Transferencia','pago_movil':'Pago Móvil'}; let mensaje = `🏪 *${D.config.empresa.nombre}* 🏪\n`; if(D.config.empresa.direccion) mensaje += `📍 ${D.config.empresa.direccion}\n`; if(D.config.empresa.telefono) mensaje += `📞 ${D.config.empresa.telefono}\n`; mensaje += `━━━━━━━━━━━━━━━━━━━━\n📅 ${textoFechaVenta(venta)}\n🧾 *${venta.id}*\n👤 Cliente: ${venta.cliente}\n━━━━━━━━━━━━━━━━━━━━\n`; venta.items.forEach(item => { mensaje += `${item.cantidad}x ${item.nombre} → ${fmtPrecio(item.subtotal)} Bs\n`; }); mensaje += `━━━━━━━━━━━━━━━━━━━━\n💰 *SUBTOTAL:* ${fmtPrecio(venta.subtotal)} Bs\n`; if(venta.iva) mensaje += `📊 *IVA:* ${fmtPrecio(venta.iva)} Bs\n`; mensaje += `💵 *TOTAL:* ${fmtPrecio(venta.total)} Bs\n💸 *PAGO:* ${fmtPrecio(venta.pago)} Bs\n${esPagoEfectivo(venta) ? `🔄 *CAMBIO:* ${fmtPrecio(venta.cambio)} Bs\n` : ''}`; if(venta.detallePagos) { venta.detallePagos.forEach(d => { mensaje += `└ ${etiqMetodo[d.metodo]||d.metodo}: ${fmtPrecio(d.monto)} Bs\n`; }); } else { mensaje += `💳 *FORMA DE PAGO:* ${formasPago[venta.tipoPago] || venta.tipoPago}\n`; } mensaje += `━━━━━━━━━━━━━━━━━━━━\n🙏 ¡Gracias por su compra!\n${D.config.empresa.nombre}`; const telefono = await jamPrompt("📱 Ingrese el número de teléfono (ej: 584121234567):"); if(telefono) { let numeroLimpio = telefono.replace(/[^0-9]/g, ''); if(numeroLimpio.startsWith('0')) numeroLimpio = '58' + numeroLimpio.substring(1); if(!numeroLimpio.startsWith('58')) numeroLimpio = '58' + numeroLimpio; window.open(`https://wa.me/${numeroLimpio}?text=${encodeURIComponent(mensaje)}`, '_blank'); } };
+    window.enviarTicketPorWhatsApp = async (ventaId) => {
+        const venta = D.ventas.find(v => v.id === ventaId);
+        if(!venta) return;
+        const formasPago = { 'efectivo_bs':'EFECTIVO Bs','pago_movil':'PAGO MÓVIL','transferencia':'TRANSFERENCIA','tarjeta_debito':'TARJETA DÉBITO','dolares':'DÓLARES','pago_dividido':'PAGO DIVIDIDO' };
+        const etiqMetodo = {'efectivo_bs':'Efectivo Bs','dolares':'Dólares','tarjeta_debito':'Tarjeta Débito','transferencia':'Transferencia','pago_movil':'Pago Móvil'};
+        let mensaje = `🏪 *${D.config.empresa.nombre}* 🏪\n`;
+        if(D.config.empresa.direccion) mensaje += `📍 ${D.config.empresa.direccion}\n`;
+        if(D.config.empresa.telefono) mensaje += `📞 ${D.config.empresa.telefono}\n`;
+        mensaje += `━━━━━━━━━━━━━━━━━━━━\n📅 ${textoFechaVenta(venta)}\n🧾 *${venta.id}*\n👤 Cliente: ${venta.cliente}\n━━━━━━━━━━━━━━━━━━━━\n`;
+        venta.items.forEach(item => { mensaje += `${item.cantidad}x ${item.nombre} → ${fmtPrecio(item.subtotal)} Bs\n`; });
+        mensaje += `━━━━━━━━━━━━━━━━━━━━\n💰 *SUBTOTAL:* ${fmtPrecio(venta.subtotal)} Bs\n`;
+        if(venta.iva) mensaje += `📊 *IVA:* ${fmtPrecio(venta.iva)} Bs\n`;
+        mensaje += `💵 *TOTAL:* ${fmtPrecio(venta.total)} Bs\n💸 *PAGO:* ${fmtPrecio(venta.pago)} Bs\n${esPagoEfectivo(venta) ? `🔄 *CAMBIO:* ${fmtPrecio(venta.cambio)} Bs\n` : ''}`;
+        if(venta.detallePagos) {
+            venta.detallePagos.forEach(d => { mensaje += `└ ${etiqMetodo[d.metodo]||d.metodo}: ${fmtPrecio(d.monto)} Bs\n`; });
+        } else {
+            mensaje += `💳 *FORMA DE PAGO:* ${formasPago[venta.tipoPago] || venta.tipoPago}\n`;
+        }
+        mensaje += `━━━━━━━━━━━━━━━━━━━━\n🙏 ¡Gracias por su compra!\n${D.config.empresa.nombre}`;
+        try { await navigator.clipboard.writeText(mensaje); mostrarNotificacion('📋 Ticket copiado al portapapeles', 'success'); } catch(e) {}
+        const telefono = await jamPrompt("📱 Ingrese el número de teléfono (ej: 584121234567):");
+        if(telefono) {
+            let numeroLimpio = telefono.replace(/[^0-9]/g, '');
+            if(numeroLimpio.startsWith('0')) numeroLimpio = '58' + numeroLimpio.substring(1);
+            if(!numeroLimpio.startsWith('58')) numeroLimpio = '58' + numeroLimpio;
+            window.open(`https://wa.me/${numeroLimpio}?text=${encodeURIComponent(mensaje)}`, '_blank');
+        }
+    };
     async function capturarTicketImagen() {
         const ticket = document.getElementById('ticketParaImprimir');
         if(!ticket) return null;
@@ -1275,7 +1309,7 @@
         {icon:"fa-coins", label:"Gastos", id:"gastos"},
         {icon:"fa-user-tie", label:"Empleados", id:"empleados"},
         {icon:"fa-chart-line", label:"Reportes", id:"reportes"},
-        {icon:"fa-palette", label:"Config", id:"config"}
+        {icon:"fa-palette", label:"Configuración", id:"config"}
     ];
     
     function renderSidebar() {
@@ -1305,7 +1339,7 @@
                 <div class="mb-4">
                     <div class="relative">
                         <i class="fas fa-search absolute left-4 top-3.5 text-gray-400"></i>
-                        <input type="text" id="searchGlobalInput" placeholder="Buscar productos, clientes..." class="w-full pl-10 pr-12 py-3 rounded-2xl border-2 shadow-sm" style="border-color:${accent}">
+                        <input type="text" id="searchGlobalInput" placeholder="Buscar productos, clientes..." class="w-full pl-10 pr-12 p-2 rounded-2xl border-2 shadow-sm" style="border-color:${accent}">
                         <button class="btn-ayuda-home" onclick="mostrarGuiaApp()" title="Guía de la app"><i class="fas fa-circle-question"></i></button>
                         <div id="globalResults" class="absolute z-30 w-full mt-2 rounded-2xl shadow-xl max-h-72 overflow-auto hidden" style="border:1px solid var(--accent);"></div>
                     </div>
@@ -1410,7 +1444,7 @@
     async function renderInventario(){
         let bloqueado = volverBloqueado, accent = D.config.theme;
         productosSeleccionados = new Set(); selectAllChecked = false;
-        document.getElementById('appRoot').innerHTML = `<div class="page-header-fixed"><div class="module-header"><h2 id="tituloModule" class="module-title ${bloqueado?'module-title-bloqueado':''}" style="color:${accent}" onmousedown="iniciarBloqueo(this,'Inventario')" onmouseup="cancelarBloqueo()" onmouseleave="cancelarBloqueo()">Inventario</h2><div id="btnVolverModule" class="btn-back ${bloqueado?'btn-back-bloqueado':''}" onclick="${bloqueado?'':'backToHome()'}">${bloqueado?'<i class="fas fa-lock"></i> Bloqueado':'<i class="fas fa-arrow-left"></i> Volver'}</div></div></div><div class="page-container"><div class="mb-3"><div class="buscador"><i class="fas fa-search icono-busqueda"></i><input type="text" id="searchInv" placeholder="Buscar producto o código de barras..." class="border-2 rounded-xl p-2 w-full" style="border-color:${accent}" autocomplete="off"><button id="btnScanInv" class="btn-icon-cuadrado" title="Escanear con cámara">📷</button></div></div><div class="batch-toolbar"><label class="flex items-center gap-2 text-sm"><input type="checkbox" id="selectAllCheckbox" class="select-all-checkbox" onchange="toggleSelectAll(this.checked)"> Seleccionar todo</label><button id="nuevoProducto" class="btn-azul-redondeado btn-redondeado py-2 px-4">+ Nuevo</button><button id="btnEditarLote" class="btn-azul-redondeado btn-redondeado py-2 px-4" onclick="editarSeleccionLote()" style="display:none">✏️ Editar selección</button><span id="batchCount" class="batch-count"></span></div><div id="listaProductos" class="scroll-area"></div></div>`;
+        document.getElementById('appRoot').innerHTML = `<div class="page-header-fixed"><div class="module-header"><h2 id="tituloModule" class="module-title ${bloqueado?'module-title-bloqueado':''}" style="color:${accent}" onmousedown="iniciarBloqueo(this,'Inventario')" onmouseup="cancelarBloqueo()" onmouseleave="cancelarBloqueo()">Inventario</h2><div id="btnVolverModule" class="btn-back ${bloqueado?'btn-back-bloqueado':''}" onclick="${bloqueado?'':'backToHome()'}">${bloqueado?'<i class="fas fa-lock"></i> Bloqueado':'<i class="fas fa-arrow-left"></i> Volver'}</div></div></div><div class="page-container"><div class="mb-3"><div class="buscador"><i class="fas fa-search icono-busqueda"></i><input type="text" id="searchInv" placeholder="Buscar producto o código de barras..." class="border-2 rounded-xl p-2 w-full" style="border-color:${accent}" autocomplete="off"><button id="btnScanInv" class="btn-icon-cuadrado" title="Escanear con cámara"><i class="fas fa-camera"></i></button></div></div><div class="batch-toolbar"><label class="flex items-center gap-2 text-sm"><input type="checkbox" id="selectAllCheckbox" class="select-all-checkbox" onchange="toggleSelectAll(this.checked)"> Seleccionar todo</label><button id="nuevoProducto" class="btn-azul-redondeado btn-redondeado py-2 px-4">+ Nuevo</button><button id="btnEditarLote" class="btn-azul-redondeado btn-redondeado py-2 px-4" onclick="editarSeleccionLote()" style="display:none">✏️ Editar selección</button><span id="batchCount" class="batch-count"></span></div><div id="listaProductos" class="scroll-area"></div></div>`;
         if(volverBloqueado) document.getElementById('btnVolverModule').onclick = () => mostrarOverlayBloqueo();
         document.getElementById('searchInv').addEventListener('input', e => renderListaProductos(e.target.value.toLowerCase()));
         document.getElementById('searchInv').addEventListener('keydown', e => { if(e.key === 'Enter') buscarPorCodigoInventario(e.target.value.trim()); });
@@ -1540,7 +1574,7 @@
         let modal = document.createElement('div'); modal.className = 'modal-form';
         modal.innerHTML = `<div class="modal-form-content" style="max-width:420px"><h3 class="text-xl font-bold mb-4">${esNuevo ? 'Nuevo Producto' : 'Editar Producto'}</h3>
             <div class="mb-3"><label>Nombre</label><input id="nombre" value="${escapeHtml(prod?.nombre||'')}" class="border rounded-xl p-2 w-full"></div>
-            <div class="mb-3"><label>📷 Código de barras</label><div class="flex gap-2"><input id="codigo" value="${escapeHtml(prod?.codigo||'')}" class="border-2 rounded-xl p-2 flex-1" style="border-color:var(--accent,#3b82f6)"><button id="btnScanProducto" class="btn-icon-cuadrado" title="Escanear con cámara">📷</button></div></div>
+            <div class="mb-3"><label>📷 Código de barras</label><div class="flex gap-2"><input id="codigo" value="${escapeHtml(prod?.codigo||'')}" class="border-2 rounded-xl p-2 flex-1" style="border-color:var(--accent,#3b82f6)"><button id="btnScanProducto" class="btn-icon-cuadrado" title="Escanear con cámara"><i class="fas fa-camera"></i></button></div></div>
             <div class="mb-3"><label>Categoría</label><input id="categoria" value="${escapeHtml(prod?.categoria||'')}" class="border rounded-xl p-2 w-full"></div>
             <div class="mb-3"><label>Proveedor</label><input id="proveedor" value="${escapeHtml(prod?.proveedor||'')}" class="border rounded-xl p-2 w-full"></div>
             <div class="mb-3"><label>Stock</label><input type="number" id="stock" value="${prod?.stock||0}" class="border rounded-xl p-2 w-full"></div>
@@ -1931,6 +1965,7 @@
         }
         return dias;
     }
+    let _barsInfo = [];
     function renderGraficoVentas(ventas){
         let dias = generarDiasSemana();
         ventas.forEach(v => {
@@ -1943,7 +1978,7 @@
             if(!canvas) return;
             let ctx = canvas.getContext('2d');
             let W = canvas.parentElement.clientWidth - 24;
-            let H = 160;
+            let H = 180;
             canvas.width = W * 2; canvas.height = H * 2;
             canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
             ctx.scale(2,2);
@@ -1952,20 +1987,24 @@
             let barW = Math.max(16, (W - 40) / dias.length - 8);
             let gap = 8;
             ctx.clearRect(0,0,W,H);
+            _barsInfo = [];
             dias.forEach((d,i) => {
                 let val = d.ventas.reduce((a,b)=>a+b,0);
-                let barH = (val / maxVal) * (H - 30);
+                let barH = Math.max(4, (val / maxVal) * (H - 36));
                 let x = 20 + i * (barW + gap) + (W - 40 - dias.length*(barW+gap) + gap)/2;
-                let y = H - 10 - barH;
+                let y = H - 16 - barH;
+                _barsInfo.push({x, y, w: barW, h: barH, fecha: d.fecha, label: d.label, val});
                 ctx.fillStyle = accent;
+                ctx.globalAlpha = 0.85;
                 ctx.beginPath();
                 if (ctx.roundRect) ctx.roundRect(x, y, barW, barH, [4,4,0,0]);
                 else ctx.rect(x, y, barW, barH);
                 ctx.fill();
+                ctx.globalAlpha = 1;
                 ctx.fillStyle = getComputedStyle(document.body).color;
                 ctx.font = '9px sans-serif';
                 ctx.textAlign = 'center';
-                ctx.fillText(d.label, x + barW/2, H - 2);
+                ctx.fillText(d.label, x + barW/2, H - 3);
                 if(val > 0){
                     ctx.fillStyle = accent;
                     ctx.font = 'bold 8px sans-serif';
@@ -1974,60 +2013,94 @@
             });
         }, 50);
     }
+
+    function mostrarKPIsDelDia(fecha, label){
+        document.querySelectorAll('.kpi-popup').forEach(e => e.remove());
+        let ventasAll = D.ventas || [];
+        let ventasDia = ventasAll.filter(v => msToDateStr(v.timestamp || new Date(v.fecha).getTime()) === fecha);
+        let totalVentasAll = ventasAll.reduce((a,b)=>a+(b.total||0),0);
+        let totalGananciaAll = ventasAll.reduce((a,b)=>a+(b.gananciaTotal||0),0);
+        let totalGastosAll = D.gastos.reduce((a,b)=>a+(b.montoBs||0),0);
+        let utilidadAll = totalGananciaAll - totalGastosAll;
+        let cnt = ventasDia.length;
+        let total = ventasDia.reduce((a,b)=>a+(b.total||0),0);
+        let ganancia = ventasDia.reduce((a,b)=>a+(b.gananciaTotal||0),0);
+        let gastos = D.gastos.filter(g => msToDateStr(g.timestamp || new Date(g.fecha).getTime()) === fecha).reduce((a,b)=>a+(b.montoBs||0),0);
+        let utilidad = ganancia - gastos;
+        let accent = D.config.theme;
+        let overlay = document.createElement('div');
+        overlay.className = 'kpi-popup-overlay';
+        overlay.onclick = e => { if(e.target === overlay) overlay.remove(); };
+        let popup = document.createElement('div');
+        popup.className = 'kpi-popup';
+        popup.innerHTML = `<div class="kpi-popup-titulo" style="color:${accent}"><i class="fas fa-chart-bar"></i> ${label} <button class="kpi-popup-cerrar" onclick="this.closest('.kpi-popup-overlay').remove()">✕</button></div>
+        <div class="kpi-popup-grid">
+            <div class="kpi-popup-card"><div class="kpi-popup-icon">💰</div><div class="kpi-popup-val">${fmtPrecio(total)} Bs</div><div class="kpi-popup-lbl">Ventas</div></div>
+            <div class="kpi-popup-card"><div class="kpi-popup-icon">🧾</div><div class="kpi-popup-val">${cnt}</div><div class="kpi-popup-lbl">Ticket(s)</div></div>
+            <div class="kpi-popup-card"><div class="kpi-popup-icon">📈</div><div class="kpi-popup-val">${fmtPrecio(ganancia)} Bs</div><div class="kpi-popup-lbl">Ganancia</div></div>
+            <div class="kpi-popup-card"><div class="kpi-popup-icon">💸</div><div class="kpi-popup-val">${fmtPrecio(gastos)} Bs</div><div class="kpi-popup-lbl">Gastos</div></div>
+            <div class="kpi-popup-card"><div class="kpi-popup-icon">📊</div><div class="kpi-popup-val" style="color:${utilidad >= 0 ? '#10b981' : '#ef4444'}">${fmtPrecio(utilidad)} Bs</div><div class="kpi-popup-lbl">Utilidad</div></div>
+            <div class="kpi-popup-card"><div class="kpi-popup-icon">👥</div><div class="kpi-popup-val">${new Set(ventasDia.map(v => v.clienteId)).size}</div><div class="kpi-popup-lbl">Clientes</div></div>
+        </div>
+        <div class="kpi-popup-totales"><span>Acumulado: ${fmtPrecio(totalVentasAll)} Bs</span><span>Ganancia: ${fmtPrecio(totalGananciaAll)} Bs</span><span>Gastos: ${fmtPrecio(totalGastosAll)} Bs</span><span>Utilidad: <b style="color:${utilidadAll >= 0 ? '#10b981' : '#ef4444'}">${fmtPrecio(utilidadAll)} Bs</b></span></div>`;
+        overlay.appendChild(popup);
+        document.body.appendChild(overlay);
+    }
     async function renderReportes(){
         let ventas = await getAll('ventas');
-        let totalVentas = ventas.reduce((a,b)=>a+(b.total||0),0);
-        let totalGanancia = ventas.reduce((a,b)=>a+(b.gananciaTotal||0),0);
-        let totalGastos = D.gastos.reduce((a,b)=>a+(b.montoBs||0),0);
-        let utilidad = totalGanancia - totalGastos;
-        let hoy = msToDateStr(Date.now());
-        let ventasHoy = ventas.filter(v => msToDateStr(v.timestamp || new Date(v.fecha).getTime()) === hoy);
-        let totalHoy = ventasHoy.reduce((a,b)=>a+(b.total||0),0);
-        let gananciaHoy = ventasHoy.reduce((a,b)=>a+(b.gananciaTotal||0),0);
-        let gastosHoy = D.gastos.filter(g => { let t = g.timestamp || new Date(g.fecha).getTime(); return !isNaN(t) && msToDateStr(t) === hoy; }).reduce((a,b)=>a+(b.montoBs||0),0);
-        let utilidadHoy = gananciaHoy - gastosHoy;
-        let clientesUnicos = new Set(ventas.map(v => v.clienteId)).size;
-        let stockBajo = D.productos.filter(p => p.stock < 5).length;
         let bloqueado = volverBloqueado, accent = D.config.theme;
+        let histTasa = cargarHistorialTasa();
+        let histSemana = histTasa.slice(-7).reverse();
+        let tasaHtml = histSemana.length > 0 ? histSemana.map(h => {
+            let prev = histTasa.filter(x => x.fecha < h.fecha).slice(-1)[0];
+            let flecha = '';
+            if(prev){
+                let diff = h.tasa - prev.tasa;
+                if(diff > 0.001) flecha = '<span style="color:#ef4444">▲</span>';
+                else if(diff < -0.001) flecha = '<span style="color:#10b981">▼</span>';
+            }
+            return `<div class="flex justify-between items-center" style="padding:5px 0;border-bottom:1px solid rgba(128,128,128,.1)"><span class="text-xs" style="opacity:.6">${fmtFechaDisplay(h.fecha)}</span><span class="text-xs font-bold" style="color:${accent}">${flecha} ${fmtDolar(h.tasa)} Bs</span></div>`;
+        }).join('') : '<div class="text-xs" style="opacity:.5;text-align:center;padding:8px">Sin datos de tasa esta semana</div>';
         document.getElementById('appRoot').innerHTML = `
             <div class="page-header-fixed"><div class="module-header"><h2 id="tituloModule" class="module-title ${bloqueado?'module-title-bloqueado':''}" style="color:${accent}" onmousedown="iniciarBloqueo(this,'Reportes')" onmouseup="cancelarBloqueo()" onmouseleave="cancelarBloqueo()">Reportes</h2><div id="btnVolverModule" class="btn-back ${bloqueado?'btn-back-bloqueado':''}" onclick="${bloqueado?'':'backToHome()'}">${bloqueado?'<i class="fas fa-lock"></i> Bloqueado':'<i class="fas fa-arrow-left"></i> Volver'}</div></div></div>
             <div class="page-container">
-                <div class="kpi-grid">
-                    <div class="kpi-card"><div class="kpi-icon">💰</div><div class="kpi-value">${fmtPrecio(totalHoy)} Bs</div><div class="kpi-label">Ventas hoy</div></div>
-                    <div class="kpi-card"><div class="kpi-icon">📈</div><div class="kpi-value">${fmtPrecio(gananciaHoy)} Bs</div><div class="kpi-label">Ganancia hoy</div></div>
-                    <div class="kpi-card"><div class="kpi-icon">📊</div><div class="kpi-value">${fmtPrecio(utilidadHoy)} Bs</div><div class="kpi-label">Utilidad hoy</div></div>
-                    <div class="kpi-card"><div class="kpi-icon">🧾</div><div class="kpi-value">${ventasHoy.length}</div><div class="kpi-label">Ventas hoy (cnt)</div></div>
-                    <div class="kpi-card"><div class="kpi-icon">📦</div><div class="kpi-value">${fmtPrecio(totalVentas)} Bs</div><div class="kpi-label">Ventas totales</div></div>
-                    <div class="kpi-card"><div class="kpi-icon">📈</div><div class="kpi-value">${fmtPrecio(totalGanancia)} Bs</div><div class="kpi-label">Ganancia bruta total</div></div>
-                    <div class="kpi-card"><div class="kpi-icon">💸</div><div class="kpi-value">${fmtPrecio(totalGastos)} Bs</div><div class="kpi-label">Gastos totales</div></div>
-                    <div class="kpi-card"><div class="kpi-icon">📊</div><div class="kpi-value">${fmtPrecio(utilidad)} Bs</div><div class="kpi-label">Utilidad neta total</div></div>
-                    <div class="kpi-card"><div class="kpi-icon">👥</div><div class="kpi-value">${clientesUnicos}</div><div class="kpi-label">Clientes</div></div>
-                    <div class="kpi-card ${stockBajo > 0 ? 'kpi-low-stock' : ''}"><div class="kpi-icon">⚠️</div><div class="kpi-value">${stockBajo}</div><div class="kpi-label">Stock bajo (&lt;5)</div></div>
-                </div>
+                <div class="chart-hint" style="text-align:center;font-size:.75rem;opacity:.5;margin-bottom:6px">Toca una barra para ver los indicadores del día</div>
                 <div class="chart-container"><canvas id="chartVentas"></canvas></div>
+                <div class="config-section" style="margin-bottom:16px">
+                    <div class="config-section-title" style="font-size:.75rem;font-weight:700;opacity:.6;margin-bottom:8px">💱 Tasa del dólar — últimos 7 días</div>
+                    ${tasaHtml}
+                </div>
                 <h3 class="font-bold mb-2">Registro de ventas</h3>
                 <div class="flex gap-2 mb-2">
                     <div class="buscador" style="flex:1">
                         <i class="fas fa-search icono-busqueda"></i>
-                        <input id="buscarVentas" type="search" placeholder="🔍 Buscar por fecha, artículo o cliente..." oninput="window.onBuscarVentasTexto()" class="w-full" autocomplete="off">
+                        <input id="buscarVentas" type="text" placeholder="Buscar por fecha, artículo o cliente..." oninput="window.onBuscarVentasTexto()" class="border-2 rounded-xl p-2 w-full" autocomplete="off">
                         <button id="btnCalendarioVentas" class="btn-icon-cuadrado" title="Ver ventas por fecha" onclick="window.abrirCalendarioVentas()"><i class="fas fa-calendar-alt"></i></button>
                     </div>
                 </div>
                 <div class="text-xs opacity-60 mb-2" id="contadorVentas">${ventas.length} venta(s)</div>
                 <div id="listaVentasReporte" class="max-h-64 overflow-auto">${ventas.slice().reverse().map(v => ventaCardReporte(v)).join('')}</div>
-                <h3 class="font-bold mt-4 mb-2">💱 Historial de la tasa del dólar</h3>
-                <div class="flex gap-2 mb-2">
-                    <div class="buscador" style="flex:1">
-                        <i class="fas fa-search icono-busqueda"></i>
-                        <input id="buscarHistTasa" type="search" placeholder="🔍 Buscar por fecha..." oninput="window.onBuscarHistTasaTexto()" class="w-full" autocomplete="off">
-                        <button id="btnCalendarioTasa" class="btn-icon-cuadrado" title="Ver cambios de tasa por fecha" onclick="window.abrirCalendarioTasa()"><i class="fas fa-calendar-alt"></i></button>
-                    </div>
-                </div>
-                <div class="text-xs opacity-60 mb-2" id="contadorHistTasa">${cargarHistorialTasa().length} cambio(s) de tasa</div>
-                <div id="listaHistTasa" class="max-h-64 overflow-auto">${renderTarjetasHistTasa()}</div>
             </div>`;
         if(volverBloqueado) document.getElementById('btnVolverModule').onclick = () => mostrarOverlayBloqueo();
         renderGraficoVentas(ventas);
+        D.ventas = ventas;
+        setTimeout(() => {
+            let canvas = document.getElementById('chartVentas');
+            if(!canvas) return;
+            let handler = (ex, ey) => {
+                let r = canvas.getBoundingClientRect();
+                let cx = ex - r.left, cy = ey - r.top;
+                for(let b of _barsInfo){
+                    if(cx >= b.x && cx <= b.x + b.w && cy >= b.y - 10 && cy <= b.y + b.h + 14){
+                        document.querySelectorAll('.kpi-popup-overlay').forEach(e => e.remove());
+                        mostrarKPIsDelDia(b.fecha, b.label);
+                        return;
+                    }
+                }
+            };
+            canvas.addEventListener('click', e => handler(e.clientX, e.clientY));
+            canvas.addEventListener('touchstart', e => { e.preventDefault(); handler(e.touches[0].clientX, e.touches[0].clientY); }, {passive:false});
+        }, 100);
     }
     
     const formasPagoGlobal = { 'efectivo_bs':'EFECTIVO Bs','pago_movil':'PAGO MÓVIL','transferencia':'TRANSFERENCIA','tarjeta_debito':'TARJETA DÉBITO','dolares':'DÓLARES','pago_dividido':'PAGO DIVIDIDO' };
@@ -2111,13 +2184,24 @@
         const semana = ['Do','Lu','Ma','Mi','Ju','Vi','Sá'];
         let celdas = semana.map(d => `<div class="cal-cabecera">${d}</div>`).join('');
         for(let i = 0; i < primerDia; i++) celdas += `<div class="cal-vacio"></div>`;
+        let prevTasa = 0;
         for(let d = 1; d <= numDias; d++){
             const iso = prefijo + '-' + String(d).padStart(2, '0');
             const n = ventasMes.filter(v => isoFechaVenta(v) === iso).length;
-            celdas += `<button class="cal-dia ${n > 0 ? 'cal-dia-venta' : ''}" onclick="window.aplicarFiltroDia('${iso}')"><span class="cal-dia-num">${d}</span>${n > 0 ? `<span class="cal-badge">${n}</span>` : ''}</button>`;
+            const info = tasaParaFecha(iso);
+            const conTasa = info.tasa > 0;
+            let flecha = '';
+            if(conTasa){
+                if(prevTasa > 0 && info.tasa > prevTasa) flecha = '<span class="cal-flecha cal-flecha-up">▲</span>';
+                else if(prevTasa > 0 && info.tasa < prevTasa) flecha = '<span class="cal-flecha cal-flecha-down">▼</span>';
+                prevTasa = info.tasa;
+            }
+            const tasaHtml = conTasa ? `<span class="cal-tasa">${flecha}${fmtDolar(info.tasa)}</span>` : '';
+            celdas += `<button class="cal-dia ${n > 0 ? 'cal-dia-venta' : ''}" onclick="window.aplicarFiltroDia('${iso}')"><span class="cal-dia-num">${d}</span>${n > 0 ? `<span class="cal-badge">${n}</span>` : ''}${tasaHtml}</button>`;
         }
         modal.innerHTML = `<div class="modal-form-content" style="max-width:340px">
             <h3 class="font-bold text-lg mb-1" style="color:${D.config.theme}">📅 Ventas por fecha</h3>
+            <p class="text-xs opacity-70 mb-2">La tasa del día aparece en cada casilla.</p>
             <div class="cal-nav"><button onclick="window._calMonth--;if(window._calMonth<0){window._calMonth=11;window._calYear--;}renderCalendarioVentas()">◀</button><div class="cal-titulo">${mesNombre(m)} ${a}</div><button onclick="window._calMonth++;if(window._calMonth>11){window._calMonth=0;window._calYear++;}renderCalendarioVentas()">▶</button></div>
             <div class="cal-nav cal-nav-ano"><button onclick="window._calYear--;renderCalendarioVentas()">◀ Año</button><div class="cal-titulo">${ventasMes.length} venta(s) · ${fmtPrecio(totalMes)} Bs</div><button onclick="window._calYear++;renderCalendarioVentas()">Año ▶</button></div>
             <div class="cal-grid">${celdas}</div>
@@ -2138,176 +2222,6 @@
         modal.onclick = e => { if(e.target === modal) modal.remove(); };
         document.body.appendChild(modal);
         renderCalendarioVentas();
-    };
-    
-    // ==================== HISTORIAL TASA DEL DÓLAR ====================
-    let filtroTasaCalendario = null;
-    function tarjetaHistTasa(h){
-        return `<div class="border rounded-xl p-3 mb-2" style="border-color:var(--accent)"><div class="flex justify-between items-center"><span class="text-sm font-bold" style="color:var(--accent)">💲 1 USD = ${fmtDolar(h.tasa)} Bs</span><span class="text-xs opacity-60">📅 ${fmtFechaDisplay(h.fecha)} · 🕐 ${h.hora || ''}</span></div></div>`;
-    }
-    function baseHistTasa(){
-        let hist = cargarHistorialTasa();
-        if(filtroTasaCalendario){
-            return hist.filter(h => filtroTasaCalendario.tipo === 'dia' ? h.fecha === filtroTasaCalendario.valor : h.fecha.startsWith(filtroTasaCalendario.valor));
-        }
-        return hist;
-    }
-    function renderTarjetasHistTasa(){
-        let base = baseHistTasa();
-        if(base.length === 0) return `<div class="text-sm opacity-60 text-center py-4">Sin registros de cambio de tasa. La tasa se registra aquí cada vez que cambia (mínimo un céntimo).</div>`;
-        return base.slice().reverse().map(tarjetaHistTasa).join('');
-    }
-    window.filtrarHistTasa = () => {
-        const input = document.getElementById('buscarHistTasa');
-        const lista = document.getElementById('listaHistTasa');
-        const contador = document.getElementById('contadorHistTasa');
-        const btnCal = document.getElementById('btnCalendarioTasa');
-        if(!lista) return;
-        let q = (input ? input.value : '').toLowerCase().trim();
-        let hist = cargarHistorialTasa();
-        let base = filtroTasaCalendario ? hist.filter(h => filtroTasaCalendario.tipo === 'dia' ? h.fecha === filtroTasaCalendario.valor : h.fecha.startsWith(filtroTasaCalendario.valor)) : hist;
-        let result = base;
-        if(!filtroTasaCalendario && q) result = base.filter(h => (h.fecha||'').includes(q));
-        lista.innerHTML = result.length ? result.slice().reverse().map(tarjetaHistTasa).join('') : `<div class="text-sm opacity-60 text-center py-4">Sin registros.</div>`;
-        if(contador) contador.innerText = result.length + ' cambio(s) de tasa';
-        if(btnCal) btnCal.style.background = filtroTasaCalendario ? (D.config.theme || '#3b82f6') : '';
-    };
-    window.onBuscarHistTasaTexto = () => { if(filtroTasaCalendario) filtroTasaCalendario = null; window.filtrarHistTasa(); };
-    window.aplicarFiltroTasaDia = (iso) => {
-        filtroTasaCalendario = { tipo:'dia', valor: iso };
-        const input = document.getElementById('buscarHistTasa');
-        if(input) input.value = iso;
-        window.filtrarHistTasa();
-        const modal = document.getElementById('modalCalendarioTasa');
-        if(modal) modal.remove();
-    };
-    window.aplicarFiltroTasaMes = (prefix, etiqueta) => {
-        filtroTasaCalendario = { tipo:'mes', valor: prefix };
-        const input = document.getElementById('buscarHistTasa');
-        if(input) input.value = etiqueta;
-        window.filtrarHistTasa();
-        const modal = document.getElementById('modalCalendarioTasa');
-        if(modal) modal.remove();
-    };
-    window.quitarFiltroTasa = () => {
-        filtroTasaCalendario = null;
-        const input = document.getElementById('buscarHistTasa');
-        if(input) input.value = '';
-        window.filtrarHistTasa();
-        const modal = document.getElementById('modalCalendarioTasa');
-        if(modal) modal.remove();
-    };
-    function renderCalendarioTasa(){
-        const modal = document.getElementById('modalCalendarioTasa');
-        if(!modal) return;
-        const a = window._calTasaYear, m = window._calTasaMonth;
-        const primerDia = new Date(a, m, 1).getDay();
-        const numDias = new Date(a, m + 1, 0).getDate();
-        const prefijo = a + '-' + String(m + 1).padStart(2, '0');
-        const hoy = hoyISO();
-        let registradosMes = cacheTasaDiaria.filter(x => x.fecha.startsWith(prefijo));
-        let diasConTasa = new Set(registradosMes.map(h => h.fecha));
-        const semana = ['Do','Lu','Ma','Mi','Ju','Vi','Sá'];
-        let celdas = semana.map(d => `<div class="cal-cabecera">${d}</div>`).join('');
-        for(let i = 0; i < primerDia; i++) celdas += `<div class="cal-vacio"></div>`;
-        let prevTasa = 0;
-        for(let d = 1; d <= numDias; d++){
-            const iso = prefijo + '-' + String(d).padStart(2, '0');
-            const info = tasaParaFecha(iso);
-            const conTasa = info.tasa > 0;
-            const esHoy = iso === hoy;
-            const clase = conTasa ? 'cal-dia-venta' : '';
-            const candado = info.fijada ? '<span class="cal-lock">🔒</span>' : '';
-            const etiquetaHoy = esHoy ? '<span class="cal-hoy">HOY</span>' : '';
-            let flecha = '';
-            if(conTasa){
-                if(prevTasa > 0 && info.tasa > prevTasa) flecha = '<span class="cal-flecha cal-flecha-up">▲</span>';
-                else if(prevTasa > 0 && info.tasa < prevTasa) flecha = '<span class="cal-flecha cal-flecha-down">▼</span>';
-                prevTasa = info.tasa;
-            }
-            celdas += `<button class="cal-dia ${clase} ${esHoy ? 'cal-dia-hoy' : ''}" onclick="window.verTasaDia('${iso}')"><span class="cal-dia-num">${d}</span>${conTasa ? `<span class="cal-tasa">${flecha}${fmtDolar(info.tasa)}</span>${candado}` : ''}${etiquetaHoy}</button>`;
-        }
-        modal.innerHTML = `<div class="modal-form-content" style="max-width:340px">
-            <h3 class="font-bold text-lg mb-1" style="color:${D.config.theme}">💱 Tasa del dólar por fecha</h3>
-            <p class="text-xs opacity-70 mb-2">Cada día imprime su propia tasa. Los días fijados (🔒) son inamovibles para siempre.</p>
-            <div class="cal-nav"><button onclick="window._calTasaMonth--;if(window._calTasaMonth<0){window._calTasaMonth=11;window._calTasaYear--;}renderCalendarioTasa()">◀</button><div class="cal-titulo">${mesNombre(m)} ${a}</div><button onclick="window._calTasaMonth++;if(window._calTasaMonth>11){window._calTasaMonth=0;window._calTasaYear++;}renderCalendarioTasa()">▶</button></div>
-            <div class="cal-nav cal-nav-ano"><button onclick="window._calTasaYear--;renderCalendarioTasa()">◀ Año</button><div class="cal-titulo">${diasConTasa.size} día(s) con tasa</div><button onclick="window._calTasaYear++;renderCalendarioTasa()">Año ▶</button></div>
-            <div class="cal-grid">${celdas}</div>
-            <div class="flex gap-2 mt-3">
-                <button class="btn-azul-redondeado btn-redondeado flex-1 py-2 text-sm" onclick="window.aplicarFiltroTasaMes('${prefijo}','${mesNombre(m)} ${a}')">📆 Ver todo ${mesNombre(m)}</button>
-                <button class="btn-redondeado flex-1 py-2 bg-gray-200 text-sm" onclick="window.quitarFiltroTasa()">🗑 Quitar</button>
-            </div>
-            <button class="w-full mt-2 py-2 rounded-xl bg-gray-200" onclick="document.getElementById('modalCalendarioTasa').remove()">Cerrar</button>
-        </div>`;
-    }
-    window.verTasaDia = async (iso) => {
-        const info = tasaParaFecha(iso);
-        const d = new Date(iso + 'T12:00:00');
-        const fechaLegible = isNaN(d.getTime()) ? iso : d.toLocaleDateString('es-ES', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
-        const hoy = hoyISO();
-        const sinTasa = info.tasa <= 0;
-        let variacion = '';
-        if(!sinTasa){
-            const prev = new Date(iso + 'T12:00:00');
-            prev.setDate(prev.getDate() - 1);
-            const infoPrev = tasaParaFecha(msToDateStr(prev.getTime()));
-            if(infoPrev.tasa > 0){
-                const diff = info.tasa - infoPrev.tasa;
-                if(diff > 0.001) variacion = `<div class="text-sm mt-2" style="color:#ef4444">▲ Aumentó ${fmtDolar(diff)} Bs/USD vs el día anterior</div>`;
-                else if(diff < -0.001) variacion = `<div class="text-sm mt-2" style="color:#10b981">▼ Bajó ${fmtDolar(-diff)} Bs/USD vs el día anterior</div>`;
-                else variacion = `<div class="text-xs opacity-60 mt-2">Igual que el día anterior</div>`;
-            }
-        }
-        let detalle = document.createElement('div'); detalle.className = 'modal-form';
-        detalle.id = 'modalDetalleTasa';
-        detalle.innerHTML = `<div class="modal-form-content" style="max-width:320px">
-            <h3 class="font-bold text-lg mb-1" style="color:${D.config.theme}">💱 Tasa del día</h3>
-            <p class="text-sm capitalize opacity-80 mb-2">${fechaLegible}</p>
-            <div class="text-center py-3">
-                ${sinTasa ? `<div class="text-sm opacity-70 py-4">Este día no tiene tasa impresa.</div>` : `<div class="text-4xl font-black" style="color:${D.config.theme}">${fmtDolar(info.tasa)}</div>
-                <div class="text-xs opacity-60">Bs/USD</div>
-                <div class="mt-2 text-sm">${info.fijada ? '<span style="color:#10b981">🔒 Impresa (inamovible)</span>' : '<span style="color:#f59e0b">🕓 HOY editable (aún puede cambiar)</span>'}</div>
-                ${info.hora ? `<div class="text-xs opacity-60 mt-1">Imprimida a las ${escapeHtml(info.hora)}</div>` : ''}
-                ${variacion}`}
-            </div>
-            <div class="flex flex-col gap-2">
-                ${iso === hoy && !info.fijada ? `<button id="fijarHoyBtn" class="btn-azul-redondeado btn-redondeado w-full py-2 font-bold">🔒 Fijar tasa del día</button>` : ''}
-                <button id="verHistBtn" class="btn-redondeado w-full py-2 bg-gray-200">📆 Ver cambios de este día en el historial</button>
-            </div>
-            <button id="cerrarDetTasa" class="w-full mt-2 py-2 rounded-xl bg-gray-200">Cerrar</button>
-        </div>`;
-        document.body.appendChild(detalle);
-        const cerrar = () => { if(document.getElementById('modalDetalleTasa')) detalle.remove(); };
-        detalle.querySelector('#cerrarDetTasa').onclick = cerrar;
-        detalle.querySelector('#verHistBtn').onclick = () => { cerrar(); window.aplicarFiltroTasaDia(iso); };
-        const fijarBtn = document.getElementById('fijarHoyBtn');
-        if(fijarBtn){
-            fijarBtn.onclick = async () => {
-                const ok = await fijarTasaDia(iso);
-                cerrar();
-                if(ok){
-                    D.tasaDiaria = await cargarTasaDiaria();
-                    refrescarCacheTasaDiaria();
-                    renderCalendarioTasa();
-                    mostrarNotificacion('🔒 Tasa del día fijada. Ya no se modificará.', 'success');
-                } else {
-                    mostrarNotificacion('ℹ️ La tasa del día ya estaba fijada', 'info');
-                }
-            };
-        }
-        detalle.onclick = e => { if(e.target === detalle) cerrar(); };
-    };
-    window.abrirCalendarioTasa = () => {
-        refrescarCacheTasaDiaria();
-        const ahora = new Date();
-        window._calTasaYear = ahora.getFullYear();
-        window._calTasaMonth = ahora.getMonth();
-        const modal = document.createElement('div');
-        modal.className = 'modal-form';
-        modal.id = 'modalCalendarioTasa';
-        modal.onclick = e => { if(e.target === modal) modal.remove(); };
-        document.body.appendChild(modal);
-        renderCalendarioTasa();
     };
     
     window.mostrarTicketDesdeReporte = (ventaId) => {
@@ -2703,7 +2617,7 @@
     
     // ==================== CONFIGURACIÓN ====================
     async function renderConfig(){
-        let colores = ['#3b82f6','#8b5cf6','#10b981','#f59e0b','#ef4444','#ec4899','#000000','#22c55e','#a855f7','#f97316','#ff69b4','#00ced1'];
+        let colores = ['#ef4444','#f97316','#f59e0b','#10b981','#22c55e','#3b82f6','#00ced1','#8b5cf6','#a855f7','#ec4899','#ff69b4','#000000'];
         let bloqueado = volverBloqueado, accent = D.config.theme;
         const filaOpcion = (icono, nombre, desc, id, checked) => `
             <label class="opcion-fila">
@@ -2727,6 +2641,7 @@
                                 <span>Bs/USD</span>
                             </div>
                             <div class="text-xs text-gray-500 mt-1">Actualizado: ${D.config.lastUpdate}</div>
+                            ${D.config.tasaManual ? `<div class="text-xs mt-1 p-2 rounded" style="background:rgba(239,68,68,.1);color:#ef4444;font-weight:600">⚠️ Modo manual activo. Verifique siempre el valor actual en el BCV antes de fijar un precio.</div>` : `<div class="text-xs mt-1 p-2 rounded" style="background:rgba(16,185,129,.1);color:#10b981;font-weight:600">✅ Modo automático — la tasa se actualiza sola al abrir la app.</div>`}
                         </div>
                         <div class="flex flex-col gap-3">
                             <label class="flex items-center gap-2 cursor-pointer">
@@ -2734,7 +2649,7 @@
                                 <span>🔒 Usar tasa manual (fija, sin internet)</span>
                             </label>
                             <div id="tasaManualDiv" style="${D.config.tasaManual ? 'display:flex' : 'display:none'}" class="flex gap-2 items-center">
-                                <input type="number" id="tasaManualInput" step="0.01" value="${D.config.tasaManualValue}" placeholder="Ej: 68.50" class="border rounded-xl p-2 flex-1">
+                                <input type="number" id="tasaManualInput" step="0.01" value="${D.config.tasaManualValue}" placeholder="Ej: 777.42" class="border rounded-xl p-2 flex-1">
                                 <button id="guardarTasaManualBtn" class="btn-azul-redondeado btn-redondeado py-2 px-4">Fijar</button>
                             </div>
                             <button id="actualizarTasaInternetBtn" class="btn-redondeado py-2 px-4" style="background:#3b82f6; color:white;">
@@ -2770,9 +2685,9 @@
                     <p class="text-xs text-center mt-3 opacity-60">Las alertas aparecen como notificaciones al iniciar y al realizar acciones clave</p>
                 </div></div>
                 <div class="config-section"><button id="btnToggleSeguridad" class="btn-azul-redondeado btn-redondeado w-full mb-2 py-2">🔒 Seguridad (PIN)</button><div id="panelSeguridad" style="display:none;" class="mt-2 config-inner"><div class="mb-2"><label>PIN de acceso (4 dígitos, dejar vacío para deshabilitar)</label><input type="password" id="pinInput" value="${escapeHtml(D.config.pin)}" maxlength="4" pattern="[0-9]*" inputmode="numeric" class="border rounded-xl p-2 w-full text-center text-2xl tracking-widest" placeholder="****"></div><button id="guardarPinBtn" class="btn-azul-redondeado btn-redondeado w-full py-2">🔐 Guardar PIN</button><p class="text-xs text-center mt-2 opacity-60">${D.config.pin ? '✅ PIN activo. Se pedirá al abrir la app.' : 'ℹ️ Sin PIN. Cualquiera puede acceder.'}</p></div></div>
-                <div class="config-section"><button id="btnToggleColores" class="btn-azul-redondeado btn-redondeado w-full mb-2 py-2">🎨 Temas de color</button><div id="panelColores" style="display:none;" class="mt-2 config-inner"><div class="flex flex-wrap justify-center gap-2" id="paletaColores"></div></div></div>
+                <div class="config-section"><button id="btnToggleColores" class="btn-azul-redondeado btn-redondeado w-full mb-2 py-2">🎨 Temas de color</button><div id="panelColores" style="display:none;" class="mt-2 config-inner"><div class="flex flex-wrap justify-center gap-2" id="paletaColores" style="max-width:290px;margin:0 auto"></div></div></div>
                 <div class="config-section"><button id="btnToggleBackup" class="btn-azul-redondeado btn-redondeado w-full mb-2 py-2">💾 Copia de seguridad</button><div id="panelBackup" style="display:none;" class="mt-2 config-inner"><div class="flex flex-col gap-3">${esAppNativa() ? `<div class="rounded-xl p-3" style="background:rgba(14,165,233,0.08);border:1px solid rgba(14,165,233,0.3)"><p class="text-sm font-semibold mb-1">📁 Carpeta de la aplicación</p><p id="carpetaEstado" class="text-xs opacity-70 mb-2">ℹ️ Elija una carpeta para guardar tickets y respaldos (se creará la subcarpeta JAMPOS).</p><button id="elegirCarpetaBtn" class="btn-redondeado py-2 px-4 w-full" style="background:#0ea5e9;color:#fff">📂 Elegir carpeta</button></div>` : `<p class="text-xs text-center opacity-60">💡 En la app Android podrás elegir una carpeta donde guardar los archivos.</p>`}<button id="exportJsonBtn" class="btn-redondeado py-2 px-4" style="background:#3b82f6;color:#fff">📥 Exportar todo (JSON)</button><button id="exportCsvBtn" class="btn-redondeado py-2 px-4" style="background:#10b981;color:#fff">📥 Exportar todo (CSV / Excel)</button><button id="importJsonBtn" class="btn-redondeado py-2 px-4" style="background:#8b5cf6;color:#fff">📤 Importar desde JSON</button><button id="importCsvBtn" class="btn-redondeado py-2 px-4" style="background:#f59e0b;color:#fff">📤 Importar desde CSV / Excel</button>${esAppNativa() ? `<button id="importCarpetaBtn" class="btn-redondeado py-2 px-4" style="background:#14b8a6;color:#fff">📂 Importar desde la carpeta JAMPOS</button>` : ''}<input type="file" id="importFileInput" accept=".json" style="display:none"><input type="file" id="importCsvFileInput" accept=".csv,.xlsx,.xls,.txt" style="display:none"><p class="text-xs text-center mt-2 opacity-60">Los archivos CSV se abren directamente en Excel</p></div></div></div>
-                <div class="mt-4 text-xs text-center">💰 POS Profesional</div>
+                <div class="config-section"><button id="btnToggleSync" class="btn-azul-redondeado btn-redondeado w-full mb-2 py-2">🔄 Sincronizar terminales</button><div id="panelSync" style="display:none;" class="mt-2 config-inner">${window.JAMSync && window.JAMSync.isConnected() ? `<div class="mb-3 p-3 rounded-xl" style="background:rgba(16,185,129,0.1);border:1px solid #10b98140"><div class="flex items-center gap-2"><span style="color:#10b981;font-size:1.2rem">&#9679;</span><div><div class="text-sm font-bold" style="color:#10b981">Conectado a ${window.JAMSync.getName()}</div><div class="text-xs opacity-70">Sync automatico cada 30s</div></div></div></div><div class="mb-2 p-2 rounded-lg" style="background:rgba(139,92,246,0.1);border:1px solid #8b5cf640"><div class="text-xs opacity-70 mb-1">URL de conexion</div><div class="text-sm font-mono font-bold" style="color:#8b5cf6">${window.JAMSync.getUrl()}</div></div><button id="syncNowBtn" class="btn-redondeado w-full py-3 mb-2" style="background:#3b82f6;color:#fff"><i class="fas fa-sync-alt mr-1"></i> Sincronizar ahora</button><button id="syncStopBtn" class="btn-redondeado w-full py-2" style="background:#ef4444;color:#fff">Desconectar</button>` : `<div class="mb-2"><label class="text-sm font-semibold">Nombre de este dispositivo</label><div class="flex gap-2 mt-1"><input type="text" id="syncNameInput" placeholder="Nombre de la tienda..." class="border rounded-xl p-2 flex-1" value="${window.JAMSync ? window.JAMSync.getName() : ''}"><button id="syncNowBtn" class="btn-redondeado px-3 py-2" style="background:#3b82f6;color:#fff" title="Sincronizar datos"><i class="fas fa-sync-alt"></i></button></div><p class="text-xs mt-1 opacity-60">Escribe el nombre → QR se genera solo</p></div><div id="syncUrlRow" style="display:none" class="mb-2 p-2 rounded-lg"><div class="text-xs opacity-70 mb-1">URL de conexion</div><div id="syncUrlText" class="text-sm font-mono font-bold" style="color:#8b5cf6"></div></div><div id="syncQRDiv" style="display:none" class="text-center my-3"><canvas id="syncQRCanvas" width="256" height="256" style="width:200px;height:200px;border:3px solid #333;border-radius:12px"></canvas><p class="text-xs mt-2 opacity-60">Escanear este codigo desde el otro dispositivo</p></div><div class="border-t border-gray-200 dark:border-gray-700 pt-3 mt-3"><button id="syncScanBtn" class="btn-redondeado w-full py-3" style="background:#10b981;color:#fff"><i class="fas fa-camera mr-1"></i> Escanear QR del principal</button><p class="text-xs text-center mt-1 opacity-60">Dispositivo secundario: escanea para enlazar</p></div>`}<p class="text-xs text-center opacity-60 mt-3">1. En el PC principal: <code>node sync-server.js</code><br>2. Escribe el nombre y se genera el QR<br>3. Desde el celular escanea el QR</p></div></div>
             </div>
         `;
         document.getElementById('appRoot').innerHTML = html;
@@ -2785,6 +2700,104 @@
         toggle('btnToggleSeguridad', 'panelSeguridad');
         toggle('btnToggleColores', 'panelColores');
         toggle('btnToggleBackup', 'panelBackup');
+        toggle('btnToggleSync', 'panelSync');
+        
+        var syncNameInput = document.getElementById('syncNameInput');
+        var syncScanBtn = document.getElementById('syncScanBtn');
+        var syncStopBtn = document.getElementById('syncStopBtn');
+        var syncNowBtn = document.getElementById('syncNowBtn');
+        
+        if (syncNowBtn) {
+            syncNowBtn.addEventListener('click', function () {
+                if (!window.JAMSync) { mostrarNotificacion('Modulo sync no disponible', 'error'); return; }
+                syncNowBtn.disabled = true;
+                syncNowBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Sincronizando...';
+                window.JAMSync.bidirectionalSync().then(function (result) {
+                    syncNowBtn.disabled = false;
+                    syncNowBtn.innerHTML = '<i class="fas fa-sync-alt mr-1"></i> Sincronizar ahora';
+                    if (result && result.ok) {
+                        if (result.added > 0 || result.updated > 0) {
+                            mostrarNotificacion('Sync completada: ' + result.added + ' nuevos, ' + result.updated + ' actualizados', 'success');
+                        } else {
+                            mostrarNotificacion('Bases de datos al dia', 'info');
+                        }
+                    } else if (result && result.msg) {
+                        mostrarNotificacion('Sync: ' + result.msg, 'warning');
+                    }
+                }).catch(function (e) {
+                    syncNowBtn.disabled = false;
+                    syncNowBtn.innerHTML = '<i class="fas fa-sync-alt mr-1"></i> Sincronizar ahora';
+                    mostrarNotificacion('Error sync: ' + e.message, 'error');
+                });
+            });
+        }
+        
+        if (syncNameInput) {
+            var syncDebounce = null;
+            syncNameInput.addEventListener('input', function () {
+                clearTimeout(syncDebounce);
+                var name = syncNameInput.value.trim();
+                if (name.length < 2) {
+                    var qrDiv = document.getElementById('syncQRDiv');
+                    if (qrDiv) qrDiv.style.display = 'none';
+                    return;
+                }
+                syncDebounce = setTimeout(function () {
+                    if (!window.JAMSync) return;
+                    window.JAMSync.setupPrincipal(name).then(function (result) {
+                        var urlRow = document.getElementById('syncUrlRow');
+                        var urlText = document.getElementById('syncUrlText');
+                        if (urlRow) urlRow.style.display = 'block';
+                        if (urlText) urlText.textContent = result.url;
+                        var qrDiv = document.getElementById('syncQRDiv');
+                        if (qrDiv) qrDiv.style.display = 'block';
+                        window.JAMSync.showQR('syncQRCanvas', result.payload);
+                    }).catch(function (e) {
+                        mostrarNotificacion('Error config sync: ' + e.message, 'error');
+                    });
+                }, 300);
+            });
+            if (syncNameInput.value.trim().length >= 2 && window.JAMSync && window.JAMSync.getUrl()) {
+                var urlRow = document.getElementById('syncUrlRow');
+                var urlText = document.getElementById('syncUrlText');
+                if (urlRow) urlRow.style.display = 'block';
+                if (urlText) urlText.textContent = window.JAMSync.getUrl();
+                var qrDiv = document.getElementById('syncQRDiv');
+                if (qrDiv) qrDiv.style.display = 'block';
+                window.JAMSync.showQR('syncQRCanvas', JSON.stringify({u:window.JAMSync.getUrl(),n:window.JAMSync.getName(),k:localStorage.getItem('jam_sync_key')||''}));
+            }
+        }
+        
+        if (syncScanBtn) {
+            syncScanBtn.addEventListener('click', function () {
+                if (!window.JAMSync) return;
+                window.JAMSync.scanAndConnect().then(function (info) {
+                    mostrarNotificacion('Conectado a ' + info.name + ' - Sincronizando...', 'success');
+                    return window.JAMSync.bidirectionalSync();
+                }).then(function () {
+                    window.JAMSync.startSync();
+                    renderConfig();
+                }).catch(function (e) {
+                    mostrarNotificacion('Error: ' + e.message, 'error');
+                });
+            });
+        }
+        
+        if (syncStopBtn) {
+            syncStopBtn.addEventListener('click', function () {
+                if (!window.JAMSync) return;
+                window.JAMSync.stopSync();
+                localStorage.removeItem('jam_sync_url');
+                localStorage.removeItem('jam_sync_name');
+                localStorage.removeItem('jam_sync_key');
+                mostrarNotificacion('Desconectado', 'info');
+                renderConfig();
+            });
+        }
+        
+        if (window.JAMSync && window.JAMSync.isConnected()) {
+            window.JAMSync.startSync();
+        }
         
         const modoManualCheck = document.getElementById('modoManualCheck');
         const tasaManualDiv = document.getElementById('tasaManualDiv');
@@ -3082,7 +3095,7 @@
         { sel: null, titulo: '¡Listo!', texto: 'Ya sabes manejar inventario y sus conversiones. ¡Agrega tu primer producto!' }
     ];
     const GUIA_REPORTES = [
-        { sel: '.kpi-grid', titulo: '1. Indicadores', texto: 'Aquí ves de un vistazo: ventas de hoy, ganancia, utilidad, ventas totales, gastos y stock bajo. Todo en Bs.' },
+        { sel: '.chart-container', titulo: '1. Gráfico diario', texto: 'Toca cualquier barra del gráfico para ver las ventas, ganancia y utilidad de ese día.' },
         { sel: '#chartVentas', titulo: '2. Gráfico', texto: 'Gráfica de tus ventas en el tiempo para detectar tendencias de un vistazo.' },
         { sel: '#buscarVentas', titulo: '3. Buscar ventas', texto: 'Escribe para filtrar por fecha, artículo, cliente o número de venta. También puedes usar el calendario de la derecha.' },
         { sel: '#btnCalendarioVentas', titulo: '4. Calendario', texto: 'Abre un calendario para ver las ventas de un día o de un mes específicos.' },
