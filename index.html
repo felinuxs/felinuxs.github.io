@@ -21,6 +21,24 @@
     <script src="qrcode.min.js"></script>
     <script src="jsqr.js"></script>
     <script src="sync-client.js"></script>
+    <script>
+    if(location.protocol==='file:'){
+        document.addEventListener('DOMContentLoaded',function(){
+            var w=document.createElement('div');
+            w.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:#000;z-index:999999;display:flex;align-items:center;justify-content:center;padding:20px';
+            w.innerHTML='<div style="background:#1e293b;border:2px solid #ef4444;border-radius:16px;padding:30px;max-width:420px;text-align:center;color:#fff;font-family:sans-serif"><div style="font-size:48px;margin-bottom:16px">&#9888;&#65039;</div><h2 style="font-size:20px;font-weight:bold;margin-bottom:12px;color:#ef4444">No puedes abrir este archivo directamente</h2><p style="font-size:14px;color:#94a3b8;line-height:1.6;margin-bottom:20px">El sync no funciona con <code style="background:#334155;padding:2px 6px;border-radius:4px">file://</code>.<br><br><b style="color:#fff">Abre en el navegador esta direccion:</b></p><div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:12px;font-family:monospace;font-size:16px;color:#38bdf8;word-break:break-all">http://192.168.0.102:3000</div><p style="font-size:12px;color:#64748b;margin-top:16px">Ejecuta primero: <code style="background:#334155;padding:2px 6px;border-radius:4px">node sync-server.js</code></p></div>';
+            document.body.appendChild(w);
+        });
+    }
+    if(location.protocol==='https:' && location.hostname.includes('github.io')){
+        document.addEventListener('DOMContentLoaded',function(){
+            var w=document.createElement('div');
+            w.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:#000;z-index:999999;display:flex;align-items:center;justify-content:center;padding:20px';
+            w.innerHTML='<div style="background:#1e293b;border:2px solid #f59e0b;border-radius:16px;padding:30px;max-width:440px;text-align:center;color:#fff;font-family:sans-serif"><div style="font-size:48px;margin-bottom:16px">&#9888;&#65039;</div><h2 style="font-size:20px;font-weight:bold;margin-bottom:12px;color:#f59e0b">Sync no disponible desde GitHub Pages</h2><p style="font-size:14px;color:#94a3b8;line-height:1.6;margin-bottom:20px">El sync requiere acceso a tu red local.<br><br><b style="color:#fff">Abre la app desde el sync server:</b></p><div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:12px;font-family:monospace;font-size:16px;color:#38bdf8;word-break:break-all">http://'+(location.hostname||'IP_DE_TU_PC')+':3000</div><p style="font-size:12px;color:#64748b;margin-top:16px">1. Ejecuta <code style="background:#334155;padding:2px 6px;border-radius:4px">node sync-server.js</code> en la PC principal<br>2. Abre esa URL en la PC y en el celular<br>3. El sync solo funciona entre dispositivos en la misma red</p></div>';
+            document.body.appendChild(w);
+        });
+    }
+    </script>
 </head>
 <body>
     <div class="sidebar" id="sidebarNav"></div>
