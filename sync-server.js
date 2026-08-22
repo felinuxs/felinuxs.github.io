@@ -21,41 +21,53 @@ function combinarImportacion(destino, nuevos, campoNombre) {
     let existentes = Array.isArray(destino) ? destino.slice() : [];
     let porId = new Map(), porCodigo = new Map(), porNombre = new Map();
     const keyCod = c => c != null ? String(c).toLowerCase() : '';
-    existentes.forEach(x => {
+    existentes.forEach((x, idx) => {
         if(!x) return;
-        if(x.id) porId.set(x.id, true);
+        if(x.id) porId.set(x.id, idx);
         if(x.codigo) porCodigo.set(keyCod(x.codigo), true);
         if(campoNombre && !x.codigo && x[campoNombre]) porNombre.set(keyCod(x[campoNombre]), true);
     });
-    let agregados = 0, omitidos = 0;
+    let agregados = 0, actualizados = 0, omitidos = 0;
     (nuevos || []).forEach(item => {
         if(!item) return;
+        if(item.id && porId.has(item.id)){
+            let existente = existentes[porId.get(item.id)];
+            let tsNuevo = item.updatedAt || 0;
+            let tsExistente = (existente && existente.updatedAt) || 0;
+            if(tsNuevo > tsExistente){
+                existentes[porId.get(item.id)] = Object.assign({}, item);
+                actualizados++;
+            }else{
+                omitidos++;
+            }
+            return;
+        }
         let esNombre = campoNombre && !item.codigo && item[campoNombre];
-        let duplicado = !!(item.id && porId.has(item.id))
-            || !!(item.codigo && porCodigo.has(keyCod(item.codigo)))
+        let duplicado = !!(item.codigo && porCodigo.has(keyCod(item.codigo)))
             || !!(esNombre && porNombre.has(keyCod(item[campoNombre])));
         if(duplicado){ omitidos++; return; }
         let nuevo = Object.assign({}, item);
         if(!nuevo.id) nuevo.id = 'imp' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
         existentes.push(nuevo);
-        porId.set(nuevo.id, true);
+        porId.set(nuevo.id, existentes.length - 1);
         if(nuevo.codigo) porCodigo.set(keyCod(nuevo.codigo), true);
         if(esNombre) porNombre.set(keyCod(nuevo[campoNombre]), true);
         agregados++;
     });
-    return { lista: existentes, agregados: agregados, omitidos: omitidos };
+    return { lista: existentes, agregados: agregados, actualizados: actualizados, omitidos: omitidos };
 }
 
 function mergeAll(remote) {
     let stats = {};
-    let totalAdded = 0, totalSkipped = 0;
+    let totalAdded = 0, totalUpdated = 0, totalSkipped = 0;
     STORES.forEach(s => {
         if (remote[s] && Array.isArray(remote[s])) {
             let campoNombre = s === 'productos' ? 'nombre' : null;
             let r = combinarImportacion(store[s]||[], remote[s], campoNombre);
             store[s] = r.lista;
-            stats[s] = { total: r.lista.length, added: r.agregados, skipped: r.omitidos };
+            stats[s] = { total: r.lista.length, added: r.agregados, updated: r.actualizados || 0, skipped: r.omitidos };
             totalAdded += r.agregados;
+            totalUpdated += r.actualizados || 0;
             totalSkipped += r.omitidos;
         }
     });
@@ -80,7 +92,7 @@ function mergeAll(remote) {
         totalAdded += nuevos;
     }
     store.timestamp = new Date().toISOString();
-    return { ok: true, stats: stats, total: { added: totalAdded, skipped: totalSkipped } };
+    return { ok: true, stats: stats, total: { added: totalAdded, updated: totalUpdated, skipped: totalSkipped } };
 }
 
 const ip = (() => { for (const n of Object.values(os.networkInterfaces())) for (const net of n) if (net.family==='IPv4' && !net.internal) return net.address; return '127.0.0.1'; })();

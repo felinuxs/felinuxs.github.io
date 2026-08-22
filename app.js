@@ -220,7 +220,6 @@
             const i = D[store].findIndex(x => x.id === item.id);
             if (i !== -1) D[store][i] = item; else D[store].push(item);
             try { await saveToIDB(store, D[store]); } catch(e) { console.warn('IDB save error', e); }
-            try { encolarSync(store, 'save', item); } catch(e) {}
         } else {
             const items = loadFromStorage(key, []);
             const idx = items.findIndex(x => x.id === item.id);
@@ -234,7 +233,6 @@
         if (DATA_STORES.includes(store)) {
             D[store] = (D[store] || []).filter(x => x.id !== id);
             try { await saveToIDB(store, D[store]); } catch(e) { console.warn('IDB delete error', e); }
-            try { encolarSync(store, 'delete', { id }); } catch(e) {}
         } else {
             const items = loadFromStorage(key, []).filter(x => x.id !== id);
             saveToStorage(key, items);
@@ -2422,30 +2420,41 @@
         let existentes = Array.isArray(destino) ? destino.slice() : [];
         let porId = new Map(), porCodigo = new Map(), porNombre = new Map();
         const keyCod = c => c != null ? String(c).toLowerCase() : '';
-        existentes.forEach(x => {
+        existentes.forEach((x, idx) => {
             if(!x) return;
-            if(x.id) porId.set(x.id, true);
+            if(x.id) porId.set(x.id, idx);
             if(x.codigo) porCodigo.set(keyCod(x.codigo), true);
             if(campoNombre && !x.codigo && x[campoNombre]) porNombre.set(keyCod(x[campoNombre]), true);
         });
-        let agregados = 0, omitidos = 0, nuevosItems = [];
+        let agregados = 0, actualizados = 0, omitidos = 0, nuevosItems = [];
         (nuevos || []).forEach(item => {
             if(!item) return;
+            if(item.id && porId.has(item.id)){
+                let existente = existentes[porId.get(item.id)];
+                let tsNuevo = item.updatedAt || 0;
+                let tsExistente = (existente && existente.updatedAt) || 0;
+                if(tsNuevo > tsExistente){
+                    existentes[porId.get(item.id)] = Object.assign({}, item);
+                    actualizados++;
+                }else{
+                    omitidos++;
+                }
+                return;
+            }
             let esNombre = campoNombre && !item.codigo && item[campoNombre];
-            let duplicado = !!(item.id && porId.has(item.id))
-                || !!(item.codigo && porCodigo.has(keyCod(item.codigo)))
+            let duplicado = !!(item.codigo && porCodigo.has(keyCod(item.codigo)))
                 || !!(esNombre && porNombre.has(keyCod(item[campoNombre])));
             if(duplicado){ omitidos++; return; }
             let nuevo = Object.assign({}, item);
             if(!nuevo.id) nuevo.id = 'imp' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
             existentes.push(nuevo);
             nuevosItems.push(nuevo);
-            porId.set(nuevo.id, true);
+            porId.set(nuevo.id, existentes.length - 1);
             if(nuevo.codigo) porCodigo.set(keyCod(nuevo.codigo), true);
             if(esNombre) porNombre.set(keyCod(nuevo[campoNombre]), true);
             agregados++;
         });
-        return { lista: existentes, nuevos: nuevosItems, agregados: agregados, omitidos: omitidos };
+        return { lista: existentes, nuevos: nuevosItems, agregados: agregados, actualizados: actualizados, omitidos: omitidos };
     }
     function importarBackupJSON(file){
         let reader = new FileReader();
@@ -3279,6 +3288,11 @@
         document.addEventListener('dragstart', e => e.preventDefault());
     })();
     loadAllData().then(() => {
+        if(window.JAMSync && window.JAMSync.tryAutoReconnect){
+            window.JAMSync.tryAutoReconnect().then(function(ok){
+                if(ok) console.log('[APP] Sync reconectado automaticamente');
+            });
+        }
         if(verificarPruebaInicio()) return;
         const lastModule = localStorage.getItem('jam_last_module');
         if(lastModule && lastModule !== 'home' && lastModule !== '' && window.navigateTo) {

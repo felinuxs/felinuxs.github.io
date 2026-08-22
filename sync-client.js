@@ -5,7 +5,7 @@ function makeKey(){var b=new Uint8Array(16);crypto.getRandomValues(b);return Arr
 var _url=localStorage.getItem('jam_sync_url')||'';
 var _name=localStorage.getItem('jam_sync_name')||'';
 var _key=localStorage.getItem('jam_sync_key')||'';
-var _active=false;var _timer=null;
+var _active=false;var _timer=null;var _syncing=false;
 function isConnected(){return _active;}
 function getName(){return _name;}
 function getUrl(){return _url;}
@@ -13,16 +13,16 @@ function getUrl(){return _url;}
 async function setupPrincipal(name){
     _name=name;_key=_key||makeKey();
     var base='http://'+(location.hostname||location.host||'localhost')+':3000';
-    console.log('[SYNC] Probando servidor en: '+base);
-    try{var r=await fetch(base+'/ip',{signal:AbortSignal.timeout(5000)});var d=await r.json();if(d.ok&&d.ip){_url='http://'+d.ip+':3000';console.log('[SYNC] Servidor encontrado en: '+_url);}else{_url=base;}}
-    catch(e){_url=base;console.log('[SYNC] Servidor no encontrado en '+base+'. Usando URL base.');}
+    console.log('[SYNC] Buscando servidor en: '+base);
+    try{var r=await fetch(base+'/ip',{signal:AbortSignal.timeout(4000)});var d=await r.json();if(d.ok&&d.ip){_url='http://'+d.ip+':3000';console.log('[SYNC] OK: '+_url);}else{_url=base;}}
+    catch(e){_url=base;console.log('[SYNC] Fallback: '+_url);}
     localStorage.setItem('jam_sync_url',_url);
     localStorage.setItem('jam_sync_name',_name);
     localStorage.setItem('jam_sync_key',_key);
     _active=true;
     if(_timer)clearInterval(_timer);
     _timer=setInterval(bidirectionalSync,30000);
-    try{await bidirectionalSync();}catch(e){console.log('[SYNC] Initial sync err:',e.message);}
+    try{await bidirectionalSync();}catch(e){console.log('[SYNC] Init err:',e.message);}
     return{payload:JSON.stringify({u:_url,n:_name,k:_key}),name:_name,url:_url};
 }
 
@@ -79,33 +79,29 @@ function scanFallbackFile(){
 var STORES=['productos','ventas','clientes','proveedores','gastos','empleados'];
 
 async function bidirectionalSync(){
-    if(!_url)return{ok:false,msg:'Sin URL configurada. Configura el sync primero.'};
+    if(!_url)return{ok:false,msg:'Sin URL'};
+    if(_syncing)return{ok:false,msg:'Sync en curso'};
     var getDatos=window.jamGetAllDatos;
     var combinar=window.jamCombinarImportacion;
     var saveIDB=window.jamSaveIDB;
-    if(!getDatos||!combinar)return{ok:false,msg:'App no lista. Recarga la pagina.'};
-    console.log('[SYNC] URL destino: '+_url);
+    if(!getDatos||!combinar)return{ok:false,msg:'App no lista'};
+    _syncing=true;
+    console.log('[SYNC] Iniciando sync con '+_url);
     try{
-        var ping=null;
-        try{ping=await fetch(_url+'/ip',{signal:AbortSignal.timeout(5000)});ping=await ping.json();}catch(e){
-            console.log('[SYNC] Ping fallo:',e.message);
-            var msg='No se pudo contactar el servidor en '+_url+'. ';
-            if(e.name==='TypeError')msg+='Verifica que node sync-server.js este corriendo en la PC principal.';
-            else if(e.name==='AbortError')msg+='El servidor tardo demasiado en responder.';
-            else msg+='Error: '+e.message;
-            return{ok:false,msg:msg};
-        }
         var localData=await getDatos();
-        console.log('[SYNC] POST '+_url+'/sync — productos:'+(localData.productos||[]).length+' ventas:'+(localData.ventas||[]).length+' bytes:'+JSON.stringify(localData).length);
-        var r=await fetch(_url+'/sync',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(localData),signal:AbortSignal.timeout(15000)});
+        var prodCount=(localData.productos||[]).length;
+        var ventCount=(localData.ventas||[]).length;
+        console.log('[SYNC] Enviando: '+prodCount+' productos, '+ventCount+' ventas');
+        var r=await fetch(_url+'/sync',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(localData),signal:AbortSignal.timeout(30000)});
+        if(!r.ok)throw new Error('Servidor respondio '+r.status);
         var serverResult=await r.json();
-        console.log('[SYNC] POST resultado:',JSON.stringify(serverResult));
-        if(!serverResult.ok)return{ok:false,msg:serverResult.err||'Error del servidor'};
-        var serverStore=await fetch(_url+'/pull',{signal:AbortSignal.timeout(10000)}).then(function(res){return res.json();});
-        console.log('[SYNC] GET /pull productos:'+(serverStore.productos||[]).length+' ventas:'+(serverStore.ventas||[]).length);
+        console.log('[SYNC] Servidor:',JSON.stringify(serverResult));
+        if(!serverResult.ok)throw new Error(serverResult.err||'Error del servidor');
+        var serverStore=await fetch(_url+'/pull',{signal:AbortSignal.timeout(15000)}).then(function(res){if(!res.ok)throw new Error('Pull fallido');return res.json();});
+        console.log('[SYNC] Recibido: '+(serverStore.productos||[]).length+' productos, '+(serverStore.ventas||[]).length+' ventas');
         var d=window.D;
-        if(!d)return{ok:false,msg:'Datos no disponibles'};
-        var totalAdded=0,totalSkipped=0;
+        if(!d)throw new Error('window.D no disponible');
+        var totalAdded=0,totalUpdated=0,totalSkipped=0;
         for(var j=0;j<STORES.length;j++){
             var st=STORES[j];
             if(!serverStore[st]||!Array.isArray(serverStore[st]))continue;
@@ -113,34 +109,41 @@ async function bidirectionalSync(){
             var result=combinar(d[st]||[],serverStore[st],campoNombre);
             d[st]=result.lista;
             totalAdded+=result.agregados;
+            totalUpdated+=result.actualizados||0;
             totalSkipped+=result.omitidos;
-            console.log('[SYNC] '+st+': '+result.lista.length+' items (+'+result.agregados+' nuevos, '+result.omitidos+' dup)');
+            console.log('[SYNC] '+st+': '+result.lista.length+' total (+'+result.agregados+' nuevos, ~'+(result.actualizados||0)+' actualizados)');
             if(saveIDB){try{await saveIDB(st,result.lista);}catch(e){console.log('[SYNC] IDB err:',e.message);}}
         }
         var notify=typeof mostrarNotificacion==='function'?mostrarNotificacion:null;
-        console.log('[SYNC] DONE +'+totalAdded+' skip'+totalSkipped);
-        if(totalAdded>0){if(notify)notify('Sync: '+totalAdded+' registros nuevos integrados','success');}
-        else{if(notify)notify('Bases de datos al dia','info');}
-        return{ok:true,added:totalAdded,skipped:totalSkipped};
+        var msg='Sync OK: '+totalAdded+' nuevos, '+totalUpdated+' actualizados';
+        console.log('[SYNC] '+msg);
+        if(notify)notify(msg,'success');
+        _syncing=false;
+        return{ok:true,added:totalAdded,updated:totalUpdated,skipped:totalSkipped};
     }catch(e){
-        console.log('[SYNC] ERROR:',e.message);
-        var msg2='Error sync: ';
-        if(e.name==='TypeError')msg2+='No se pudo conectar con '+_url+'. Verifica que el servidor este corriendo.';
-        else if(e.name==='AbortError')msg2+='El servidor tardo demasiado. Intenta de nuevo.';
+        _syncing=false;
+        console.log('[SYNC] ERROR: '+e.name+': '+e.message);
+        var msg2='Sync: ';
+        if(e.name==='TypeError')msg2+='No se conecta con '+_url+'. Verifica que node sync-server.js este corriendo.';
+        else if(e.name==='AbortError')msg2+='Timeout — servidor lento. Intenta de nuevo.';
         else msg2+=e.message;
         var notify2=typeof mostrarNotificacion==='function'?mostrarNotificacion:null;
-        if(notify2)notify2(msg2,'error');
+        if(notify2)notify2(msg2,'warning');
         return{ok:false,msg:msg2};
     }
 }
 
-function startSync(){if(_active||!_url)return;_active=true;_timer=setInterval(bidirectionalSync,30000);bidirectionalSync();}
-function stopSync(){_active=false;if(_timer){clearInterval(_timer);_timer=null;}}
+function startSync(){if(!_url)return;_active=true;if(_timer)clearInterval(_timer);_timer=setInterval(bidirectionalSync,30000);console.log('[SYNC] Timer activo (30s)');}
+function stopSync(){_active=false;if(_timer){clearInterval(_timer);_timer=null;}console.log('[SYNC] Detenido');}
 
-if(_url&&_name){
-    console.log('[SYNC] Auto-reconnect: '+_url+' '+_name);
-    fetch(_url+'/info').then(function(r){if(r.ok){_active=true;_timer=setInterval(bidirectionalSync,30000);bidirectionalSync();}}).catch(function(e){console.log('[SYNC] Auto-reconnect fail:',e.message);});
+function tryAutoReconnect(){
+    if(!_url||!_name){console.log('[SYNC] Sin credenciales guardadas');return Promise.resolve(false);}
+    console.log('[SYNC] Auto-reconnect a '+_url+' ('+_name+')');
+    return fetch(_url+'/ip',{signal:AbortSignal.timeout(4000)}).then(function(r){return r.json();}).then(function(d){
+        if(d.ok){_active=true;if(_timer)clearInterval(_timer);_timer=setInterval(bidirectionalSync,30000);console.log('[SYNC] Reconectado OK');return true;}
+        return false;
+    }).catch(function(e){console.log('[SYNC] Reconect fail:',e.message);return false;});
 }
 
-window.JAMSync={setupPrincipal:setupPrincipal,showQR:showQR,scanAndConnect:scanAndConnect,startSync:startSync,stopSync:stopSync,isConnected:isConnected,getName:getName,getUrl:getUrl,bidirectionalSync:bidirectionalSync};
+window.JAMSync={setupPrincipal:setupPrincipal,showQR:showQR,scanAndConnect:scanAndConnect,startSync:startSync,stopSync:stopSync,isConnected:isConnected,getName:getName,getUrl:getUrl,bidirectionalSync:bidirectionalSync,tryAutoReconnect:tryAutoReconnect};
 })();
