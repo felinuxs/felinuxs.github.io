@@ -35,85 +35,27 @@ function scanAndConnect(){
     return new Promise(function(resolve,reject){
         var overlay=document.createElement('div');
         overlay.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:#000;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center';
-        var videoWrap=document.createElement('div');
-        videoWrap.style.cssText='position:relative;width:300px;height:300px;border-radius:16px;overflow:hidden;border:2px solid #8b5cf6;box-shadow:0 0 30px rgba(139,92,246,0.3)';
-        var videoEl=document.createElement('video');
-        videoEl.setAttribute('playsinline','true');
-        videoEl.setAttribute('autoplay','true');
-        videoEl.setAttribute('muted','true');
-        videoEl.style.cssText='width:100%;height:100%;object-fit:cover;display:block';
-        var scanCanvas=document.createElement('canvas');
-        scanCanvas.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none';
-        videoWrap.appendChild(videoEl);
-        videoWrap.appendChild(scanCanvas);
-        var scanLine=document.createElement('div');
-        scanLine.style.cssText='position:absolute;top:0;left:10%;width:80%;height:3px;background:linear-gradient(90deg,transparent,#00e5ff,#00e5ff,transparent);box-shadow:0 0 12px #00e5ff;border-radius:2px;transition:none;z-index:2;animation:scanMove 2s ease-in-out infinite';
-        videoWrap.appendChild(scanLine);
-        var cornerTL=document.createElement('div');cornerTL.style.cssText='position:absolute;top:20px;left:20px;width:30px;height:30px;border-top:3px solid #00e5ff;border-left:3px solid #00e5ff;z-index:3';
-        var cornerTR=document.createElement('div');cornerTR.style.cssText='position:absolute;top:20px;right:20px;width:30px;height:30px;border-top:3px solid #00e5ff;border-right:3px solid #00e5ff;z-index:3';
-        var cornerBL=document.createElement('div');cornerBL.style.cssText='position:absolute;bottom:20px;left:20px;width:30px;height:30px;border-bottom:3px solid #00e5ff;border-left:3px solid #00e5ff;z-index:3';
-        var cornerBR=document.createElement('div');cornerBR.style.cssText='position:absolute;bottom:20px;right:20px;width:30px;height:30px;border-bottom:3px solid #00e5ff;border-right:3px solid #00e5ff;z-index:3';
-        videoWrap.appendChild(cornerTL);videoWrap.appendChild(cornerTR);
-        videoWrap.appendChild(cornerBL);videoWrap.appendChild(cornerBR);
-        var statusDot=document.createElement('div');
-        statusDot.style.cssText='position:absolute;bottom:12px;left:50%;transform:translateX(-50%);width:10px;height:10px;border-radius:50%;background:#22c55e;box-shadow:0 0 8px #22c55e;z-index:4;animation:pulse 1.5s ease-in-out infinite';
-        videoWrap.appendChild(statusDot);
-        var hint=document.createElement('div');
-        hint.style.cssText='color:#e2e8f0;font-size:15px;margin-top:16px;text-align:center;max-width:320px;line-height:1.4';
-        hint.innerHTML='<span style="color:#00e5ff;font-weight:600">Escaneando QR</span><br><span style="color:#94a3b8;font-size:13px">Apunta la camara al codigo QR del dispositivo principal</span>';
-        var cancelBtn=document.createElement('button');
-        cancelBtn.textContent='Cancelar';
-        cancelBtn.style.cssText='color:#fff;background:#ef4444;border:none;padding:10px 30px;border-radius:8px;margin-top:16px;font-size:14px;cursor:pointer;font-weight:600';
-        overlay.appendChild(videoWrap);overlay.appendChild(hint);overlay.appendChild(cancelBtn);
-        document.body.appendChild(overlay);
-        var style=document.createElement('style');
-        style.textContent='@keyframes scanMove{0%{top:5%}50%{top:90%}100%{top:5%}}@keyframes pulse{0%,100%{opacity:1;transform:translateX(-50%) scale(1)}50%{opacity:0.5;transform:translateX(-50%) scale(0.7)}}';
-        overlay.appendChild(style);
-        var stream=null,done=false,scanner=null,scanCount=0;
+        var videoEl=document.createElement('video');videoEl.setAttribute('playsinline','true');videoEl.setAttribute('autoplay','true');videoEl.setAttribute('muted','true');
+        videoEl.style.cssText='width:400px;height:400px;object-fit:cover;border-radius:12px;border:3px solid #8b5cf6';
+        var hint=document.createElement('div');hint.style.cssText='color:#fff;font-size:14px;margin-top:12px;text-align:center';hint.textContent='Apunta al QR del dispositivo principal...';
+        var cancelBtn=document.createElement('button');cancelBtn.textContent='Cancelar';cancelBtn.style.cssText='color:#fff;background:#ef4444;border:none;padding:10px 30px;border-radius:8px;margin-top:16px;font-size:14px;cursor:pointer';
+        overlay.appendChild(videoEl);overlay.appendChild(hint);overlay.appendChild(cancelBtn);document.body.appendChild(overlay);
+        var stream=null,done=false,scanner=null;
         function cleanup(){done=true;if(scanner)clearInterval(scanner);if(stream)stream.getTracks().forEach(function(t){t.stop();});if(overlay.parentNode)overlay.parentNode.removeChild(overlay);}
         cancelBtn.onclick=function(){cleanup();reject(new Error('Cancelado'));};
         if(typeof jsQR==='undefined'){cleanup();reject(new Error('Libreria jsQR no cargada'));return;}
-        var scanW=800,scanH=600;
-        var scanCtx2=scanCanvas.getContext('2d',{willReadFrequently:true});
-        navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:960}}})
+        var scanCanvas=document.createElement('canvas');var scanCtx=scanCanvas.getContext('2d',{willReadFrequently:true});scanCanvas.width=400;scanCanvas.height=400;
+        navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}})
         .then(function(s){
             stream=s;videoEl.srcObject=stream;videoEl.play();
-            videoEl.onplaying=function(){
-                scanW=videoEl.videoWidth||800;
-                scanH=videoEl.videoHeight||600;
-                scanCanvas.width=scanW;
-                scanCanvas.height=scanH;
-                hint.innerHTML='<span style="color:#00e5ff;font-weight:600">Escaneando QR</span><br><span style="color:#94a3b8;font-size:13px">Apunta la camara al codigo QR del dispositivo principal</span>';
-            };
+            videoEl.onplaying=function(){hint.textContent='Escaneando... apunta al QR';};
             scanner=setInterval(function(){
-                if(done)return;
-                if(videoEl.readyState<2||!videoEl.videoWidth||!videoEl.videoHeight)return;
-                scanCtx2.drawImage(videoEl,0,0,scanW,scanH);
-                var imageData=scanCtx2.getImageData(0,0,scanW,scanH);
-                var code=jsQR(imageData.data,imageData.width,imageData.height,{inversionAttempts:'attemptBoth',binaryThreshold:128});
-                scanCount++;
-                if(!code){
-                    if(scanCount%20===0){statusDot.style.background='#eab308';statusDot.style.boxShadow='0 0 8px #eab308';}
-                    return;
-                }
-                try{
-                    var obj=JSON.parse(code.data);
-                    if(!obj.u||!obj.k)return;
-                    done=true;
-                    statusDot.style.background='#22c55e';
-                    scanLine.style.background='linear-gradient(90deg,transparent,#22c55e,#22c55e,transparent)';
-                    scanLine.style.boxShadow='0 0 12px #22c55e';
-                    cornerTL.style.borderColor='#22c55e';cornerTR.style.borderColor='#22c55e';
-                    cornerBL.style.borderColor='#22c55e';cornerBR.style.borderColor='#22c55e';
-                    hint.innerHTML='<span style="color:#22c55e;font-weight:600">QR Detectado!</span>';
-                    setTimeout(function(){cleanup();},600);
-                    _url=obj.u;_name=obj.n||'Principal';_key=obj.k;
-                    localStorage.setItem('jam_sync_url',_url);
-                    localStorage.setItem('jam_sync_name',_name);
-                    localStorage.setItem('jam_sync_key',_key);
-                    resolve({name:_name,url:_url});
-                }catch(e){}
-            },80);
+                if(done)return;if(videoEl.readyState<2||!videoEl.videoWidth||!videoEl.videoHeight)return;
+                scanCtx.drawImage(videoEl,0,0,400,400);var imageData=scanCtx.getImageData(0,0,400,400);
+                var code=jsQR(imageData.data,imageData.width,imageData.height,{inversionAttempts:'attemptBoth'});
+                if(!code)return;
+                try{var obj=JSON.parse(code.data);if(!obj.u||!obj.k)return;done=true;cleanup();_url=obj.u;_name=obj.n||'Principal';_key=obj.k;localStorage.setItem('jam_sync_url',_url);localStorage.setItem('jam_sync_name',_name);localStorage.setItem('jam_sync_key',_key);resolve({name:_name,url:_url});}catch(e){}
+            },100);
         })
         .catch(function(){cleanup();scanFallbackFile().then(resolve).catch(reject);});
     });
