@@ -4,12 +4,33 @@
   "description": "Sistema de punto de venta profesional. Gestión de inventario, ventas, clientes y reportes. Funciona sin conexión.",
   "start_url": "./",
   "display": "standalone",
+  "display_override": ["standalone", "fullscreen"],
   "orientation": "portrait",
   "background_color": "#ffffff",
   "theme_color": "#3b82f6",
   "lang": "es",
   "scope": "./",
   "categories": ["business", "productivity", "finance"],
+  "shortcuts": [
+    {
+      "name": "Abrir caja",
+      "short_name": "Caja",
+      "url": "./?shortcut=caja",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Productos",
+      "short_name": "Productos",
+      "url": "?shortcut=productos",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Reportes",
+      "short_name": "Reportes",
+      "url": "?shortcut=reportes",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    }
+  ],
   "icons": [
     {
       "src": "icon-192.png",

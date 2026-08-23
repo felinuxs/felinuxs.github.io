@@ -228,11 +228,243 @@
         notificar(mensaje, 'info');
     }
     function esVersionPrueba() {
+        return true;
+    }
+
+    // ---------- Trial 30 días con fingerprint ----------
+    var TRIAL_DAYS = 30;
+    var TRIAL_KEY = 'jam_trial_data';
+
+    function generarFingerprint() {
+        var parts = [];
+        try { parts.push(navigator.userAgent.length.toString(36)); } catch(e) {}
+        try { parts.push(screen.width + 'x' + screen.height); } catch(e) {}
+        try { parts.push(screen.colorDepth.toString()); } catch(e) {}
+        try { parts.push(navigator.language); } catch(e) {}
+        try { parts.push(navigator.hardwareConcurrency || 0); } catch(e) {}
+        try { parts.push(navigator.deviceMemory || 0); } catch(e) {}
+        try {
+            var c = document.createElement('canvas');
+            var ctx = c.getContext('2d');
+            ctx.textBaseline = 'top';
+            ctx.font = '14px Arial';
+            ctx.fillText('JAM2027', 2, 2);
+            parts.push(c.toDataURL().length.toString(36));
+        } catch(e) {}
+        var raw = parts.join('|');
+        var hash = 0;
+        for (var i = 0; i < raw.length; i++) {
+            hash = ((hash << 5) - hash) + raw.charCodeAt(i);
+            hash |= 0;
+        }
+        return 'fp_' + Math.abs(hash).toString(36);
+    }
+
+    function codificarFecha(ts) {
+        try {
+            var obj = { f: ts, k: 'j27', v: 1 };
+            return btoa(JSON.stringify(obj));
+        } catch(e) { return btoa(String(ts)); }
+    }
+
+    function decodificarFecha(encoded) {
+        try {
+            var obj = JSON.parse(atob(encoded));
+            if (obj && obj.k === 'j27' && obj.f) return Number(obj.f);
+        } catch(e) {}
+        try { return Number(atob(encoded)); } catch(e) {}
+        return 0;
+    }
+
+    // ---------- Real IndexedDB para persistencia trial ----------
+    var TRIAL_IDB = 'jampos_trial_db';
+    var TRIAL_IDB_STORE = 'meta';
+    var _fechaCache = 0;
+
+    function idbOpen() {
+        return new Promise(function(resolve, reject) {
+            var req = indexedDB.open(TRIAL_IDB, 1);
+            req.onupgradeneeded = function() {
+                if (!req.result.objectStoreNames.contains(TRIAL_IDB_STORE))
+                    req.result.createObjectStore(TRIAL_IDB_STORE);
+            };
+            req.onsuccess = function() { resolve(req.result); };
+            req.onerror = function() { reject(req.error); };
+        });
+    }
+    function idbSave(key, val) {
+        return idbOpen().then(function(db) {
+            return new Promise(function(resolve, reject) {
+                var tx = db.transaction(TRIAL_IDB_STORE, 'readwrite');
+                tx.objectStore(TRIAL_IDB_STORE).put(val, key);
+                tx.oncomplete = function() { db.close(); resolve(); };
+                tx.onerror = function() { db.close(); reject(tx.error); };
+            });
+        });
+    }
+    function idbLoad(key) {
+        return idbOpen().then(function(db) {
+            return new Promise(function(resolve, reject) {
+                var tx = db.transaction(TRIAL_IDB_STORE, 'readonly');
+                var g = tx.objectStore(TRIAL_IDB_STORE).get(key);
+                g.onsuccess = function() { db.close(); resolve(g.result || null); };
+                g.onerror = function() { db.close(); reject(g.error); };
+            });
+        });
+    }
+
+    // ---------- Cookie persistente (1 año) ----------
+    function setCookie(name, val, days) {
+        var exp = new Date(Date.now() + days * 86400000).toUTCString();
+        document.cookie = name + '=' + encodeURIComponent(val) + ';expires=' + exp + ';path=/;SameSite=Lax';
+    }
+    function getCookie(name) {
+        var match = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+        return match ? decodeURIComponent(match[1]) : null;
+    }
+
+    function guardarFechaTodasLasCapas(fecha) {
+        var encoded = codificarFecha(fecha);
+        // Capa 1: localStorage
+        try { localStorage.setItem(TRIAL_KEY, encoded); } catch(e) {}
+        try { localStorage.setItem(TRIAL_KEY + '_idb', encoded); } catch(e) {}
+        // Capa 2: Cookie (1 año)
+        try { setCookie(TRIAL_KEY, encoded, 365); } catch(e) {}
+        // Capa 3: Real IndexedDB
+        try { idbSave(TRIAL_KEY, { f: fecha, encoded: encoded }); } catch(e) {}
+        // Capa 4: navigator.storage.persist()
+        try {
+            if (navigator.storage && navigator.storage.persist) {
+                navigator.storage.persist().then(function(granted) {
+                    if (granted) console.log('[TRIAL] Storage persistente activado');
+                });
+            }
+        } catch(e) {}
+        // Capa 5: SW cache
+        try {
+            if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+                navigator.serviceWorker.controller.postMessage({ type: 'saveTrialStart', timestamp: fecha });
+            }
+        } catch(e) {}
+    }
+
+    function obtenerFechaInstalacion() {
+        if (_fechaCache > 0) return _fechaCache;
+        var fecha = 0;
+        // Capa 1: localStorage
+        try {
+            var stored = localStorage.getItem(TRIAL_KEY);
+            if (stored) {
+                var decoded = decodificarFecha(stored);
+                if (decoded > 0) fecha = decoded;
+            }
+        } catch(e) {}
+        // Capa 2: Cookie
+        if (!fecha) {
+            try {
+                var ck = getCookie(TRIAL_KEY);
+                if (ck) {
+                    var decoded2 = decodificarFecha(ck);
+                    if (decoded2 > 0) fecha = decoded2;
+                }
+            } catch(e) {}
+        }
+        // Capa 3: Real IndexedDB (async pero intentamos sync con localStorage como respaldo)
+        if (!fecha) {
+            try {
+                var idbData = localStorage.getItem(TRIAL_KEY + '_idb');
+                if (idbData) {
+                    var decoded3 = decodificarFecha(idbData);
+                    if (decoded3 > 0) fecha = decoded3;
+                }
+            } catch(e) {}
+        }
+        // Si no hay fecha, es primera vez → guardarla en TODAS las capas
+        if (!fecha) {
+            fecha = Date.now();
+            guardarFechaTodasLasCapas(fecha);
+        } else {
+            // Asegurar que esté en todas las capas (refuerzo)
+            guardarFechaTodasLasCapas(fecha);
+        }
+        // Leer también de IndexedDB real para cruzar datos
+        try {
+            idbLoad(TRIAL_KEY).then(function(data) {
+                if (data && data.f && (!fecha || data.f < fecha)) {
+                    _fechaCache = data.f;
+                    guardarFechaTodasLasCapas(data.f);
+                }
+            });
+        } catch(e) {}
+        _fechaCache = fecha;
+        return fecha;
+    }
+
+    function verificarPrueba() {
+        var fechaInicio = obtenerFechaInstalacion();
+        var ahora = Date.now();
+        var diffMs = ahora - fechaInicio;
+        var diffDias = Math.floor(diffMs / 86400000);
+        var diasRestantes = TRIAL_DAYS - diffDias;
+        var bloqueada = diasRestantes <= 0;
+        diasRestantes = Math.max(0, diasRestantes);
+        var fp = generarFingerprint();
+        // Verificar si el fingerprint coincide (anti-copia)
+        var fpGuardada = localStorage.getItem(TRIAL_KEY + '_fp');
+        if (!fpGuardada) {
+            localStorage.setItem(TRIAL_KEY + '_fp', fp);
+        } else if (fpGuardada !== fp) {
+            // Fingerprint cambió → posible reinstalación
+            // Usar la fecha más antigua
+            localStorage.setItem(TRIAL_KEY + '_fp', fp);
+        }
+        return JSON.stringify({
+            bloqueada: bloqueada,
+            diasRestantes: diasRestantes,
+            fechaInicio: fechaInicio,
+            tamper: false,
+            fingerprint: fp,
+            version: 'trial-30d'
+        });
+    }
+
+    // ---------- Wake Lock (pantalla encendida) ----------
+    var _wakeLock = null;
+    async function requestWakeLock() {
+        try {
+            if ('wakeLock' in navigator) {
+                _wakeLock = await navigator.wakeLock.request('screen');
+                _wakeLock.addEventListener('release', function() { _wakeLock = null; });
+                console.log('[PWA] Wake Lock activo');
+                return true;
+            }
+        } catch (e) { console.log('[PWA] Wake Lock no disponible:', e.message); }
         return false;
     }
-    function verificarPrueba() {
-        return JSON.stringify({ bloqueada: false, diasRestantes: 0, fechaInicio: 0, tamper: false });
+    async function releaseWakeLock() {
+        try { if (_wakeLock) { await _wakeLock.release(); _wakeLock = null; } } catch (e) {}
     }
+
+    // ---------- Orientation Lock ----------
+    function lockPortrait() {
+        try {
+            if (screen.orientation && screen.orientation.lock) {
+                screen.orientation.lock('portrait').catch(function() {});
+            }
+        } catch (e) {}
+    }
+
+    // ---------- iOS Standalone Detection ----------
+    function esAppInstalada() {
+        return window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+    }
+
+    // ---------- Visibility: re-request Wake Lock al volver ----------
+    document.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'visible' && !_wakeLock) {
+            requestWakeLock();
+        }
+    });
 
     // ---------- restaurar carpeta persistida ----------
     cargarHandle().then(function (h) {
@@ -252,6 +484,10 @@
         getCarpetaInfo: getCarpetaInfo,
         guardarArchivo: guardarArchivo,
         leerArchivo: leerArchivo,
-        listarArchivos: listarArchivos
+        listarArchivos: listarArchivos,
+        requestWakeLock: requestWakeLock,
+        releaseWakeLock: releaseWakeLock,
+        lockPortrait: lockPortrait,
+        esAppInstalada: esAppInstalada
     };
 })();

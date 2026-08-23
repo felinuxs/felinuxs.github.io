@@ -2696,7 +2696,7 @@
                 <div class="config-section"><button id="btnToggleSeguridad" class="btn-azul-redondeado btn-redondeado w-full mb-2 py-2">🔒 Seguridad (PIN)</button><div id="panelSeguridad" style="display:none;" class="mt-2 config-inner"><div class="mb-2"><label>PIN de acceso (4 dígitos, dejar vacío para deshabilitar)</label><input type="password" id="pinInput" value="${escapeHtml(D.config.pin)}" maxlength="4" pattern="[0-9]*" inputmode="numeric" class="border rounded-xl p-2 w-full text-center text-2xl tracking-widest" placeholder="****"></div><button id="guardarPinBtn" class="btn-azul-redondeado btn-redondeado w-full py-2">🔐 Guardar PIN</button><p class="text-xs text-center mt-2 opacity-60">${D.config.pin ? '✅ PIN activo. Se pedirá al abrir la app.' : 'ℹ️ Sin PIN. Cualquiera puede acceder.'}</p></div></div>
                 <div class="config-section"><button id="btnToggleColores" class="btn-azul-redondeado btn-redondeado w-full mb-2 py-2">🎨 Temas de color</button><div id="panelColores" style="display:none;" class="mt-2 config-inner"><div class="flex flex-wrap justify-center gap-2" id="paletaColores" style="max-width:290px;margin:0 auto"></div></div></div>
                 <div class="config-section"><button id="btnToggleBackup" class="btn-azul-redondeado btn-redondeado w-full mb-2 py-2">💾 Copia de seguridad</button><div id="panelBackup" style="display:none;" class="mt-2 config-inner"><div class="flex flex-col gap-3">${esAppNativa() ? `<div class="rounded-xl p-3" style="background:rgba(14,165,233,0.08);border:1px solid rgba(14,165,233,0.3)"><p class="text-sm font-semibold mb-1">📁 Carpeta de la aplicación</p><p id="carpetaEstado" class="text-xs opacity-70 mb-2">ℹ️ Elija una carpeta para guardar tickets y respaldos (se creará la subcarpeta JAMPOS).</p><button id="elegirCarpetaBtn" class="btn-redondeado py-2 px-4 w-full" style="background:#0ea5e9;color:#fff">📂 Elegir carpeta</button></div>` : `<p class="text-xs text-center opacity-60">💡 En la app Android podrás elegir una carpeta donde guardar los archivos.</p>`}<button id="exportJsonBtn" class="btn-redondeado py-2 px-4" style="background:#3b82f6;color:#fff">📥 Exportar todo (JSON)</button><button id="exportCsvBtn" class="btn-redondeado py-2 px-4" style="background:#10b981;color:#fff">📥 Exportar todo (CSV / Excel)</button><button id="importJsonBtn" class="btn-redondeado py-2 px-4" style="background:#8b5cf6;color:#fff">📤 Importar desde JSON</button><button id="importCsvBtn" class="btn-redondeado py-2 px-4" style="background:#f59e0b;color:#fff">📤 Importar desde CSV / Excel</button>${esAppNativa() ? `<button id="importCarpetaBtn" class="btn-redondeado py-2 px-4" style="background:#14b8a6;color:#fff">📂 Importar desde la carpeta JAMPOS</button>` : ''}<input type="file" id="importFileInput" accept=".json" style="display:none"><input type="file" id="importCsvFileInput" accept=".csv,.xlsx,.xls,.txt" style="display:none"><p class="text-xs text-center mt-2 opacity-60">Los archivos CSV se abren directamente en Excel</p></div></div></div>
-                <div class="config-section"><button id="btnToggleSync" class="btn-azul-redondeado btn-redondeado w-full mb-2 py-2">🔄 Sincronizar terminales</button><div id="panelSync" style="display:none;" class="mt-2 config-inner">${window.JAMSync && window.JAMSync.isConnected() ? `<div class="mb-3 p-3 rounded-xl" style="background:rgba(16,185,129,0.1);border:1px solid #10b98140"><div class="flex items-center gap-2"><span style="color:#10b981;font-size:1.2rem">&#9679;</span><div><div class="text-sm font-bold" style="color:#10b981">Conectado a ${window.JAMSync.getName()}</div><div class="text-xs opacity-70">Sync automatico cada 30s</div></div></div></div><div class="mb-2 p-2 rounded-lg" style="background:rgba(139,92,246,0.1);border:1px solid #8b5cf640"><div class="text-xs opacity-70 mb-1">URL de conexion</div><div class="text-sm font-mono font-bold" style="color:#8b5cf6">${window.JAMSync.getUrl()}</div></div><button id="syncNowBtn" class="btn-redondeado w-full py-3 mb-2" style="background:#3b82f6;color:#fff"><i class="fas fa-sync-alt mr-1"></i> Sincronizar ahora</button><button id="syncStopBtn" class="btn-redondeado w-full py-2" style="background:#ef4444;color:#fff">Desconectar</button>` : `<div class="mb-2"><label class="text-sm font-semibold">Nombre de este dispositivo</label><div class="flex gap-2 mt-1"><input type="text" id="syncNameInput" placeholder="Nombre de la tienda..." class="border rounded-xl p-2 flex-1" value="${window.JAMSync ? window.JAMSync.getName() : ''}"><button id="syncNowBtn" class="btn-redondeado px-3 py-2" style="background:#3b82f6;color:#fff" title="Sincronizar datos"><i class="fas fa-sync-alt"></i></button></div><p class="text-xs mt-1 opacity-60">Escribe el nombre → QR se genera solo</p></div><div id="syncUrlRow" style="display:none" class="mb-2 p-2 rounded-lg"><div class="text-xs opacity-70 mb-1">URL de conexion</div><div id="syncUrlText" class="text-sm font-mono font-bold" style="color:#8b5cf6"></div></div><div id="syncQRDiv" style="display:none" class="text-center my-3"><canvas id="syncQRCanvas" width="256" height="256" style="width:200px;height:200px;border:3px solid #333;border-radius:12px"></canvas><p class="text-xs mt-2 opacity-60">Escanear este codigo desde el otro dispositivo</p></div><div class="border-t border-gray-200 dark:border-gray-700 pt-3 mt-3"><button id="syncScanBtn" class="btn-redondeado w-full py-3" style="background:#10b981;color:#fff"><i class="fas fa-camera mr-1"></i> Escanear QR del principal</button><p class="text-xs text-center mt-1 opacity-60">Dispositivo secundario: escanea para enlazar</p></div>`}<p class="text-xs text-center opacity-60 mt-3">1. En el PC principal: <code>node sync-server.js</code><br>2. Escribe el nombre y se genera el QR<br>3. Desde el celular escanea el QR</p></div></div>
+                <div class="config-section"><button id="btnToggleSync" class="btn-azul-redondeado btn-redondeado w-full mb-2 py-2">🔄 Sincronizar terminales</button><div id="panelSync" style="display:none;" class="mt-2 config-inner">${window.JAMSync && window.JAMSync.isConnected() ? `<div class="mb-3 p-3 rounded-xl" style="background:rgba(16,185,129,0.1);border:1px solid #10b98140"><div class="flex items-center gap-2"><span style="color:#10b981;font-size:1.2rem">&#9679;</span><div><div class="text-sm font-bold" style="color:#10b981">Conectado a ${window.JAMSync.getName()}</div><div class="text-xs opacity-70">Sync automatico cada 30s</div></div></div></div><div class="mb-2 p-2 rounded-lg" style="background:rgba(139,92,246,0.1);border:1px solid #8b5cf640"><div class="text-xs opacity-70 mb-1">URL de conexion</div><div class="text-sm font-mono font-bold" style="color:#8b5cf6">${window.JAMSync.getUrl()}</div></div><button id="syncNowBtn" class="btn-redondeado w-full py-3 mb-2" style="background:#3b82f6;color:#fff"><i class="fas fa-sync-alt mr-1"></i> Sincronizar ahora</button><button id="syncStopBtn" class="btn-redondeado w-full py-2" style="background:#ef4444;color:#fff">Desconectar</button>` : `<div class="mb-2"><label class="text-sm font-semibold">Nombre de este dispositivo</label><div class="flex gap-2 mt-1"><input type="text" id="syncNameInput" placeholder="Nombre de la tienda..." class="border rounded-xl p-2 flex-1" value="${window.JAMSync ? window.JAMSync.getName() : ''}"><button id="syncNowBtn" class="btn-redondeado px-3 py-2" style="background:#3b82f6;color:#fff" title="Sincronizar datos"><i class="fas fa-sync-alt"></i></button></div><p class="text-xs mt-1 opacity-60">Escribe el nombre → QR se genera solo</p></div><div id="syncUrlRow" style="display:none" class="mb-2 p-2 rounded-lg"><div class="text-xs opacity-70 mb-1">URL de conexion</div><div id="syncUrlText" class="text-sm font-mono font-bold" style="color:#8b5cf6"></div></div><div id="syncQRDiv" style="display:none" class="text-center my-3"><canvas id="syncQRCanvas" width="256" height="256" style="width:200px;height:200px;border:3px solid #333;border-radius:12px"></canvas><p class="text-xs mt-2 opacity-60">Escanear este codigo desde el otro dispositivo</p></div><div class="border-t border-gray-200 dark:border-gray-700 pt-3 mt-3"><button id="syncScanBtn" class="btn-redondeado w-full py-3" style="background:#10b981;color:#fff"><i class="fas fa-camera mr-1"></i> Escanear QR del principal</button><p class="text-xs text-center mt-1 opacity-60">Dispositivo secundario: escanea para enlazar</p></div>`}<p class="text-xs text-center opacity-60 mt-3">Ambos dispositivos en la misma WiFi<br>Escribe el nombre → genera QR → escanea desde el otro</p></div></div>
             </div>
         `;
         document.getElementById('appRoot').innerHTML = html;
@@ -2950,6 +2950,13 @@
             });
         }
 
+        if (window.AndroidBridge && window.AndroidBridge.requestWakeLock) {
+            window.AndroidBridge.requestWakeLock();
+        }
+        if (window.AndroidBridge && window.AndroidBridge.lockPortrait) {
+            window.AndroidBridge.lockPortrait();
+        }
+
         let deferredPrompt;
         window.addEventListener('beforeinstallprompt', function(e) {
             e.preventDefault();
@@ -3190,23 +3197,69 @@
         }, 500);
     }
 // ==================== VERSIÓN DE PRUEBA (CANDADO) ====================
-    // URL del backend de candado (dejar '' = solo candado offline).
-    // Ej.: 'https://tu-servicio.onrender.com'
-    const JAM_SERVER_PRUEBA = '';
+    // ==================== SISTEMA DE PRUEBA 30 DÍAS ====================
+    const JAM_EMAIL_VENTA = 'jamaplicativo@gmail.com';
     window._pruebaInfo = null;
 
     function mostrarBloqueoPrueba() {
         if(document.querySelector('.prueba-bloqueo')) return;
+        document.body.innerHTML = '';
         const fondo = document.createElement('div');
         fondo.className = 'prueba-bloqueo';
         fondo.innerHTML = `<div class="prueba-bloqueo-caja">
-            <div class="prueba-bloqueo-icono">🔒</div>
+            <div class="prueba-bloqueo-icono">&#128274;</div>
             <h2>Periodo de prueba finalizado</h2>
-            <p>Este dispositivo ya usó su periodo de prueba de <b>3 días</b> de JAM POS.</p>
-            <p class="prueba-bloqueo-detalle">Para seguir usando la aplicación necesitas la versión completa.</p>
-            <button class="prueba-bloqueo-btn" onclick="if(window.AndroidBridge&&AndroidBridge.cerrarApp)AndroidBridge.cerrarApp()">Cerrar</button>
+            <p>Tu periodo de prueba de <b>30 dias</b> de JAM POS ha terminado.</p>
+            <p class="prueba-bloqueo-detalle">Para seguir usando el sistema necesitas la version completa con todas las caracteristicas premium.</p>
+            <div class="prueba-bloqueo-email">
+                <div class="prueba-bloqueo-email-label">Contacta para obtener la version completa:</div>
+                <a href="mailto:${JAM_EMAIL_VENTA}" class="prueba-bloqueo-email-link">${JAM_EMAIL_VENTA}</a>
+            </div>
+            <div class="prueba-bloqueo-premium">
+                <div class="prueba-bloqueo-premium-titulo">Version Premium incluye:</div>
+                <div class="prueba-bloqueo-premium-item">&#10003; Sin limite de tiempo</div>
+                <div class="prueba-bloqueo-premium-item">&#10003; Sincronizacion entre dispositivos</div>
+                <div class="prueba-bloqueo-premium-item">&#10003; Soporte tecnico prioritario</div>
+                <div class="prueba-bloqueo-premium-item">&#10003; Actualizaciones de por vida</div>
+                <div class="prueba-bloqueo-premium-item">&#10003; Personalizacion para tu tienda</div>
+            </div>
+            <button class="prueba-bloqueo-btn" onclick="window.location.href='mailto:${JAM_EMAIL_VENTA}'">Enviar correo</button>
+            <button class="prueba-bloqueo-btn-cerrar" onclick="if(window.AndroidBridge&&AndroidBridge.cerrarApp)AndroidBridge.cerrarApp();else window.close();">Cerrar</button>
         </div>`;
         document.body.appendChild(fondo);
+    }
+
+    function mostrarContadorPrueba(info) {
+        if(!info || info.bloqueada) return;
+        if(sessionStorage.getItem('jam_trial_popup_shown')) return;
+        sessionStorage.setItem('jam_trial_popup_shown', '1');
+        const overlay = document.createElement('div');
+        overlay.className = 'prueba-contador-overlay';
+        const pct = Math.round((info.diasRestantes / 30) * 100);
+        const diasText = info.diasRestantes === 1 ? '1 dia' : info.diasRestantes + ' dias';
+        const urgente = info.diasRestantes <= 7;
+        overlay.innerHTML = `<div class="prueba-contador-caja">
+            <div class="prueba-contador-header">
+                <div class="prueba-contador-icono">&#128230;</div>
+                <h2>JAM POS</h2>
+                <span class="prueba-contador-tag">Version de Prueba</span>
+            </div>
+            <div class="prueba-contador-cuerpo">
+                <div class="prueba-contador-numero ${urgente ? 'prueba-contador-urgente' : ''}">${info.diasRestantes}</div>
+                <div class="prueba-contador-label">${diasText} restantes</div>
+                <div class="prueba-contador-barra">
+                    <div class="prueba-contador-barra-fill" style="width:${pct}%"></div>
+                </div>
+                <div class="prueba-contador-dias-total">30 dias de prueba</div>
+            </div>
+            <div class="prueba-contador-footer">
+                <p>¿Necesitas la version completa?</p>
+                <a href="mailto:${JAM_EMAIL_VENTA}" class="prueba-contador-email">${JAM_EMAIL_VENTA}</a>
+                <button class="prueba-contador-btn" id="btnCerrarContador">Continuar usando</button>
+            </div>
+        </div>`;
+        document.body.appendChild(overlay);
+        overlay.querySelector('#btnCerrarContador').onclick = function() { overlay.remove(); };
     }
 
     function mostrarBannerPrueba(info) {
@@ -3218,51 +3271,55 @@
         if(existente) existente.remove();
         const b = document.createElement('div');
         b.className = 'prueba-banner';
-        b.innerHTML = `<span>🔒 Versión de prueba — <b>${info.diasRestantes}</b> día(s) restantes</span><button onclick="this.parentElement.remove()">✕</button>`;
+        const diasText = info.diasRestantes === 1 ? '1 dia' : info.diasRestantes + ' dias';
+        b.innerHTML = `<span>&#128274; Prueba — <b>${diasText}</b> restantes</span><a href="mailto:${JAM_EMAIL_VENTA}" class="prueba-banner-link">Version completa</a><button onclick="this.parentElement.remove()">&#10005;</button>`;
         home.prepend(b);
     }
 
-    async function sincronizarPrueba(info) {
-        if(!JAM_SERVER_PRUEBA) {
-            if(info.bloqueada) mostrarBloqueoPrueba();
-            else mostrarBannerPrueba(info);
-            return;
-        }
-        try {
-            const device = (window.AndroidBridge && AndroidBridge.deviceId) ? AndroidBridge.deviceId() : 'desconocido';
-            let res = await fetch(JAM_SERVER_PRUEBA + '/prueba?device=' + encodeURIComponent(device));
-            let data = await res.json();
-            let fechaInicio = data.fechaInicio ? Number(data.fechaInicio) : 0;
-            if(!fechaInicio && info.fechaInicio) {
-                res = await fetch(JAM_SERVER_PRUEBA + '/prueba', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ device, fechaInicio: info.fechaInicio })
-                });
-                data = await res.json();
-                fechaInicio = data.fechaInicio ? Number(data.fechaInicio) : info.fechaInicio;
-            }
-            const efectiva = (fechaInicio && fechaInicio < info.fechaInicio) ? fechaInicio : info.fechaInicio;
-            const serverNow = data.serverNow ? Number(data.serverNow) : Date.now();
-            const ahoraRef = Math.abs(serverNow - Date.now()) > 3600000 ? serverNow : Date.now();
-            const dias = Math.floor((ahoraRef - efectiva) / 86400000);
-            const bloqueada = dias >= 3;
-            const nuevoInfo = { bloqueada, diasRestantes: bloqueada ? 0 : (3 - dias), fechaInicio: efectiva, tamper: info.tamper };
-            if(bloqueada) { window._pruebaInfo = null; mostrarBloqueoPrueba(); }
-            else mostrarBannerPrueba(nuevoInfo);
-        } catch(e) {
-            if(info.bloqueada) mostrarBloqueoPrueba();
-            else mostrarBannerPrueba(info);
-        }
+    function sincronizarPrueba(info) {
+        if(info.bloqueada) { window._pruebaInfo = null; mostrarBloqueoPrueba(); }
+        else { mostrarBannerPrueba(info); mostrarContadorPrueba(info); }
     }
 
     function verificarPruebaInicio() {
-        if(!window.AndroidBridge || typeof AndroidBridge.esVersionPrueba !== 'function') return false;
-        let esPrueba = false;
-        try { esPrueba = !!AndroidBridge.esVersionPrueba(); } catch(e) {}
-        if(!esPrueba) return false;
-        let info = { bloqueada: false, diasRestantes: 3, fechaInicio: 0, tamper: false };
-        try { info = JSON.parse(AndroidBridge.verificarPrueba()); } catch(e) {}
+        var TRIAL_DAYS = 30;
+        var TRIAL_KEY = 'jam_trial_data';
+
+        // Función local de verificación (funciona sin AndroidBridge)
+        function verificarLocal() {
+            var fecha = 0;
+            try {
+                var stored = localStorage.getItem(TRIAL_KEY);
+                if (stored) {
+                    try { fecha = JSON.parse(atob(stored)).f; } catch(e) {}
+                }
+            } catch(e) {}
+            if (!fecha) {
+                try {
+                    var idbData = localStorage.getItem(TRIAL_KEY + '_idb');
+                    if (idbData) {
+                        try { fecha = JSON.parse(atob(idbData)).f; } catch(e) {}
+                    }
+                } catch(e) {}
+            }
+            if (!fecha) {
+                fecha = Date.now();
+                var encoded = btoa(JSON.stringify({ f: fecha, k: 'j27', v: 1 }));
+                try { localStorage.setItem(TRIAL_KEY, encoded); } catch(e) {}
+                try { localStorage.setItem(TRIAL_KEY + '_idb', encoded); } catch(e) {}
+            }
+            var diffDias = Math.floor((Date.now() - fecha) / 86400000);
+            var diasRestantes = Math.max(0, TRIAL_DAYS - diffDias);
+            return { bloqueada: diasRestantes <= 0, diasRestantes: diasRestantes, fechaInicio: fecha, tamper: false };
+        }
+
+        // Intentar con AndroidBridge primero, si no existe usar local
+        var info;
+        if (window.AndroidBridge && typeof AndroidBridge.esVersionPrueba === 'function' && AndroidBridge.esVersionPrueba()) {
+            try { info = JSON.parse(AndroidBridge.verificarPrueba()); } catch(e) { info = verificarLocal(); }
+        } else {
+            info = verificarLocal();
+        }
         sincronizarPrueba(info);
         if(info.bloqueada) { mostrarBloqueoPrueba(); return true; }
         window._pruebaInfo = info;
@@ -3286,6 +3343,16 @@
         document.addEventListener('copy', e => { if(!editable(e.target)) e.preventDefault(); });
         document.addEventListener('cut', e => { if(!editable(e.target)) e.preventDefault(); });
         document.addEventListener('dragstart', e => e.preventDefault());
+    })();
+    // Feedback háptico nativo al presionar botones
+    (function setupHaptico() {
+        if (!navigator.vibrate) return;
+        document.addEventListener('pointerdown', function(e) {
+            var t = e.target;
+            if (t.closest('button,.btn-redondeado,.sidebar-item,.main-module-btn,.color-circle,.btn-editar-redondeado,.btn-eliminar-redondeado,.btn-verde-redondeado,#btnFinalizarVenta')) {
+                navigator.vibrate(10);
+            }
+        }, { passive: true });
     })();
     loadAllData().then(() => {
         if(window.JAMSync && window.JAMSync.tryAutoReconnect){

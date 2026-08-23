@@ -1,4 +1,4 @@
-const CACHE_NAME = "jampos-web-cache-v3";
+const CACHE_NAME = "jampos-web-cache-v4";
 const STATIC_ASSETS = [
   "./",
   "./index.html",
@@ -23,13 +23,23 @@ const STATIC_ASSETS = [
   "./style.css",
   "./quagga.min.js",
   "./web-bridge.js",
+  "./qrcode.min.js",
+  "./jsqr.js",
+  "./sync-client.js",
   "./app.js"
 ];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(function(cache) {
-      return cache.addAll(STATIC_ASSETS);
+      return cache.addAll(STATIC_ASSETS).then(function() {
+        return cache.match('./trial-meta').then(function(resp) {
+          if (!resp) {
+            var meta = JSON.stringify({ installed: Date.now(), version: 'trial-30d' });
+            return cache.put('./trial-meta', new Response(meta, { headers: { 'Content-Type': 'application/json' } }));
+          }
+        });
+      });
     }).catch(function() {})
   );
   self.skipWaiting();
@@ -60,6 +70,23 @@ self.addEventListener("message", function(event) {
       vibrate: [200, 100, 200],
       requireInteraction: true
     });
+  }
+  if (data && data.type === "getTrialMeta") {
+    caches.open(CACHE_NAME).then(function(cache) {
+      return cache.match('./trial-meta');
+    }).then(function(resp) {
+      if (resp) {
+        resp.json().then(function(meta) {
+          event.source.postMessage({ type: 'trialMeta', data: meta });
+        });
+      }
+    }).catch(function() {});
+  }
+  if (data && data.type === "saveTrialStart") {
+    var meta = JSON.stringify({ installed: data.timestamp, version: 'trial-30d' });
+    caches.open(CACHE_NAME).then(function(cache) {
+      return cache.put('./trial-meta', new Response(meta, { headers: { 'Content-Type': 'application/json' } }));
+    }).catch(function() {});
   }
 });
 
