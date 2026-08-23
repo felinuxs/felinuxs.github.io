@@ -159,19 +159,50 @@
         empleados: 'jam_pos_empleados',
         ventas: 'jam_pos_ventas',
         config: 'jam_pos_config',
-        session_cart: 'jam_pos_cart',
-        session_meta: 'jam_pos_meta'
+        session_meta: 'jam_pos_meta',
+        tasa_diaria: 'jam_pos_tasa_diaria'
     };
 
+    let _idbAvisada = false;
+    function avisarIDBCaida(err){
+        if (_idbAvisada) return;
+        _idbAvisada = true;
+        console.warn('IndexedDB no disponible:', err);
+        try { mostrarNotificacion('⚠️ Base de datos local no disponible. Los datos se conservan en memoria durante esta sesión.', 'error'); } catch(e) {}
+    }
+    // ==================== DATOS SUCIOS / CACHÉ DE MÓDULOS ====================
+    // Cada escritura de datos marca "datos sucios"; en la siguiente navegación
+    // se descarta la caché visual de los módulos para que las listas se
+    // reconstruyan desde la base de datos (visibilidad instantánea entre
+    // módulos: cliente creado en Ventas aparece ya en Clientes y viceversa).
+    let datosSucios = false;
+    const MODULOS_CACHEABLES = ['ventas','inventario','clientes','proveedores','gastos','empleados','reportes','config'];
+    function limpiarCacheSiDatosSucios(){
+        if(!datosSucios) return;
+        datosSucios = false;
+        MODULOS_CACHEABLES.forEach(m => { const el = document.getElementById('_cache_' + m); if(el) el.remove(); });
+    }
     function abrirBaseDatos() {
         return new Promise((resolve, reject) => {
-            const req = indexedDB.open('jampos_db', 2);
-            req.onupgradeneeded = e => { const db = e.target.result; DATA_STORES.forEach(s => { if (!db.objectStoreNames.contains(s)) db.createObjectStore(s); }); };
-            req.onsuccess = e => resolve(e.target.result);
-            req.onerror = e => reject(e.target.error);
+            const configurar = req => {
+                req.onupgradeneeded = e => { const db = e.target.result; DATA_STORES.forEach(s => { if (!db.objectStoreNames.contains(s)) db.createObjectStore(s); }); if (!db.objectStoreNames.contains('session')) db.createObjectStore('session'); };
+                req.onsuccess = e => resolve(e.target.result);
+            };
+            const abrirSinVersion = errOriginal => {
+                try { if (req1.result) req1.result.close(); } catch(e) {}
+                const req2 = indexedDB.open('jampos_db');
+                configurar(req2);
+                req2.onerror = () => { avisarIDBCaida(req2.error || errOriginal); reject(req2.error || errOriginal); };
+            };
+            // Versión 3: coincide con instalaciones previas (evita VersionError)
+            const req1 = indexedDB.open('jampos_db', 3);
+            configurar(req1);
+            req1.onerror = () => abrirSinVersion(req1.error);
+            req1.onblocked = () => abrirSinVersion(new Error('DB bloqueada'));
         });
     }
     async function saveToIDB(store, data) {
+        datosSucios = true;
         const db = await abrirBaseDatos();
         return new Promise((resolve, reject) => {
             const tx = db.transaction(store, 'readwrite');
@@ -197,6 +228,7 @@
         });
     }
     async function addToIDB(store, items) {
+        datosSucios = true;
         const db = await abrirBaseDatos();
         return new Promise((resolve, reject) => {
             const tx = db.transaction(store, 'readwrite');
@@ -219,28 +251,36 @@
             D[store] = D[store] || [];
             const i = D[store].findIndex(x => x.id === item.id);
             if (i !== -1) D[store][i] = item; else D[store].push(item);
-            try { await saveToIDB(store, D[store]); } catch(e) { console.warn('IDB save error', e); }
+            try { await saveToIDB(store, D[store]); } catch(e) { console.warn('IDB save error', e); avisarIDBCaida(e); }
         } else {
             const items = loadFromStorage(key, []);
             const idx = items.findIndex(x => x.id === item.id);
             if (idx !== -1) items[idx] = item; else items.push(item);
             saveToStorage(key, items);
             D[store] = items;
+            datosSucios = true;
         }
     }
     async function deleteItem(store, id) {
         const key = STORAGE_KEYS[store];
         if (DATA_STORES.includes(store)) {
             D[store] = (D[store] || []).filter(x => x.id !== id);
-            try { await saveToIDB(store, D[store]); } catch(e) { console.warn('IDB delete error', e); }
+            try { await saveToIDB(store, D[store]); } catch(e) { console.warn('IDB delete error', e); avisarIDBCaida(e); }
         } else {
-            const items = loadFromStorage(key, []).filter(x => x.id !== id);
-            saveToStorage(key, items);
+            const items = loadFromStorage(STORAGE_KEYS[store], []).filter(x => x.id !== id);
+            saveToStorage(STORAGE_KEYS[store], items);
             D[store] = items;
+            datosSucios = true;
         }
     }
     async function getAll(store) {
-        if (DATA_STORES.includes(store)) { try { return await loadFromIDB(store); } catch(e) { console.warn('IDB load error', e); } }
+        if (DATA_STORES.includes(store)) {
+            try { return await loadFromIDB(store); } catch(e) { console.warn('IDB load error', e); avisarIDBCaida(e); }
+            // Respaldo NO destructivo: conservar lo que hay en memoria antes de
+            // recurrir al espejo localStorage (que puede estar vacío).
+            if (Array.isArray(D[store]) && D[store].length) return D[store];
+            return loadFromStorage(STORAGE_KEYS[store] || store, []);
+        }
         return loadFromStorage(STORAGE_KEYS[store], []);
     }
     
@@ -261,6 +301,16 @@
     window.jamLoadAll = async function() { await loadAllData(); };
     window.jamGetAllDatos = async function() { return await obtenerTodosLosDatos(); };
     window.jamCombinarImportacion = function(dest, src, campo) { return combinarImportacion(dest, src, campo); };
+    window.jamRefrescarModuloActual = function(){
+        try {
+            if(currentModule === 'clientes') renderCrud('clientes','Clientes',['cedula','nombre','telefono','direccion','email']);
+            else if(currentModule === 'proveedores') renderCrud('proveedores','Proveedores',['rif','nombre','telefono','contacto','direccion']);
+            else if(currentModule === 'gastos') renderCrud('gastos','Gastos',['concepto','montoBs','categoria','fecha']);
+            else if(currentModule === 'empleados') renderCrud('empleados','Empleados',['cedula','nombre','cargo','salarioBs','fechaContrato']);
+            else if(currentModule === 'inventario') renderInventario();
+            else if(currentModule === 'ventas') sincronizarUIVenta();
+        } catch(e) { console.warn('refrescar modulo', e); }
+    };
     let currentModule = 'home', volverBloqueado = false, timeoutTitulo = null;
     const KIOSCO_KEY = 'jam_kiosco_ventas';
     let kioscoVentas = false;
@@ -1229,6 +1279,7 @@
         if(currentModule === 'ventas') guardarSesionVenta();
         
         // Cache current module DOM
+        limpiarCacheSiDatosSucios();
         cacheModuleDOM(currentModule);
         currentModule = m;
         localStorage.setItem('jam_last_module', m);

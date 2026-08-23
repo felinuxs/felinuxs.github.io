@@ -85,6 +85,7 @@ async function integrateRemoteData(remoteData){
         if(saveIDB){try{await saveIDB(st,result.lista);}catch(e){console.log('[P2P] IDB err:',e.message);}}
     }
     console.log('[P2P] Fusion: +'+totalAdded+' new, ~'+totalUpdated+' upd, ~'+totalSkipped+' skip');
+    try{ if(window.jamRefrescarModuloActual) window.jamRefrescarModuloActual(); }catch(e){}
     return{added:totalAdded,updated:totalUpdated,skipped:totalSkipped};
 }
 
