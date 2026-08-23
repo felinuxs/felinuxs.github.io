@@ -226,20 +226,16 @@ async function bidirectionalSync(){
         var localData=await getDatos();
         var syncPromise=new Promise(function(res,rej){
             var t=setTimeout(function(){rej(new Error('Timeout sync'));},20000);
-            var origHandler=_dc?_dc.onmessage:null;
-            if(_dc){
-                var oldOnMsg=_dc.onmessage;
-                _dc.onmessage=function(e){
-                    try{
-                        var msg=JSON.parse(e.data);
-                        if(msg.type==='sync'||msg.type==='ack'){
-                            handleMessage(msg);
-                            if(oldOnMsg)oldOnMsg(e);
-                            clearTimeout(t);res();
-                        }
-                    }catch(err){}
-                };
-            }
+            // Solo señala la finalización; el procesamiento del mensaje lo hace
+            // el handler permanente de setupDataChannel (handleMessage una sola vez).
+            var oldOnMsg=_dc?_dc.onmessage:null;
+            _dc.onmessage=function(e){
+                try{
+                    var msg=JSON.parse(e.data);
+                    if(msg.type==='sync'||msg.type==='ack'){clearTimeout(t);res();}
+                }catch(err){}
+                if(oldOnMsg)oldOnMsg(e);
+            };
         });
         send({type:'sync',data:localData});
         send({type:'sync-request'});

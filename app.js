@@ -262,6 +262,9 @@
     window.jamGetAllDatos = async function() { return await obtenerTodosLosDatos(); };
     window.jamCombinarImportacion = function(dest, src, campo) { return combinarImportacion(dest, src, campo); };
     let currentModule = 'home', volverBloqueado = false, timeoutTitulo = null;
+    const KIOSCO_KEY = 'jam_kiosco_ventas';
+    let kioscoVentas = false;
+    try { kioscoVentas = localStorage.getItem(KIOSCO_KEY) === '1'; } catch(e) {}
     let carrito = [], tipoPago = 'pago_movil', clienteSeleccionadoId = null, clienteInputText = '', totalVenta = 0;
     let productosSeleccionados = new Set(), selectAllChecked = false;
     let pagosDivididos = [{ metodo: 'efectivo_bs', monto: 0 }];
@@ -525,6 +528,10 @@
     empujarHistorial();
     window.addEventListener('popstate', async function(e) {
         empujarHistorial();
+        if (kioscoVentas) {
+            if (currentModule !== 'ventas') { currentModule = 'ventas'; renderVentas(); }
+            return;
+        }
         if (currentModule !== 'home') {
             if (window.backToHome) window.backToHome();
             return;
@@ -535,8 +542,12 @@
     // ==================== VENTAS ====================
     async function renderVentas(){
         let bloqueado = volverBloqueado, accent = D.config.theme;
+        // Pantalla única de Ventas (kiosco): sin Volver; candado rojo para salir.
+        const btnHeader = kioscoVentas
+            ? `<div id="btnKioscoCandado" class="kiosco-candado" title="Pantalla única activada: mantén presionado el candado 4 segundos para salir"><i class="fas fa-lock"></i></div>`
+            : `<div id="btnVolverModule" class="btn-back ${bloqueado?'btn-back-bloqueado':''}" onclick="${bloqueado?'':'backToHome()'}">${bloqueado?'<i class="fas fa-lock"></i> Bloqueado':'<i class="fas fa-arrow-left"></i> Volver'}</div>`;
         const html = `
-            <div class="page-header-fixed"><div class="module-header"><h2 id="tituloModule" class="module-title ${bloqueado?'module-title-bloqueado':''}" style="color:${accent}" onmousedown="iniciarBloqueo(this,'Ventas')" onmouseup="cancelarBloqueo()" onmouseleave="cancelarBloqueo()">Ventas</h2><div id="btnVolverModule" class="btn-back ${bloqueado?'btn-back-bloqueado':''}" onclick="${bloqueado?'':'backToHome()'}">${bloqueado?'<i class="fas fa-lock"></i> Bloqueado':'<i class="fas fa-arrow-left"></i> Volver'}</div></div></div>
+            <div class="page-header-fixed"><div class="module-header"><h2 id="tituloModule" class="module-title ${bloqueado?'module-title-bloqueado':''} ${kioscoVentas?'titulo-kiosco':''}" style="color:${accent}">Ventas</h2>${btnHeader}</div></div>
             <div class="page-container ventas-layout">
                 <div class="ventas-top">
                     <div class="cliente-search-wrap">
@@ -576,6 +587,7 @@
         `;
         document.getElementById('appRoot').innerHTML = html;
         if(volverBloqueado && document.getElementById('btnVolverModule')) document.getElementById('btnVolverModule').onclick = () => mostrarOverlayBloqueo();
+        conectarGestosKiosco();
         actualizarCarritoUI();
         sincronizarUIVenta();
         
@@ -1211,6 +1223,7 @@
     }
     
     window.navigateTo = m => {
+        if(kioscoVentas && m !== 'ventas') { mostrarAvisoKiosco(); return; }
         if(volverBloqueado && currentModule !== 'home') { mostrarOverlayBloqueo(); return; }
         if(currentModule === m) return;
         if(currentModule === 'ventas') guardarSesionVenta();
@@ -1252,6 +1265,7 @@
     }
     
     window.backToHome = () => {
+        if(kioscoVentas) { mostrarAvisoKiosco(); if(currentModule !== 'ventas') { currentModule = 'ventas'; renderVentas(); } return; }
         if(volverBloqueado) { mostrarOverlayBloqueo(); return; }
         if(currentModule === 'home') return;
         if(currentModule === 'ventas') guardarSesionVenta();
@@ -1282,6 +1296,80 @@
     };
     
     window.cancelarBloqueo = () => { if(timeoutTitulo){ clearTimeout(timeoutTitulo); timeoutTitulo = null; } };
+
+    // ==================== PANTALLA ÚNICA DE VENTAS (KIOSCO) ====================
+    // Se activa manteniendo presionado el título "Ventas" 4 s: el módulo queda
+    // fijado como única pantalla (sin Volver ni acceso a otros módulos).
+    // Persiste en localStorage (sobrevive reinicios y segundo plano). Se
+    // desactiva manteniendo presionado el candado rojo 4 s.
+    // Gesto táctil robusto: Pointer Events + captura de puntero (sobrevive a
+    // micro-deslizamientos), tolerancia 12 px, barra de progreso --kiosco-p,
+    // sin selección de texto ni menú contextual durante la pulsación.
+    function mostrarAvisoKiosco() {
+        const overlay = document.createElement('div'); overlay.className = 'modulo-bloqueado-overlay';
+        overlay.innerHTML = `<div class="modulo-bloqueado-mensaje"><i class="fas fa-lock" style="color:#ef4444"></i><p><strong>Pantalla única de Ventas</strong></p><p>Solo puedes usar este módulo. Mantén presionado el candado rojo por 4 segundos para salir.</p></div>`;
+        document.body.appendChild(overlay);
+        setTimeout(() => overlay.remove(), 2200);
+    }
+    function crearGestoMantener(el, ms, alCompletar, claseVisual) {
+        if(!el || el.dataset.holdBound) return;
+        el.dataset.holdBound = '1';
+        el.style.setProperty('--kiosco-p', '0%');
+        let timer = null, raf = null, x0 = 0, y0 = 0;
+        const pintar = () => {
+            const p = Math.min(100, ((Date.now() - el._holdInicio) / ms) * 100);
+            el.style.setProperty('--kiosco-p', p + '%');
+            if(p < 100) raf = requestAnimationFrame(pintar); else raf = null;
+        };
+        const limpiar = () => {
+            if(timer){ clearTimeout(timer); timer = null; }
+            if(raf){ cancelAnimationFrame(raf); raf = null; }
+            el.style.setProperty('--kiosco-p', '0%');
+            if(claseVisual) el.classList.remove(claseVisual);
+        };
+        const abajo = e => {
+            if(timer) return;
+            x0 = e.clientX; y0 = e.clientY; el._holdInicio = Date.now();
+            if(claseVisual) el.classList.add(claseVisual);
+            if(navigator.vibrate) navigator.vibrate(15);
+            try { el.setPointerCapture(e.pointerId); } catch(err) {}
+            if(e.pointerType !== 'mouse') e.preventDefault();
+            pintar();
+            timer = setTimeout(() => { limpiar(); alCompletar(); }, ms);
+        };
+        const mover = e => {
+            if(!timer) return;
+            if(Math.hypot(e.clientX - x0, e.clientY - y0) > 12) limpiar();
+        };
+        el.addEventListener('pointerdown', abajo);
+        el.addEventListener('pointermove', mover);
+        ['pointerup','pointercancel','lostpointercapture'].forEach(ev => el.addEventListener(ev, () => limpiar()));
+        el.addEventListener('contextmenu', e => e.preventDefault());
+    }
+    window.iniciarKioscoVentas = () => {
+        kioscoVentas = true;
+        try { localStorage.setItem(KIOSCO_KEY, '1'); } catch(e) {}
+        localStorage.setItem('jam_last_module', 'ventas');
+        renderVentas();
+        mostrarNotificacion('🔒 Pantalla única de Ventas ACTIVADA', 'error');
+        if(navigator.vibrate) navigator.vibrate([40,60,40]);
+    };
+    window.desactivarKioscoVentas = () => {
+        kioscoVentas = false;
+        try { localStorage.setItem(KIOSCO_KEY, '0'); } catch(e) {}
+        renderVentas();
+        mostrarNotificacion('🔓 Pantalla única DESACTIVADA', 'success');
+        if(navigator.vibrate) navigator.vibrate(30);
+    };
+    function conectarGestosKiosco() {
+        if(kioscoVentas) {
+            const c = document.getElementById('btnKioscoCandado');
+            if(c) crearGestoMantener(c, 4000, () => window.desactivarKioscoVentas(), 'kiosco-sostenido');
+        } else {
+            const t = document.getElementById('tituloModule');
+            if(t) crearGestoMantener(t, 4000, () => window.iniciarKioscoVentas(), 'titulo-sostenido');
+        }
+    }
     
     // ==================== DETECCIÓN DE ESCRITORIO ====================
     function esDesktop() { return window.innerWidth >= 1024; }
@@ -3361,6 +3449,13 @@
             });
         }
         if(verificarPruebaInicio()) return;
+        if(kioscoVentas) {
+            localStorage.setItem('jam_last_module', 'ventas');
+            const irKiosco = () => { currentModule = 'ventas'; renderVentas(); actualizarTasa(false); };
+            if(D.config.pin && D.config.pin.length === 4 && !sessionStorage.getItem('jam_pin_authed')) askPin(irKiosco);
+            else irKiosco();
+            return;
+        }
         const lastModule = localStorage.getItem('jam_last_module');
         if(lastModule && lastModule !== 'home' && lastModule !== '' && window.navigateTo) {
             if(D.config.pin && D.config.pin.length === 4) {
@@ -3390,4 +3485,11 @@
             actualizarModoLayout();
             if(currentModule === 'home' && document.activeElement?.id !== 'searchGlobalInput') renderHome();
         }, 300);
+    });
+
+    // Pantalla única de Ventas: al regresar de segundo plano siempre vuelve al módulo.
+    document.addEventListener('visibilitychange', () => {
+        if(!kioscoVentas) return;
+        if(document.hidden) guardarSesionVenta();
+        else if(currentModule !== 'ventas') { currentModule = 'ventas'; renderVentas(); }
     });

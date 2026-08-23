@@ -387,3 +387,15 @@ body.dark-mode{background:#000!important}
         .tuto-saltar{background:rgba(0,0,0,.08);color:inherit}
         .tuto-siguiente{background:var(--accent,#3b82f6);color:#fff}
         .tuto-inicial{display:flex;align-items:center;justify-content:center;height:100%}
+        .kiosco-candado{position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;border-radius:40px;padding:9px 16px;font-size:14px;background:#fee2e2;color:#dc2626;border:2px solid #ef4444;cursor:pointer;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:none;transition:transform .15s ease}
+        .kiosco-candado i{color:#dc2626;font-size:1.05rem;pointer-events:none}
+        body.dark-mode .kiosco-candado{background:rgba(239,68,68,.15);border-color:#ef4444}
+        body.dark-mode .kiosco-candado i{color:#fca5a5!important}
+        .kiosco-candado::after{content:'';position:absolute;left:0;bottom:0;height:3px;width:var(--kiosco-p,0%);background:#ef4444;border-radius:3px}
+        .kiosco-candado.kiosco-sostenido{transform:scale(1.12);animation:kiosco-pulso .9s ease-in-out infinite}
+        @keyframes kiosco-pulso{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.45)}50%{box-shadow:0 0 0 10px rgba(239,68,68,0)}}
+        .titulo-sostenido{background:rgba(220,38,38,.12);transform:scale(.97)}
+        .titulo-kiosco{cursor:default}
+        #tituloModule{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+        .module-title.titulo-sostenido{position:relative;overflow:hidden}
+        .module-title.titulo-sostenido::after{content:'';position:absolute;left:8px;bottom:4px;height:3px;width:calc(var(--kiosco-p,0%) - 16px);min-width:0;background:#dc2626;border-radius:3px}

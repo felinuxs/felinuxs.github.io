@@ -12,6 +12,11 @@
 (function () {
     'use strict';
 
+    // Si ya existe un puente nativo REAL (APK: inyectado por MainActivity vía
+    // addJavascriptInterface), NO sobreescribirlo: esta emulación es solo para
+    // navegador/PWA. En el APK este archivo queda inerte.
+    if (window.AndroidBridge) return;
+
     const DB_NAME = 'jampos-web-fs';
     const DB_STORE = 'handles';
     const SUB_CARPETA = 'JAMPOS';
