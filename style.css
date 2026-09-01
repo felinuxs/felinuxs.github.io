@@ -55,6 +55,20 @@
         input,select,textarea{border-radius:20px;padding:10px 14px;width:100%;outline:none}
         .modal-form{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:1000;padding:16px}
         .modal-form-content{max-width:460px;width:100%;border-radius:28px;padding:20px;max-height:85vh;overflow:auto}
+        /* SOLO popups: campos de entrada marcados con borde en reposo y color del tema al enfocar.
+           Las ventanas principales y módulos conservan sus bordes originales de tema. */
+        .modal-form-content input:not([type=range]):not([type=checkbox]), .modal-form-content select, .modal-form-content textarea,
+        .kpi-popup input:not([type=range]):not([type=checkbox]), .kpi-popup select, .kpi-popup textarea,
+        .backup-popup input:not([type=range]):not([type=checkbox]), .backup-popup select, .backup-popup textarea{border:2px solid;border-color:#1e1e1e!important}
+        body.dark-mode .modal-form-content input:not([type=range]):not([type=checkbox]), body.dark-mode .modal-form-content select, body.dark-mode .modal-form-content textarea,
+        body.dark-mode .kpi-popup input:not([type=range]):not([type=checkbox]), body.dark-mode .kpi-popup select, body.dark-mode .kpi-popup textarea,
+        body.dark-mode .backup-popup input:not([type=range]):not([type=checkbox]), body.dark-mode .backup-popup select, body.dark-mode .backup-popup textarea{border-color:#e0e0e0!important}
+        .modal-form-content input:focus, .modal-form-content select:focus, .modal-form-content textarea:focus,
+        .kpi-popup input:focus, .kpi-popup select:focus, .kpi-popup textarea:focus,
+        .backup-popup input:focus, .backup-popup select:focus, .backup-popup textarea:focus{border-color:var(--accent,#3b82f6)!important;box-shadow:0 0 0 2px color-mix(in srgb,var(--accent,#3b82f6) 30%,transparent)}
+        /* Barra deslizante de % ganancia (bloqueada por defecto, se desbloquea al mantener 2s) */
+        .gan-range{cursor:not-allowed;opacity:.45;transition:opacity .2s ease}
+        .gan-range:not(.gan-bloqueada){cursor:pointer;opacity:1;accent-color:var(--accent,#3b82f6)}
         .color-circle{width:40px;height:40px;border-radius:50%;cursor:pointer;box-shadow:0 2px 5px rgba(0,0,0,.2)}
         .ticket-line{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed #ddd}
         .scroll-area{overflow-y:auto;max-height:none}
@@ -387,15 +401,30 @@ body.dark-mode{background:#000!important}
         .tuto-saltar{background:rgba(0,0,0,.08);color:inherit}
         .tuto-siguiente{background:var(--accent,#3b82f6);color:#fff}
         .tuto-inicial{display:flex;align-items:center;justify-content:center;height:100%}
-        .kiosco-candado{position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;border-radius:40px;padding:9px 16px;font-size:14px;background:#fee2e2;color:#dc2626;border:2px solid #ef4444;cursor:pointer;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:none;transition:transform .15s ease}
+        .kiosco-candado{position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:1.05rem;color:#dc2626;cursor:pointer;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:none;transition:transform .15s ease;padding:6px 10px}
         .kiosco-candado i{color:#dc2626;font-size:1.05rem;pointer-events:none}
-        body.dark-mode .kiosco-candado{background:rgba(239,68,68,.15);border-color:#ef4444}
         body.dark-mode .kiosco-candado i{color:#fca5a5!important}
-        .kiosco-candado::after{content:'';position:absolute;left:0;bottom:0;height:3px;width:var(--kiosco-p,0%);background:#ef4444;border-radius:3px}
-        .kiosco-candado.kiosco-sostenido{transform:scale(1.12);animation:kiosco-pulso .9s ease-in-out infinite}
+        .kiosco-candado::after{content:'';position:absolute;left:0;bottom:0;height:3px;width:var(--kiosco-p,0%);background:#ef4444;border-radius:3px;box-shadow:0 0 6px rgba(239,68,68,.6)}
+        .kiosco-candado.kiosco-sostenido{transform:scale(1.15);animation:kiosco-pulso .9s ease-in-out infinite}
         @keyframes kiosco-pulso{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.45)}50%{box-shadow:0 0 0 10px rgba(239,68,68,0)}}
-        .titulo-sostenido{background:rgba(220,38,38,.12);transform:scale(.97)}
+        .kiosco-title-calc{display:inline-flex;align-items:center;font-size:.85rem;margin-left:10px;cursor:pointer;opacity:.7;transition:opacity .15s;position:relative;top:-1px}
+        .kiosco-title-calc:active{opacity:1}
+        .titulo-sostenido{background:rgba(220,38,38,.12);transform:scale(.97);animation:kiosco-pulso .9s ease-in-out infinite}
         .titulo-kiosco{cursor:default}
         #tituloModule{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
         .module-title.titulo-sostenido{position:relative;overflow:hidden}
-        .module-title.titulo-sostenido::after{content:'';position:absolute;left:8px;bottom:4px;height:3px;width:calc(var(--kiosco-p,0%) - 16px);min-width:0;background:#dc2626;border-radius:3px}
+        
+        .module-title.titulo-sostenido::after{content:'';position:absolute;left:8px;bottom:4px;height:3px;width:calc(var(--kiosco-p,0%) - 16px);min-width:0;background:#dc2626;border-radius:3px;box-shadow:0 0 6px rgba(220,38,38,.6)}
+
+        /* ==================== BACKUP INTELIGENTE ==================== */
+        .backup-popup-fondo{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;animation:fadeIn .3s}
+        .backup-popup{background:var(--card-bg,#fff);border-radius:16px;padding:24px;max-width:340px;width:90%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.3)}
+        .backup-popup-icono{font-size:2.5rem;margin-bottom:8px}
+        .backup-popup h3{margin:0 0 8px;font-size:1.1rem}
+        .backup-popup p{margin:0 0 16px;font-size:.85rem;opacity:.8}
+        .backup-popup-opciones{display:flex;flex-direction:column;gap:8px}
+        .backup-popup-btn{border:none;border-radius:12px;padding:12px;font-size:.9rem;cursor:pointer;font-weight:600}
+        .backup-popup-btn-principal{color:#fff}
+        .backup-popup-btn-secundario{background:rgba(59,130,246,.1);color:#3b82f6;border:1px solid rgba(59,130,246,.3)}
+        .backup-popup-btn-texto{background:none;color:#999;font-size:.8rem;font-weight:400}
+        @keyframes fadeIn{from{opacity:0}to{opacity:1}}

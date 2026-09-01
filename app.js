@@ -3,6 +3,112 @@
     const fmtPrecio = v => { let num = Number(v); if(isNaN(num)) num = 0; let p = num.toFixed(2).split('.'); p[0] = p[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.'); return p.join(','); };
     const fmtDolar = v => Number(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const parseBs = v => parseFloat(String(v).replace(/\./g, '').replace(',', '.')) || 0;
+    // ============ MÁSCARA Bs (entrada de derecha a izquierda, estilo caja registradora) ============
+    const fmtEnteroBs = s => s.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    function pintarBs(input) {
+        const dig = input.dataset.bsDig || '';
+        if (!dig) {
+            input.value = '';
+            input.dataset.bsPrev = '';
+            if (typeof document !== 'undefined' && document.activeElement === input) {
+                try { input.setSelectionRange(0, 0); } catch(e) {}
+            }
+            return;
+        }
+        const ent = fmtEnteroBs(dig.length > 2 ? (dig.slice(0, -2).replace(/^0+(?=\d)/, '') || '0') : '0');
+        const dec = dig.slice(-2).padStart(2, '0');
+        input.value = ent + ',' + dec;
+        input.dataset.bsPrev = input.value;
+        if (typeof document !== 'undefined' && document.activeElement === input) {
+            try { input.setSelectionRange(input.value.length, input.value.length); } catch(e) {}
+        }
+    }
+    function digDesdeTexto(s) {
+        const limpio = String(s).replace(/[^\d,]/g, '');
+        const idx = limpio.indexOf(',');
+        const ent = (idx !== -1 ? limpio.slice(0, idx) : limpio).replace(/^0+(?=\d)/, '') || '0';
+        const dec = idx !== -1 ? (limpio.slice(idx + 1).slice(0, 2) || '').padEnd(2, '0') : '';
+        let num = parseInt(ent, 10) * 100 + (dec ? parseInt(dec, 10) : 0);
+        if (!isFinite(num) || num < 0) num = 0;
+        num = Math.min(num, 99999999999999);
+        return String(num).slice(0, 14);
+    }
+    function sincerarDig(input) {
+        const t = input.value.split(',');
+        const ent = (t[0] || '').replace(/\D/g, '');
+        const dec = t.length > 1 ? (t[1] || '').replace(/\D/g, '').slice(0, 2) : '';
+        let num = parseInt(ent || '0', 10) * 100 + (dec ? parseInt(dec.padEnd(2, '0'), 10) : 0);
+        input.dataset.bsDig = (isFinite(num) && num > 0) ? String(Math.min(num, 99999999999999)).slice(0, 14) : '';
+        input.dataset.bsPrev = input.value;
+        input.dataset.bsReiniciar = '1';
+    }
+    function sincronizarBs(input) {
+        if (!input) return;
+        sincerarDig(input);
+    }
+    function fijarBs(input, numero) {
+        input.value = numero > 0 ? fmtPrecio(numero) : '';
+        sincronizarBs(input);
+    }
+    function reconciliarBs(input) {
+        if (input.dataset.bsOk !== '1' || input.dataset.bsPrev === undefined) return false;
+        const V = input.value, prev = input.dataset.bsPrev;
+        if (V === prev) return false;
+        let dig = input.dataset.bsDig || '';
+        let a = 0, L = Math.min(prev.length, V.length);
+        while (a < L && prev[a] === V[a]) a++;
+        let b = 0;
+        while (b < L - a && prev[prev.length - 1 - b] === V[V.length - 1 - b]) b++;
+        const ins = V.slice(a, V.length - b);
+        const del = prev.slice(a, prev.length - b);
+        if (ins && !del) {
+            if (ins.length === 1 && /^\d$/.test(ins)) {
+                if (input.dataset.bsReiniciar === '1') { dig = ''; input.dataset.bsReiniciar = '0'; }
+                if (dig.length < 14) dig += ins;
+            } else if (ins.length === 1 && (ins === ',' || ins === '.')) {
+                input.dataset.bsDig = dig;
+                pintarBs(input);
+                return true;
+            } else {
+                input.dataset.bsDig = digDesdeTexto(ins).slice(0, 14);
+                input.dataset.bsReiniciar = '0';
+                pintarBs(input);
+                return true;
+            }
+        } else if (del && !ins) {
+            const nDel = (del.match(/\d/g) || []).length;
+            if (nDel > 0) {
+                dig = dig.slice(0, Math.max(0, dig.length - nDel));
+                input.dataset.bsReiniciar = '0';
+            }
+        } else if (del && ins) {
+            if (ins.length === 1 && /^\d$/.test(ins) && (del.replace(/\D/g, '').length <= 1)) {
+                if (input.dataset.bsReiniciar === '1') { dig = ''; input.dataset.bsReiniciar = '0'; }
+                if (dig.length < 14) dig += ins;
+            } else {
+                input.dataset.bsDig = digDesdeTexto(V).slice(0, 14);
+                input.dataset.bsReiniciar = '0';
+                pintarBs(input);
+                return true;
+            }
+        } else {
+            return false;
+        }
+        input.dataset.bsDig = dig.slice(0, 14);
+        pintarBs(input);
+        return true;
+    }
+    function aplicarMascaraBs(input, placeholder) {
+        if (!input || input.dataset.bsOk) return;
+        input.dataset.bsOk = '1';
+        input.dataset.bsReiniciar = '1';
+        if (input.type !== 'text') input.type = 'text';
+        input.inputMode = 'decimal';
+        if (placeholder) input.placeholder = placeholder;
+        input.addEventListener('input', () => { if (reconciliarBs(input)) input.dispatchEvent(new Event('input', { bubbles: true })); });
+        input.addEventListener('paste', () => setTimeout(() => { input.dataset.bsDig = digDesdeTexto(input.value).slice(0, 14); input.dataset.bsReiniciar = '0'; pintarBs(input); }, 0));
+        if (input.value) sincronizarBs(input); else { input.dataset.bsDig = ''; input.dataset.bsPrev = ''; }
+    }
     const esOscuro = c => { let r=parseInt(c.slice(1,3),16), g=parseInt(c.slice(3,5),16), b=parseInt(c.slice(5,7),16); return(.299*r + .587*g + .114*b) < 128; };
     const normalizeText = s => (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
     const capitalizeWords = s => s.replace(/(^|[^\p{L}\p{N}])(\p{L})/gu, (m, p1, p2) => p1 + p2.toUpperCase());
@@ -150,7 +256,7 @@
     }
     
     // ==================== STORAGE KEYS ====================
-    const DATA_STORES = ['productos', 'clientes', 'proveedores', 'gastos', 'empleados', 'ventas', 'tasa_diaria'];
+    const DATA_STORES = ['productos', 'clientes', 'proveedores', 'gastos', 'empleados', 'ventas', 'tasa_diaria', 'tickets'];
     const STORAGE_KEYS = {
         productos: 'jam_pos_productos',
         clientes: 'jam_pos_clientes',
@@ -164,6 +270,206 @@
     };
 
     let _idbAvisada = false;
+    // ==================== DUAL PERSISTENCIA (IDB + Archivos JSON) ====================
+    // Cada escritura a IDB también guarda un archivo JSON como respaldo físico.
+    // Si IDB se borra (limpieza de caché, actualización), los datos se restauran
+    // automáticamente desde los archivos.
+    const DB_BACKUP_FOLDER = 'JAMPOS DB';
+
+    async function guardarBackupArchivo(store, data) {
+        if (!esAppNativa()) return;
+        if (!carpetaNativa || !carpetaNativa.uri) return;
+        try {
+            const json = JSON.stringify(data || []);
+            await puenteResultado(AndroidBridge.guardarArchivo(
+                DB_BACKUP_FOLDER + '/' + store + '.json',
+                'application/json',
+                utf8ToBase64(json)
+            ));
+        } catch (e) { console.warn('[DUAL] Error guardando backup ' + store + ':', e); }
+    }
+
+    async function cargarBackupArchivo(store) {
+        if (!esAppNativa()) return null;
+        if (!carpetaNativa || !carpetaNativa.uri) return null;
+        try {
+            const contenido = await puenteResultado(AndroidBridge.leerArchivo(DB_BACKUP_FOLDER + '/' + store + '.json'));
+            if (!contenido) return null;
+            return JSON.parse(contenido);
+        } catch (e) { console.warn('[DUAL] Error leyendo backup ' + store + ':', e); return null; }
+    }
+
+    async function restaurarDesdeArchivos() {
+        if (!esAppNativa()) return 0;
+        let restaurados = 0;
+        for (const store of DATA_STORES) {
+            try {
+                const desdeArchivo = await cargarBackupArchivo(store);
+                if (desdeArchivo && desdeArchivo.length > 0) {
+                    await saveToIDB(store, desdeArchivo);
+                    D[store] = desdeArchivo;
+                    restaurados++;
+                    console.log('[DUAL] Restaurado ' + store + ': ' + desdeArchivo.length + ' registros');
+                }
+            } catch (e) { console.warn('[DUAL] Error restaurando ' + store, e); }
+        }
+        if (restaurados > 0) {
+            mostrarNotificacion('✅ Base de datos restaurada desde respaldo (' + restaurados + ' tablas)', 'success');
+        }
+        return restaurados;
+    }
+
+    // ==================== BACKUP INTELIGENTE ====================
+    const BACKUP_CONFIG = {
+        UMBRALES: [5, 15, 30, 50, 100],
+        CARPETA_ROOT: 'JAM POS',
+        NOMBRE_BACKUP_GLOBAL: 'backup_completo.json',
+        NOMBRE_META: 'meta.json'
+    };
+
+    function obtenerContadores() {
+        const raw = localStorage.getItem('jampos_backup_contadores');
+        return raw ? JSON.parse(raw) : { productos:0, ventas:0, clientes:0, total:0 };
+    }
+    function guardarContadores(c) { localStorage.setItem('jampos_backup_contadores', JSON.stringify(c)); }
+
+    function registrarOperacion(store) {
+        const c = obtenerContadores();
+        if (store === 'productos' || store === 'clientes' || store === 'ventas') c[store]++;
+        c.total++;
+        guardarContadores(c);
+        if (BACKUP_CONFIG.UMBRALES.includes(c.total) && !sessionStorage.getItem('jampos_backup_popup_mostrado')) {
+            sessionStorage.setItem('jampos_backup_popup_mostrado', '1');
+            setTimeout(() => mostrarPopUpBackup(c.total), 2000);
+        }
+        // Auto-backup inmediato: APK escribe a carpeta, PWA guarda en IDB
+        if (esAppNativa()) {
+            autoBackupArchivo(store).catch(() => {});
+        }
+        // PWA: backup a IDB ya está cubierto por saveToIDB en saveItem
+    }
+
+    function mostrarPopUpBackup(totalOps) {
+        if (document.querySelector('.backup-popup-fondo')) return;
+        const accent = D.config.theme || '#3b82f6';
+        const esNativa = esAppNativa();
+        const fondo = document.createElement('div');
+        fondo.className = 'backup-popup-fondo';
+        fondo.innerHTML = `
+            <div class="backup-popup">
+                <div class="backup-popup-icono">💾</div>
+                <h3>Tus datos están creciendo</h3>
+                <p>Has realizado <strong>${totalOps} operaciones</strong> importantes. Recomendamos crear un respaldo para proteger tu información.</p>
+                <div class="backup-popup-opciones">
+                    ${esNativa ? `<button class="backup-popup-btn backup-popup-btn-principal" style="background:${accent}" onclick="window._ejecutarBackupLocal()">📁 Guardar en este dispositivo</button>` : `<button class="backup-popup-btn backup-popup-btn-principal" style="background:${accent}" onclick="window._ejecutarBackupDescarga()">📥 Descargar respaldo JSON</button>`}
+                    <button class="backup-popup-btn backup-popup-btn-secundario" onclick="window._ejecutarBackupGoogleDrive()">☁️ Guardar en Google Drive</button>
+                    <button class="backup-popup-btn backup-popup-btn-texto" onclick="window._cerrarPopUpBackup()">Recordar después</button>
+                </div>
+            </div>`;
+        document.body.appendChild(fondo);
+    }
+    window._cerrarPopUpBackup = () => { const el = document.querySelector('.backup-popup-fondo'); if (el) el.remove(); };
+
+    window._ejecutarBackupDescarga = () => { window._cerrarPopUpBackup(); exportarBackupJSON(); };
+
+    window._ejecutarBackupLocal = async () => {
+        window._cerrarPopUpBackup();
+        if (!esAppNativa()) return;
+        mostrarNotificacion('⏳ Creando respaldo...', 'info');
+        try {
+            const todos = await obtenerTodosLosDatos();
+            AndroidBridge.guardarArchivoDirecto(
+                BACKUP_CONFIG.NOMBRE_BACKUP_GLOBAL,
+                utf8ToBase64(JSON.stringify(todos, null, 2))
+            );
+            for (const store of DATA_STORES) {
+                AndroidBridge.guardarArchivoDirecto(
+                    'modulos/' + store + '.json',
+                    utf8ToBase64(JSON.stringify(D[store] || [], null, 2))
+                );
+            }
+            AndroidBridge.guardarArchivoDirecto(
+                BACKUP_CONFIG.NOMBRE_META,
+                utf8ToBase64(JSON.stringify({
+                    fecha: new Date().toISOString(), version: APP_VERSION || '0.1.3',
+                    dispositivo: 'actual', operaciones: obtenerContadores()
+                }, null, 2))
+            );
+            mostrarNotificacion('✅ Respaldo creado en /JAM POS/', 'success');
+        } catch (e) { mostrarNotificacion('❌ Error al crear respaldo: ' + e.message, 'error'); }
+    };
+
+    window._ejecutarBackupGoogleDrive = () => {
+        window._cerrarPopUpBackup();
+        mostrarNotificacion('ℹ️ Google Drive próximamente. Usa "Descargar" y sube el archivo manualmente.', 'info');
+        exportarBackupJSON();
+    };
+
+    async function autoBackupArchivo(store) {
+        if (!esAppNativa()) return;
+        if (!D[store] || D[store].length === 0) return;
+        try {
+            const ok = AndroidBridge.guardarArchivoDirecto(
+                'modulos/' + store + '.json',
+                utf8ToBase64(JSON.stringify(D[store], null, 2))
+            );
+            if (!ok || !ok.startsWith('ok')) {
+                console.warn('[BACKUP] Error auto-backup ' + store + ':', ok);
+            }
+        } catch (e) { console.warn('[BACKUP] Error auto-backup ' + store, e); }
+    }
+
+    function mostrarPopUpRestaurar(fecha, ops) {
+        if (document.querySelector('.backup-popup-fondo')) return;
+        const accent = D.config.theme || '#3b82f6';
+        const fechaCorta = fecha ? new Date(fecha).toLocaleDateString('es-VE') : 'desconocida';
+        const fondo = document.createElement('div');
+        fondo.className = 'backup-popup-fondo';
+        fondo.innerHTML = `
+            <div class="backup-popup">
+                <div class="backup-popup-icono">📂</div>
+                <h3>Respaldo detectado</h3>
+                <p>Se encontró un respaldo en <strong>/JAM POS/</strong> del <strong>${fechaCorta}</strong> con ${ops || '?'} operaciones. ¿Deseas restaurarlo?</p>
+                <div class="backup-popup-opciones">
+                    <button class="backup-popup-btn backup-popup-btn-principal" style="background:${accent}" onclick="window._confirmarRestaurar(true)">✅ Sí, restaurar</button>
+                    <button class="backup-popup-btn backup-popup-btn-secundario" onclick="window._confirmarRestaurar(false)">❌ No, empezar limpio</button>
+                </div>
+            </div>`;
+        document.body.appendChild(fondo);
+    }
+    window._confirmarRestaurar = async (restaurar) => {
+        window._cerrarPopUpBackup();
+        if (restaurar) {
+            const ok = await autoRestoreDesdeCarpeta();
+            if (!ok) mostrarNotificacion('⚠️ No se pudo restaurar el respaldo', 'error');
+        }
+    };
+
+    async function autoRestoreDesdeCarpeta() {
+        if (!esAppNativa()) return false;
+        try {
+            const contenido = await puenteResultado(AndroidBridge.leerArchivo(
+                BACKUP_CONFIG.CARPETA_ROOT + '/' + BACKUP_CONFIG.NOMBRE_BACKUP_GLOBAL
+            ));
+            if (!contenido) return false;
+            const data = JSON.parse(contenido);
+            let restaurados = 0;
+            for (const store of DATA_STORES) {
+                if (data[store] && data[store].length > 0) {
+                    D[store] = data[store];
+                    try { await saveToIDB(store, data[store]); } catch(e) {}
+                    restaurados++;
+                }
+            }
+            if (data.config) { D.config = { ...D.config, ...data.config }; saveConfig(); }
+            if (restaurados > 0) {
+                mostrarNotificacion('✅ Respaldo restaurado desde /JAM POS/ (' + restaurados + ' tablas)', 'success');
+                return true;
+            }
+        } catch (e) { console.warn('[BACKUP] Error auto-restore:', e); }
+        return false;
+    }
+
     function avisarIDBCaida(err){
         if (_idbAvisada) return;
         _idbAvisada = true;
@@ -204,7 +510,7 @@
     async function saveToIDB(store, data) {
         datosSucios = true;
         const db = await abrirBaseDatos();
-        return new Promise((resolve, reject) => {
+        const resultado = await new Promise((resolve, reject) => {
             const tx = db.transaction(store, 'readwrite');
             const obj = tx.objectStore(store);
             obj.clear();
@@ -216,6 +522,8 @@
             tx.oncomplete = () => { db.close(); resolve(); };
             tx.onerror = e => { db.close(); reject(e.target.error); };
         });
+        guardarBackupArchivo(store, data);
+        return resultado;
     }
     async function loadFromIDB(store) {
         const db = await abrirBaseDatos();
@@ -252,6 +560,7 @@
             const i = D[store].findIndex(x => x.id === item.id);
             if (i !== -1) D[store][i] = item; else D[store].push(item);
             try { await saveToIDB(store, D[store]); } catch(e) { console.warn('IDB save error', e); avisarIDBCaida(e); }
+            registrarOperacion(store);
         } else {
             const items = loadFromStorage(key, []);
             const idx = items.findIndex(x => x.id === item.id);
@@ -338,7 +647,7 @@
     }
     
     async function loadAllData(){
-        leerCarpetaNativa();
+        await leerCarpetaNativa();
         D.productos = await getAll('productos');
         D.clientes = await getAll('clientes');
         D.proveedores = await getAll('proveedores');
@@ -346,6 +655,44 @@
         D.empleados = await getAll('empleados');
         D.ventas = await getAll('ventas');
         D.tasaDiaria = await getAll('tasa_diaria');
+
+        // Dual persistencia: si IDB vino vacío, restaurar desde archivos
+        if (esAppNativa()) {
+            let restaurado = false;
+            for (const store of DATA_STORES) {
+                if (D[store] && D[store].length === 0) {
+                    const desdeArchivo = await cargarBackupArchivo(store);
+                    if (desdeArchivo && desdeArchivo.length > 0) {
+                        D[store] = desdeArchivo;
+                        try { await saveToIDB(store, desdeArchivo); } catch(e) {}
+                        restaurado = true;
+                        console.log('[DUAL] Auto-restaurado ' + store + ': ' + desdeArchivo.length + ' registros');
+                    }
+                }
+            }
+            if (restaurado) mostrarNotificacion('✅ Base de datos restaurada automáticamente desde respaldo', 'success');
+        }
+
+        // Backup inteligente: detectar carpeta JAM POS y restaurar si existe
+        if (esAppNativa()) {
+            try {
+                const metaRaw = await puenteResultado(AndroidBridge.leerArchivo(
+                    BACKUP_CONFIG.CARPETA_ROOT + '/' + BACKUP_CONFIG.NOMBRE_META
+                ));
+                if (metaRaw) {
+                    const meta = JSON.parse(metaRaw);
+                    const totalLocal = (D.productos||[]).length + (D.clientes||[]).length + (D.ventas||[]).length;
+                    if (totalLocal === 0) {
+                        const restaurado = await autoRestoreDesdeCarpeta();
+                        if (!restaurado) {
+                            const ops = meta.operaciones ? meta.operaciones.total : '?';
+                            mostrarPopUpRestaurar(meta.fecha, ops);
+                        }
+                    }
+                }
+            } catch(e) { console.log('[BACKUP] No se detectó carpeta JAM POS previa'); }
+        }
+
         const savedConfig = localStorage.getItem(STORAGE_KEYS.config);
         if (savedConfig) try { D.config = { ...D.config, ...JSON.parse(savedConfig) }; } catch(e) {}
         if(!D.config.backgroundMode) D.config.backgroundMode = 'light';
@@ -494,6 +841,10 @@
                 const nuevoBs = Math.round(p.costoRealUsd * tasa * 100) / 100;
                 if(Math.abs(nuevoBs - p.costoRealBs) > 0.01) { p.costoRealBs = nuevoBs; cambios++; }
             }
+            if(p.costoNetoUsd && p.costoNetoUsd > 0) {
+                const nuevoBs = Math.round(p.costoNetoUsd * tasa * 100) / 100;
+                if(Math.abs(nuevoBs - (p.costoNetoBs || 0)) > 0.01) { p.costoNetoBs = nuevoBs; cambios++; }
+            }
             if(p.precioDescuentoUsd && p.precioDescuentoUsd > 0) {
                 const nuevoBs = Math.round(p.precioDescuentoUsd * tasa * 100) / 100;
                 if(Math.abs(nuevoBs - (p.precioDescuentoBs || 0)) > 0.01) { p.precioDescuentoBs = nuevoBs; cambios++; }
@@ -520,6 +871,15 @@
     // Escuchar cambios del sistema
     const mqModoOscuro = window.matchMedia('(prefers-color-scheme: dark)');
     mqModoOscuro.addEventListener('change', () => aplicarModoSistema());
+
+    // Llamado desde Kotlin cuando el tema del sistema cambia (onConfigurationChanged)
+    window.jamSystemThemeChanged = function(modo) {
+        if(!D.config.autoOscuro) return;
+        if(D.config.backgroundMode !== modo) {
+            D.config.backgroundMode = modo;
+            saveConfig();
+        }
+    };
     
     // Control de navegacion movil: el botón atrás NUNCA agota el historial (así el navegador no puede cerrar la app).
     // En móviles Chrome/Safari el navegador ignora beforeunload y cierra la pestaña en silencio cuando el historial se agota;
@@ -593,11 +953,12 @@
     async function renderVentas(){
         let bloqueado = volverBloqueado, accent = D.config.theme;
         // Pantalla única de Ventas (kiosco): sin Volver; candado rojo para salir.
+        const calcIcon = kioscoVentas ? `<span id="btnKioscoCalc" class="kiosco-title-calc" title="Calculadora USD/Bs"><i class="fas fa-calculator"></i></span>` : '';
         const btnHeader = kioscoVentas
             ? `<div id="btnKioscoCandado" class="kiosco-candado" title="Pantalla única activada: mantén presionado el candado 4 segundos para salir"><i class="fas fa-lock"></i></div>`
             : `<div id="btnVolverModule" class="btn-back ${bloqueado?'btn-back-bloqueado':''}" onclick="${bloqueado?'':'backToHome()'}">${bloqueado?'<i class="fas fa-lock"></i> Bloqueado':'<i class="fas fa-arrow-left"></i> Volver'}</div>`;
         const html = `
-            <div class="page-header-fixed"><div class="module-header"><h2 id="tituloModule" class="module-title ${bloqueado?'module-title-bloqueado':''} ${kioscoVentas?'titulo-kiosco':''}" style="color:${accent}">Ventas</h2>${btnHeader}</div></div>
+            <div class="page-header-fixed"><div class="module-header"><h2 id="tituloModule" class="module-title ${bloqueado?'module-title-bloqueado':''} ${kioscoVentas?'titulo-kiosco':''}" style="color:${accent}">Ventas${calcIcon}</h2>${btnHeader}</div></div>
             <div class="page-container ventas-layout">
                 <div class="ventas-top">
                     <div class="cliente-search-wrap">
@@ -629,7 +990,7 @@
                         <option value="pago_movil">📱 Pago Móvil</option>
                         <option value="pago_dividido">🔀 Pago dividido</option>
                     </select></div>
-                    <div id="cambioContainer" style="display:none"><div class="grid grid-cols-2 gap-2 mb-2"><input type="number" id="montoPagado" placeholder="Monto recibido (Bs)" class="border rounded-xl p-2"><button id="calcularCambio" class="btn-azul-redondeado btn-redondeado py-2">Calcular cambio</button></div><div id="cambioMensaje" class="text-green-600 text-sm mb-2"></div></div>
+                    <div id="cambioContainer" style="display:none"><div class="grid grid-cols-2 gap-2 mb-2"><input type="text" inputmode="decimal" id="montoPagado" placeholder="Monto recibido (Bs)" class="border rounded-xl p-2"><button id="calcularCambio" class="btn-azul-redondeado btn-redondeado py-2">Calcular cambio</button></div><div id="cambioMensaje" class="text-green-600 text-sm mb-2"></div></div>
                     <div id="pagoDivididoContainer" style="display:none"><div id="pagosDivididosLista"></div><button id="agregarPagoDividido" class="btn-add-split mt-1"><i class="fas fa-plus"></i> Agregar método</button><div id="splitTotalStatus" class="split-total-match mt-2"></div></div>
                     <button id="finalizarVenta" class="btn-finalizar-venta">✅ Finalizar Venta</button>
                 </div>
@@ -674,6 +1035,8 @@
         document.getElementById('cambioContainer').style.display = tipoPago === 'efectivo_bs' ? 'block' : 'none';
         document.getElementById('pagoDivididoContainer').style.display = tipoPago === 'pago_dividido' ? 'block' : 'none';
         if(document.getElementById('calcularCambio')) document.getElementById('calcularCambio').onclick = () => calcularCambio();
+        const montoPagadoInput = document.getElementById('montoPagado');
+        if(montoPagadoInput) aplicarMascaraBs(montoPagadoInput);
         renderPagosDivididosUI();
         document.getElementById('agregarPagoDividido').onclick = () => {
             pagosDivididos.push({ metodo: 'efectivo_bs', monto: 0 });
@@ -697,6 +1060,7 @@
         }
         modal.innerHTML = `<div class="modal-form-content"><h3 class="text-xl font-bold mb-4">${id ? 'Editar' : 'Nuevo'} ${store === 'clientes' ? 'Cliente' : 'Elemento'}</h3>${camposHtml}<div class="flex gap-3 mt-4"><button id="guardarCrud" class="btn-azul-redondeado btn-redondeado flex-1 py-2 font-bold">Guardar</button><button id="cancelarCrud" class="btn-redondeado flex-1 py-2 bg-gray-200">Cancelar</button></div></div>`;
         document.body.appendChild(modal);
+        for(let i=0; i<campos.length; i++) if(campos[i] === 'montoBs' || campos[i] === 'salarioBs') aplicarMascaraBs(document.getElementById(`field${i}`));
         document.getElementById('cancelarCrud').onclick = () => modal.remove();
         document.getElementById('guardarCrud').onclick = async () => {
             const requeridos = { clientes:['nombre'], proveedores:['nombre'], gastos:['concepto'], empleados:['nombre'] };
@@ -750,7 +1114,7 @@
         let norm = normalizeText(term);
         let filt = D.productos.filter(p => normalizeText(p.nombre).includes(norm) || (p.codigo && normalizeText(p.codigo).includes(norm)));
         if(!filt.length){ sug.classList.add('hidden'); return; }
-        sug.innerHTML = filt.map(p => `<div class="sugerencia-item" onclick="agregarAlCarrito('${p.id}')">${escapeHtml(p.nombre)} | ${fmtPrecio(p.precioVentaBs)} Bs | Stock: ${p.stock}</div>`).join('');
+        sug.innerHTML = filt.map(p => `<div class="sugerencia-item" onclick="agregarAlCarrito('${p.id}')">${escapeHtml(p.nombre)} | ${fmtPrecio(p.precioVentaBs)} Bs / $${fmtPrecio(p.precioVentaUsd)} | Stock: ${p.stock}</div>`).join('');
         sug.classList.remove('hidden');
     }
     
@@ -808,7 +1172,7 @@
         if(!prod) return;
         agregarProductoAlCarrito(prod);
         let bp = document.getElementById('buscarProducto');
-        if(bp){ bp.value = '';             document.getElementById('sugerencias')?.classList.add('hidden'); }
+        if(bp){ bp.value = ''; document.getElementById('sugerencias')?.classList.add('hidden'); }
         guardarSesionVenta();
     };
     
@@ -889,6 +1253,47 @@
         modal.onclick = e => { if(e.target === modal) limpiarYCerrar(); };
     };
     
+    function abrirEditorCantidad(i) {
+        const it = carrito[i];
+        if(!it) return;
+        const stock = it.stock || 999;
+        let modal = document.createElement('div');
+        modal.className = 'modal-form';
+        modal.innerHTML = `<div class="modal-form-content" style="max-width:300px">
+            <h3 class="text-lg font-bold mb-1" style="color:var(--accent,#3b82f6)">📦 Cantidad</h3>
+            <p class="text-sm mb-3 opacity-70">${escapeHtml(it.nombre)}</p>
+            <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:12px">
+                <button id="edQtyMinus" class="btn-redondeado" style="width:48px;height:48px;font-size:24px;display:flex;align-items:center;justify-content:center">−</button>
+                <input id="edQtyInput" type="number" min="1" max="${stock}" value="${it.cantidad}" style="width:70px;text-align:center;font-size:24px;font-weight:bold;border:2px solid var(--accent,#3b82f6);border-radius:12px;padding:6px">
+                <button id="edQtyPlus" class="btn-redondeado" style="width:48px;height:48px;font-size:24px;display:flex;align-items:center;justify-content:center">+</button>
+            </div>
+            <div style="display:flex;gap:8px;margin-bottom:8px;justify-content:center">
+                ${[1,2,3,5,10].map(n => `<button class="edQtyQuick btn-redondeado" data-val="${n}" style="padding:6px 14px;font-size:13px;${n===it.cantidad?'background:var(--accent,#3b82f6);color:#fff':''}">${n}</button>`).join('')}
+            </div>
+            <p class="text-xs text-center opacity-50 mb-3">Stock disponible: ${stock}</p>
+            <div style="display:flex;gap:8px">
+                <button id="edQtyDelete" class="btn-redondeado" style="flex:1;padding:10px;background:#ef4444;color:#fff">🗑 Eliminar</button>
+                <button id="edQtyConfirm" class="btn-redondeado" style="flex:1;padding:10px;background:var(--accent,#3b82f6);color:#fff">✓ Listo</button>
+            </div>
+        </div>`;
+        document.body.appendChild(modal);
+        const inp = modal.querySelector('#edQtyInput');
+        const setVal = v => { inp.value = Math.max(1, Math.min(stock, v)); modal.querySelectorAll('.edQtyQuick').forEach(b => b.style.background = parseInt(b.dataset.val)===parseInt(inp.value) ? 'var(--accent,#3b82f6)' : ''); modal.querySelectorAll('.edQtyQuick').forEach(b => b.style.color = parseInt(b.dataset.val)===parseInt(inp.value) ? '#fff' : ''); };
+        modal.querySelector('#edQtyMinus').onclick = () => setVal(parseInt(inp.value) - 1);
+        modal.querySelector('#edQtyPlus').onclick = () => setVal(parseInt(inp.value) + 1);
+        modal.querySelectorAll('.edQtyQuick').forEach(b => b.onclick = () => setVal(parseInt(b.dataset.val)));
+        inp.addEventListener('input', () => setVal(parseInt(inp.value) || 1));
+        modal.querySelector('#edQtyDelete').onclick = () => { carrito.splice(i, 1); actualizarCarritoUI(); guardarSesionVenta(); modal.remove(); };
+        modal.querySelector('#edQtyConfirm').onclick = () => {
+            const nv = parseInt(inp.value) || 1;
+            if(nv <= 0) { carrito.splice(i, 1); }
+            else { it.cantidad = nv; }
+            actualizarCarritoUI(); guardarSesionVenta(); modal.remove();
+        };
+        modal.onclick = e => { if(e.target === modal) modal.remove(); };
+    }
+    window.abrirEditorCantidad = abrirEditorCantidad;
+    
     function actualizarCarritoUI(){
         let cont = document.getElementById('carritoLista'), sub = document.getElementById('subtotal'), tot = document.getElementById('total'), ivaSpan = document.getElementById('iva');
         if(!cont) return;
@@ -905,9 +1310,20 @@
             let precioU = (it.precioUsadoBs != null && it.precioUsadoBs > 0) ? it.precioUsadoBs : it.precioVentaBs;
             let subit = precioU * it.cantidad;
             suma += subit;
-            html += `<div class="flex justify-between text-sm py-1"><div>${escapeHtml(it.nombre)} x${it.cantidad}${it.precioOferta ? ' <span class="text-xs" style="color:#10b981">(Oferta)</span>' : ''}</div><div>${fmtPrecio(subit)} Bs <button onclick="eliminarDelCarrito(${i})" class="text-red-500 ml-2"><i class="fas fa-trash"></i></button></div></div>`;
+            html += `<div class="carrito-item" data-i="${i}" style="position:relative;overflow:hidden;cursor:pointer"><div style="position:absolute;left:0;top:0;bottom:0;width:0;background:var(--accent,#3b82f6);opacity:0.15;transition:width 2s linear" class="lp-bar"></div><div class="flex justify-between text-sm py-1" style="position:relative;z-index:1"><div>${escapeHtml(it.nombre)} x${it.cantidad}${it.precioOferta ? ' <span class="text-xs" style="color:#10b981">(Oferta)</span>' : ''}</div><div>${fmtPrecio(subit)} Bs <button onclick="event.stopPropagation();eliminarDelCarrito(${i})" class="text-red-500 ml-2"><i class="fas fa-trash"></i></button></div></div></div>`;
         });
         cont.innerHTML = html;
+        cont.querySelectorAll('.carrito-item').forEach(el => {
+            let timer = null, idx = parseInt(el.dataset.i), bar = el.querySelector('.lp-bar');
+            const start = () => { bar.style.width = '100%'; timer = setTimeout(() => { bar.style.width = '0'; abrirEditorCantidad(idx); }, 2000); };
+            const cancel = () => { clearTimeout(timer); bar.style.width = '0'; };
+            el.addEventListener('touchstart', start, { passive: true });
+            el.addEventListener('touchend', cancel, { passive: true });
+            el.addEventListener('touchmove', cancel, { passive: true });
+            el.addEventListener('mousedown', start);
+            el.addEventListener('mouseup', cancel);
+            el.addEventListener('mouseleave', cancel);
+        });
         let pctIva = D.config.ivaPorcentaje / 100;
         let iva = D.config.ivaActivo ? suma * pctIva : 0, total = suma + iva;
         sub.innerText = `${fmtPrecio(suma)} Bs`;
@@ -927,10 +1343,11 @@
             suma += parseFloat(p.monto) || 0;
             return `<div class="split-payment-row">
                 <select onchange="cambiarMetodoSplit(${i},this.value)">${metodos.map(m => `<option value="${m}" ${m===p.metodo?'selected':''}>${etiquetas[m]}</option>`).join('')}</select>
-                <input type="number" step="any" min="0" value="${p.monto||''}" placeholder="Monto Bs" oninput="cambiarMontoSplit(${i},this.value)">
+                <input type="text" inputmode="decimal" data-i="${i}" value="${fmtPrecio(p.monto||0)}" placeholder="Monto Bs">
                 ${pagosDivididos.length > 1 ? `<button class="remove-split" onclick="eliminarSplit(${i})"><i class="fas fa-times"></i></button>` : ''}
             </div>`;
         }).join('');
+        cont.querySelectorAll('input[data-i]').forEach(inp => { aplicarMascaraBs(inp); inp.addEventListener('input', () => cambiarMontoSplit(parseInt(inp.dataset.i,10), inp.dataset.bsDig || '0')); });
         let totalPagos = suma;
         actualizarSplitStatus(totalPagos);
     }
@@ -943,11 +1360,11 @@
         status.innerHTML = `Total asignado: ${fmtPrecio(totalPagos)} Bs ${Math.abs(diff) < 0.01 ? '✅' : `(faltan ${fmtPrecio(Math.abs(diff))} Bs)`}`;
     }
     window.cambiarMetodoSplit = (i, v) => { pagosDivididos[i].metodo = v; actualizarSplitStatus(pagosDivididos.reduce((s,p)=>s+(parseFloat(p.monto)||0),0)); };
-    window.cambiarMontoSplit = (i, v) => { pagosDivididos[i].monto = parseFloat(v) || 0; actualizarSplitStatus(pagosDivididos.reduce((s,p)=>s+(parseFloat(p.monto)||0),0)); };
+    window.cambiarMontoSplit = (i, v) => { pagosDivididos[i].monto = (parseInt(String(v||'0').replace(/\D/g,''),10)||0) / 100; actualizarSplitStatus(pagosDivididos.reduce((s,p)=>s+(parseFloat(p.monto)||0),0)); };
     window.eliminarSplit = (i) => { if(pagosDivididos.length > 1) { pagosDivididos.splice(i,1); renderPagosDivididosUI(); } };
     
     function calcularCambio(){
-        let pagado = parseFloat(document.getElementById('montoPagado')?.value || '0');
+        let pagado = parseBs(document.getElementById('montoPagado')?.value || '0');
         let cambio = document.getElementById('cambioMensaje');
         if(!isNaN(pagado) && pagado >= totalVenta) cambio.innerHTML = `Cambio: ${fmtPrecio(pagado - totalVenta)} Bs`;
         else cambio.innerHTML = 'Monto insuficiente';
@@ -958,7 +1375,7 @@
         if(!(await jamConfirm(`¿Desea finalizar la venta por ${fmtPrecio(totalVenta)} Bs?`))) return;
         let pagado = totalVenta, detallePagos = null;
         if(tipoPago === 'efectivo_bs') {
-            pagado = parseFloat(document.getElementById('montoPagado')?.value);
+            pagado = parseBs(document.getElementById('montoPagado')?.value);
             if(isNaN(pagado) || pagado < totalVenta) { alert("Monto insuficiente"); return; }
         } else if(tipoPago === 'pago_dividido') {
             pagado = pagosDivididos.reduce((s,p) => s + (parseFloat(p.monto) || 0), 0);
@@ -989,13 +1406,15 @@
             if(nombreIngresado) clienteNombre = nombreIngresado;
         }
         
-        let itemsVenta = carrito.map(i => {
-            const precioU = (i.precioUsadoBs != null && i.precioUsadoBs > 0) ? i.precioUsadoBs : i.precioVentaBs;
-            const precioUsd = (i.precioUsadoUsd != null && i.precioUsadoUsd > 0) ? i.precioUsadoUsd : i.precioVentaUsd;
-            const costoUsd = parseFloat(i.costoRealUsd) || 0;
-            const costoBsActual = costoUsd > 0 ? Math.round(costoUsd * (D.config.dolarRate || 1) * 100) / 100 : (i.costoRealBs || 0);
-            return { idProducto: i.id, nombre: i.nombre, cantidad: i.cantidad, precioUnitario: precioU, precioUsd: precioUsd, costoUnitario: costoBsActual, subtotal: precioU * i.cantidad, ganancia: (precioU - costoBsActual) * i.cantidad, precioOferta: !!i.precioOferta };
-        });
+    let itemsVenta = carrito.map(i => {
+        const precioU = (i.precioUsadoBs != null && i.precioUsadoBs > 0) ? i.precioUsadoBs : i.precioVentaBs;
+        const precioUsd = (i.precioUsadoUsd != null && i.precioUsadoUsd > 0) ? i.precioUsadoUsd : i.precioVentaUsd;
+        const costoUsd = parseFloat(i.costoRealUsd) || 0;
+        const descProv = (typeof i.descuentoProveedor === 'number' && i.descuentoProveedor > 0) ? i.descuentoProveedor : 0;
+        const costoNetoUsdCalc = (typeof i.costoNetoUsd === 'number' && i.costoNetoUsd > 0) ? i.costoNetoUsd : (descProv > 0 ? Math.round(costoUsd * (1 - descProv / 100) * 100) / 100 : costoUsd);
+        const costoBsActual = costoNetoUsdCalc > 0 ? Math.round(costoNetoUsdCalc * (D.config.dolarRate || 1) * 100) / 100 : (i.costoNetoBs || i.costoRealBs || 0);
+        return { idProducto: i.id, nombre: i.nombre, cantidad: i.cantidad, precioUnitario: precioU, precioUsd: precioUsd, costoUnitario: costoBsActual, subtotal: precioU * i.cantidad, ganancia: (precioU - costoBsActual) * i.cantidad, precioOferta: !!i.precioOferta };
+    });
         let subtotalVenta = itemsVenta.reduce((s,i) => s + i.subtotal, 0);
         let ivaVenta = D.config.ivaActivo ? subtotalVenta * (D.config.ivaPorcentaje / 100) : 0;
         let gananciaTotal = itemsVenta.reduce((s,i) => s + i.ganancia, 0);
@@ -1081,7 +1500,7 @@
         t += eq + '\n';
         t += cen(textoFechaVenta(venta)) + '\n';
         t += cen('Ticket: ' + venta.id) + '\n';
-        t += 'Cliente: ' + esc(venta.cliente) + '\n';
+        t += 'Cliente: ' + esc(venta.cliente) + (venta.clienteId ? (() => { const _cl = D.clientes.find(c => c.id === venta.clienteId); return _cl && _cl.cedula ? ' (' + esc(_cl.cedula) + ')' : ''; })() : '') + '\n';
         t += eq + '\n';
         // Items: nombre a izq, precio a der
         venta.items.forEach(item => {
@@ -1105,6 +1524,8 @@
             t += padR('FORMA DE PAGO:', W - 10) + padL(formasPago[venta.tipoPago]||venta.tipoPago, 10) + '\n';
         }
         t += eq + '\n';
+        t += cen('Este documento no constituye') + '\n';
+        t += cen('factura fiscal') + '\n';
         t += cen('GRACIAS POR SU COMPRA!') + '\n';
         t += cen(D.config.empresa.nombre) + '\n';
         // Abrir ventana para impresion con estilo minimo
@@ -1132,7 +1553,7 @@
             let detalleHtml = venta.detallePagos.map(d => `<div class="ticket-line" style="font-size:9px"><span>${etiqMetodo[d.metodo]||d.metodo}</span><span>${fmtPrecio(d.monto)} Bs</span></div>`).join('');
             formaPagoHtml = `<div class="ticket-line" style="font-weight:bold"><span>FORMA DE PAGO</span><span>PAGO DIVIDIDO</span></div>${detalleHtml}`;
         }
-        return `<div class="ticket-virtual" id="ticketParaImprimir">${logoHtml}<div class="header"><h3>${escapeHtml(D.config.empresa.nombre)}</h3>${D.config.empresa.direccion ? `<p>${escapeHtml(D.config.empresa.direccion)}</p>` : ''}${D.config.empresa.telefono ? `<p>📞 ${escapeHtml(D.config.empresa.telefono)}</p>` : ''}${D.config.empresa.rif ? `<p>RIF: ${escapeHtml(D.config.empresa.rif)}</p>` : ''}<p>${textoFechaVenta(venta)}</p>${mostrarTasa && venta.dolarRate ? `<p>Tasa: 1 USD = ${fmtDolar(venta.dolarRate)} Bs</p>` : ''}<p>Ticket: ${venta.id}</p><p>Cliente: ${escapeHtml(venta.cliente)}</p></div><div class="items">${itemsHtml}</div><div class="ticket-line"><span>SUBTOTAL</span><span>${fmtPrecio(venta.subtotal)} Bs</span></div>${venta.iva ? `<div class="ticket-line"><span>IVA (${venta.ivaPorcentaje != null ? venta.ivaPorcentaje : D.config.ivaPorcentaje}%)</span><span>${fmtPrecio(venta.iva)} Bs</span></div>` : ''}<div class="ticket-line total"><span>TOTAL</span><span>${fmtPrecio(venta.total)} Bs</span></div><div class="ticket-line"><span>PAGO</span><span>${fmtPrecio(venta.pago)} Bs</span></div>${esPagoEfectivo(venta) ? `<div class="ticket-line"><span>CAMBIO</span><span>${fmtPrecio(venta.cambio)} Bs</span></div>` : ''}${formaPagoHtml}<div class="footer"><p>¡Gracias por su compra!</p><p>${D.config.empresa.nombre}</p></div></div>`;
+        return `<div class="ticket-virtual" id="ticketParaImprimir">${logoHtml}<div class="header"><h3>${escapeHtml(D.config.empresa.nombre)}</h3>${D.config.empresa.direccion ? `<p>${escapeHtml(D.config.empresa.direccion)}</p>` : ''}${D.config.empresa.telefono ? `<p>📞 ${escapeHtml(D.config.empresa.telefono)}</p>` : ''}${D.config.empresa.rif ? `<p>RIF: ${escapeHtml(D.config.empresa.rif)}</p>` : ''}<p>${textoFechaVenta(venta)}</p>${mostrarTasa && venta.dolarRate ? `<p>Tasa: 1 USD = ${fmtDolar(venta.dolarRate)} Bs</p>` : ''}<p>Ticket: ${venta.id}</p><p>Cliente: ${escapeHtml(venta.cliente)}${venta.clienteId ? (() => { const _cl = D.clientes.find(c => c.id === venta.clienteId); return _cl && _cl.cedula ? ` (${escapeHtml(_cl.cedula)})` : ''; })() : ''}</p></div><div class="items">${itemsHtml}</div><div class="ticket-line"><span>SUBTOTAL</span><span>${fmtPrecio(venta.subtotal)} Bs</span></div>${venta.iva ? `<div class="ticket-line"><span>IVA (${venta.ivaPorcentaje != null ? venta.ivaPorcentaje : D.config.ivaPorcentaje}%)</span><span>${fmtPrecio(venta.iva)} Bs</span></div>` : ''}<div class="ticket-line total"><span>TOTAL</span><span>${fmtPrecio(venta.total)} Bs</span></div><div class="ticket-line"><span>PAGO</span><span>${fmtPrecio(venta.pago)} Bs</span></div>${esPagoEfectivo(venta) ? `<div class="ticket-line"><span>CAMBIO</span><span>${fmtPrecio(venta.cambio)} Bs</span></div>` : ''}${formaPagoHtml}<div class="footer"><p style="font-size:9px;opacity:0.6;margin-top:8px">Este documento no constituye factura fiscal</p><p>¡Gracias por su compra!</p><p>${D.config.empresa.nombre}</p></div></div>`;
     }
     function mostrarTicket(venta, mostrarTasa = false) {
         const modal = document.createElement('div'); modal.className = 'modal-form';
@@ -1175,6 +1596,23 @@
         }
         mensaje += `━━━━━━━━━━━━━━━━━━━━\n🙏 ¡Gracias por su compra!\n${D.config.empresa.nombre}`;
         try { await navigator.clipboard.writeText(mensaje); mostrarNotificacion('📋 Ticket copiado al portapapeles', 'success'); } catch(e) {}
+        // APK: copiar la IMAGEN del ticket al portapapeles y abrir WhatsApp,
+        // para que el usuario elija el contacto y pegue la imagen. (Solo en la
+        // APK; la web mantiene el flujo con número + wa.me)
+        if (typeof window !== 'undefined' && window.AndroidBridge && typeof AndroidBridge.copiarImagenWhatsApp === 'function') {
+            try {
+                const canvas = await capturarTicketImagen();
+                if (canvas) {
+                    const dataUrl = canvas.toDataURL('image/png');
+                    const base64 = dataUrl.split(',')[1];
+                    AndroidBridge.copiarImagenWhatsApp(base64);
+                } else {
+                    if (typeof AndroidBridge.copiarPortapapeles === 'function') AndroidBridge.copiarPortapapeles(mensaje);
+                    AndroidBridge.abrirWhatsApp();
+                }
+            } catch(e) { console.error('whatsapp imagen nativo', e); }
+            return;
+        }
         const telefono = await jamPrompt("📱 Ingrese el número de teléfono (ej: 584121234567):");
         if(telefono) {
             let numeroLimpio = telefono.replace(/[^0-9]/g, '');
@@ -1199,23 +1637,50 @@
             }
         }
     }
+
+    function autoGuardarTicketLocal(nombre, dataUrl) {
+        try {
+            const venta = window.ticketActual;
+            if (!venta) return;
+            const registro = {
+                id: venta.id || ('ticket_' + Date.now()),
+                nombre: nombre,
+                fecha: venta.fecha || new Date().toISOString(),
+                timestamp: Date.now(),
+                total: venta.total,
+                cliente: venta.cliente || 'Sin cliente',
+                items: (venta.items || []).length,
+                dataUrl: dataUrl
+            };
+            D.tickets = D.tickets || [];
+            D.tickets.push(registro);
+            saveToIDB('tickets', D.tickets).catch(() => {});
+        } catch(e) { console.warn('[TICKET] Error guardando ticket local', e); }
+    }
+
     window.descargarTicketImagen = async () => {
         const ticket = document.getElementById('ticketParaImprimir');
         if(!ticket) return;
         try {
             const canvas = await capturarTicketImagen();
             if(!canvas) throw new Error('canvas vacío');
-            const nombre = `ticket_${Date.now()}.png`;
+            const ahora = new Date();
+            const pad = n => String(n).padStart(2, '0');
+            const nombre = `${ahora.getFullYear()}-${pad(ahora.getMonth()+1)}-${pad(ahora.getDate())}_${pad(ahora.getHours())}-${pad(ahora.getMinutes())}-${pad(ahora.getSeconds())}.png`;
             const dataUrl = canvas.toDataURL('image/png');
-            // 1) App nativa (APK): guardar directamente vía puente Android
-            if (window.AndroidBridge && typeof AndroidBridge.saveTicketImage === 'function') {
-                const res = await puenteResultado(AndroidBridge.saveTicketImage(dataUrl, nombre));
-                if (res && res.startsWith('ok')) {
-                    mostrarNotificacion('✅ Factura guardada en Imágenes/JAMPOS', 'success');
-                    return;
-                }
+            // 1) App nativa (APK): guardar directo en /JAM POS/TICKETS/
+            if (window.AndroidBridge && typeof AndroidBridge.guardarArchivoDirecto === 'function') {
+                try {
+                    const base64 = dataUrl.split(',')[1];
+                    const res = AndroidBridge.guardarArchivoDirecto('TICKETS/' + nombre, base64);
+                    if (res && res.startsWith('ok')) {
+                        mostrarNotificacion('✅ Ticket guardado en /JAM POS/TICKETS/' + nombre, 'success');
+                        autoGuardarTicketLocal(nombre, dataUrl);
+                        return;
+                    }
+                } catch(e) {}
             }
-            // 2) Compartir/Guardar con Web Share API (Android moderno / navegador)
+            // 2) Web Share API (navegador moderno)
             if (navigator.canShare && window.File && typeof canvas.toBlob === 'function') {
                 try {
                     const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
@@ -1224,9 +1689,9 @@
                         await navigator.share({ files: [file], title: 'Factura JAM POS' });
                         return;
                     }
-                } catch(e) { /* el usuario canceló o no soportado */ }
+                } catch(e) {}
             }
-            // 3) Fallback navegador/PWA: Blob + createObjectURL (Chrome Android sí lo descarga)
+            // 3) Fallback: descarga normal del navegador
             const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
             if (blob) {
                 const link = document.createElement('a');
@@ -1235,12 +1700,7 @@
                 document.body.appendChild(link);
                 link.click();
                 setTimeout(() => { URL.revokeObjectURL(link.href); link.remove(); }, 5000);
-                mostrarNotificacion('✅ Factura descargada en Descargas', 'success');
-            } else {
-                const link = document.createElement('a');
-                link.download = nombre;
-                link.href = dataUrl;
-                link.click();
+                mostrarNotificacion('✅ Ticket descargado: ' + nombre, 'success');
             }
         } catch(e) { alert('Error al generar imagen: ' + (e && e.message ? e.message : e)); }
     };
@@ -1416,6 +1876,8 @@
         if(kioscoVentas) {
             const c = document.getElementById('btnKioscoCandado');
             if(c) crearGestoMantener(c, 4000, () => window.desactivarKioscoVentas(), 'kiosco-sostenido');
+            const calc = document.getElementById('btnKioscoCalc');
+            if(calc) calc.onclick = () => window.mostrarConvertidor();
         } else {
             const t = document.getElementById('tituloModule');
             if(t) crearGestoMantener(t, 4000, () => window.iniciarKioscoVentas(), 'titulo-sostenido');
@@ -1482,7 +1944,7 @@
                     </div>
                 </div>
                 <div class="card-bcv">
-                    <div class="led-converter" onclick="mostrarConvertidor()"><i class="fas fa-exchange-alt text-sm"></i></div>
+                    <div class="led-converter" onclick="mostrarConvertidor()"><i class="fas fa-calculator text-sm"></i></div>
                     <p class="text-xs font-bold">${D.config.mostrarDolar ? 'TIPO DE CAMBIO (USD → VES)' : 'FECHA'}</p>
                     ${mostrarDolarHtml}
                     <p class="text-[11px] mt-1">${D.config.mostrarDolar ? 'Actualizado: ' + D.config.lastUpdate : ''}</p>
@@ -1567,12 +2029,13 @@
     window.mostrarConvertidor = () => {
         if(window.convMod) window.convMod.remove();
         let m = document.createElement('div'); m.className = 'modal-form';
-        m.innerHTML = `<div class="modal-form-content"><h3 class="font-bold text-lg mb-3">🔄 Convertidor Bs ↔ USD</h3><div class="mb-3"><label>Bolívares (Bs)</label><input type="number" id="bsInput" placeholder="Bs" class="border p-2 rounded w-full"></div><div class="mb-3"><label>Dólares (USD)</label><input type="number" id="usdInput" placeholder="USD" class="border p-2 rounded w-full"></div><p class="text-sm">Tasa: 1 USD = ${fmtDolar(D.config.dolarRate)} Bs</p><button id="closeConv" class="mt-3 w-full py-2 rounded-xl bg-gray-200">Cerrar</button></div>`;
+        m.innerHTML = `<div class="modal-form-content"><h3 class="font-bold text-lg mb-3">🔄 Convertidor Bs ↔ USD</h3><div class="mb-3"><label>Bolívares (Bs)</label><input type="text" inputmode="decimal" id="bsInput" placeholder="Bs" class="border rounded-xl p-2 w-full"></div><div class="mb-3"><label>Dólares (USD)</label><input type="text" inputmode="decimal" id="usdInput" placeholder="USD" class="border rounded-xl p-2 w-full"></div><p class="text-sm">Tasa: 1 USD = ${fmtDolar(D.config.dolarRate)} Bs</p><button id="closeConv" class="mt-3 w-full py-2 rounded-xl bg-gray-200">Cerrar</button></div>`;
         document.body.appendChild(m);
         window.convMod = m;
         let bs = document.getElementById('bsInput'), usd = document.getElementById('usdInput');
-        bs.oninput = () => { if(bs.value) usd.value = (parseFloat(bs.value) / D.config.dolarRate).toFixed(2); };
-        usd.oninput = () => { if(usd.value) bs.value = (parseFloat(usd.value) * D.config.dolarRate).toFixed(2); };
+        function parseFmt(s) { return parseFloat(String(s).replace(/\./g,'').replace(',','.')) || 0; }
+        bs.oninput = () => { let raw = parseFmt(bs.value); usd.value = raw > 0 ? fmtPrecio(raw / D.config.dolarRate) : ''; };
+        usd.oninput = () => { let raw = parseFmt(usd.value); bs.value = raw > 0 ? fmtPrecio(raw * D.config.dolarRate) : ''; };
         document.getElementById('closeConv').onclick = () => { m.remove(); window.convMod = null; };
         m.onclick = e => { if(e.target === m) { m.remove(); window.convMod = null; } };
     };
@@ -1597,7 +2060,7 @@
         let cont = document.getElementById('listaProductos'); if(!cont) return;
         cont.innerHTML = filt.map(p => {
             let checked = productosSeleccionados.has(p.id);
-            return `<div class="product-card"><div class="flex items-start gap-2"><input type="checkbox" class="product-checkbox mt-1" data-id="${p.id}" ${checked?'checked':''} onchange="toggleProductoSeleccionado('${p.id}',this.checked)"><div class="flex-1"><div class="flex justify-between flex-wrap"><span class="font-bold">${escapeHtml(p.nombre)}</span><span class="text-xs">${escapeHtml(p.codigo||'')}</span></div><div class="text-sm">💰 ${fmtPrecio(preciosProducto(p).normalBs)} Bs / $${preciosProducto(p).normalUsd} | 📦 Stock: ${p.stock}</div>${tieneDescuentoProducto(p) ? `<div class="text-sm" style="color:#10b981">🏷️ Oferta: ${fmtPrecio(preciosProducto(p).desc.bs)} Bs / $${preciosProducto(p).desc.usd} <span class="text-xs">(-${typeof p.porcentajeDescuento === 'number' ? p.porcentajeDescuento : 0}%)</span></div>` : ''}<div class="text-xs break-words">🏷️ ${escapeHtml(p.categoria||'')} | 🚚 ${escapeHtml(p.proveedor||'—')}</div><div class="flex gap-2 mt-2"><button onclick="mostrarFormProducto('${p.id}')" class="btn-editar-redondeado">✏️ Editar</button><button onclick="copiarProducto('${p.id}')" class="btn-redondeado" style="background:var(--accent,#3b82f6);color:#fff;padding:4px 10px;font-size:12px">📋 Copiar</button><button onclick="eliminarProducto('${p.id}')" class="btn-eliminar-redondeado">🗑️ Eliminar</button></div></div></div></div>`;
+            return `<div class="product-card"><div class="flex items-start gap-2"><input type="checkbox" class="product-checkbox mt-1" data-id="${p.id}" ${checked?'checked':''} onchange="toggleProductoSeleccionado('${p.id}',this.checked)"><div class="flex-1"><div class="flex justify-between flex-wrap"><span class="font-bold">${escapeHtml(p.nombre)}</span><span class="text-xs">${escapeHtml(p.codigo||'')}</span></div><div class="text-sm">💰 ${fmtPrecio(preciosProducto(p).normalBs)} Bs / $${preciosProducto(p).normalUsd} | 📦 Stock: ${p.stock}</div>${tieneDescuentoProducto(p) ? `<div class="text-sm" style="color:#10b981">🏷️ Oferta: ${fmtPrecio(preciosProducto(p).desc.bs)} Bs / $${preciosProducto(p).desc.usd} <span class="text-xs">(-${typeof p.porcentajeDescuento === 'number' ? p.porcentajeDescuento : 0}%)</span></div>` : ''}${(p.descuentoProveedor && p.descuentoProveedor > 0) ? `<div class="text-xs" style="color:#f59e0b">📦 Costo prov: $${fmtPrecio(preciosProducto(p).costoNetoUsd)} <span style="text-decoration:line-through;opacity:0.6">$${fmtPrecio(preciosProducto(p).costoUsd)}</span> (-${p.descuentoProveedor}%)</div>` : ''}<div class="text-xs break-words">🏷️ ${escapeHtml(p.categoria||'')} | 🚚 ${escapeHtml(p.proveedor||'—')}</div><div class="flex gap-2 mt-2"><button onclick="mostrarFormProducto('${p.id}')" class="btn-editar-redondeado">✏️ Editar</button><button onclick="copiarProducto('${p.id}')" class="btn-redondeado" style="background:var(--accent,#3b82f6);color:#fff;padding:4px 10px;font-size:12px">📋 Copiar</button><button onclick="eliminarProducto('${p.id}')" class="btn-eliminar-redondeado">🗑️ Eliminar</button></div></div></div></div>`;
         }).join('');
         actualizarToolbarBatch();
     }
@@ -1662,11 +2125,14 @@
     // módulos (inventario, ventas, ticket, WhatsApp, reportes).
     // Reglas:
     //   - El costo se ingresa en USD; el costo en Bs se deriva con la tasa del día.
-    //   - Precio normal USD = costo USD × (1 + ganancia%). Bs = USD × tasa.
-    //   - Si hay descuento: precio oferta USD = normal USD × (1 - descuento%).
+    //   - Si el proveedor ofrece descuento: costoNeto = costoBruto × (1 - descProv%).
+    //   - Precio normal USD = costoNeto USD × (1 + ganancia%). Bs = USD × tasa.
+    //   - Si hay descuento al cliente: precio oferta USD = normal USD × (1 - descuento%).
+    //   - La ganancia siempre se calcula sobre el COSTO NETO (ya con descuento prov.).
     function calcGananciaProducto(p){
         if(p && typeof p.porcentajeGanancia === 'number' && p.porcentajeGanancia > 0) return p.porcentajeGanancia;
-        const c = parseFloat(p && p.costoRealUsd) || 0, v = parseFloat(p && p.precioVentaUsd) || 0;
+        const c = parseFloat(p && p.costoNetoUsd) || parseFloat(p && p.costoRealUsd) || 0;
+        const v = parseFloat(p && p.precioVentaUsd) || 0;
         if(c > 0 && v > 0) return Math.round((v - c) / c * 100);
         return 0;
     }
@@ -1688,14 +2154,20 @@
         tasa = tasa || (D.config && D.config.dolarRate) || 1;
         const costoUsd = parseFloat(p && p.costoRealUsd) || 0;
         const costoBs = parseFloat(p && p.costoRealBs) > 0 ? p.costoRealBs : Math.round(costoUsd * tasa * 100) / 100;
+        const descProvPct = (p && typeof p.descuentoProveedor === 'number') ? p.descuentoProveedor : 0;
+        const costoNetoUsd = (p && typeof p.costoNetoUsd === 'number' && p.costoNetoUsd > 0)
+            ? p.costoNetoUsd : (descProvPct > 0 ? Math.round(costoUsd * (1 - descProvPct / 100) * 100) / 100 : costoUsd);
+        const costoNetoBs = (p && typeof p.costoNetoBs === 'number' && p.costoNetoBs > 0)
+            ? p.costoNetoBs : Math.round(costoNetoUsd * tasa * 100) / 100;
         const normalUsd = parseFloat(p && p.precioVentaUsd) || 0;
         const normalBs = parseFloat(p && p.precioVentaBs) > 0 ? p.precioVentaBs : (normalUsd > 0 ? Math.round(normalUsd * tasa * 100) / 100 : 0);
         const desc = precioDescuentoProducto(p, tasa);
         return {
-            costoUsd, costoBs,
+            costoUsd, costoBs, costoNetoUsd, costoNetoBs,
             normalUsd, normalBs,
             ganancia: calcGananciaProducto(p),
-            desc, tieneDesc: !!desc
+            desc, tieneDesc: !!desc,
+            descProvPct
         };
     }
     
@@ -1703,30 +2175,37 @@
         let prod = id ? D.productos.find(p => p.id === id) : null;
         let esNuevo = !prod;
         const tasa = D.config.dolarRate || 1;
-        const prIni = prod ? preciosProducto(prod, tasa) : { costoUsd:0, costoBs:0, normalUsd:0, normalBs:0, desc:null };
+        const prIni = prod ? preciosProducto(prod, tasa) : { costoUsd:0, costoBs:0, costoNetoUsd:0, costoNetoBs:0, normalUsd:0, normalBs:0, desc:null, descProvPct:0 };
         const ganIni = prod ? (prIni.ganancia || 30) : 30;
         const descPct = prod ? (typeof prod.porcentajeDescuento === 'number' ? prod.porcentajeDescuento : 0) : 0;
         const descUsdIni = prIni.desc ? prIni.desc.usd : 0;
         const descBsIni = prIni.desc ? prIni.desc.bs : 0;
+        const descProvIni = prIni.descProvPct || 0;
         let modal = document.createElement('div'); modal.className = 'modal-form';
         modal.innerHTML = `<div class="modal-form-content" style="max-width:420px"><h3 class="text-xl font-bold mb-4">${esNuevo ? 'Nuevo Producto' : 'Editar Producto'}</h3>
             <div class="mb-3"><label>Nombre</label><input id="nombre" value="${escapeHtml(prod?.nombre||'')}" class="border rounded-xl p-2 w-full"></div>
             <div class="mb-3"><label>📷 Código de barras</label><div class="flex gap-2"><input id="codigo" value="${escapeHtml(prod?.codigo||'')}" class="border-2 rounded-xl p-2 flex-1" style="border-color:var(--accent,#3b82f6)"><button id="btnScanProducto" class="btn-icon-cuadrado" title="Escanear con cámara"><i class="fas fa-camera"></i></button></div></div>
             <div class="mb-3"><label>Categoría</label><input id="categoria" value="${escapeHtml(prod?.categoria||'')}" class="border rounded-xl p-2 w-full"></div>
-            <div class="mb-3"><label>Proveedor</label><input id="proveedor" value="${escapeHtml(prod?.proveedor||'')}" class="border rounded-xl p-2 w-full"></div>
+            <div class="mb-3 relative"><label>Proveedor</label><input id="proveedor" value="${escapeHtml(prod?.proveedor||'')}" placeholder="Escriba para buscar..." class="border rounded-xl p-2 w-full" autocomplete="off"><div id="sugProveedor" style="display:none;position:absolute;left:0;right:0;z-index:100;background:var(--bg,#fff);border:1px solid rgba(128,128,128,0.2);border-radius:12px;max-height:150px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,0.1)"></div></div>
+            <div class="mb-3"><div class="flex items-center justify-between"><label class="font-bold text-sm">🏷️ Descuento del proveedor</label><label class="switch"><input type="checkbox" id="descProvOn" ${descProvIni > 0 ? 'checked' : ''}><span class="slider"></span></label></div><div id="descProvDiv" style="${descProvIni > 0 ? 'display:block' : 'display:none'}"><label>% de descuento del proveedor</label><input type="number" id="descProvInput" step="any" min="0" max="99.99" value="${descProvIni || ''}" placeholder="Ej: 15" class="border rounded-xl p-2 w-full"></div></div>
             <div class="mb-3"><label>Stock</label><input type="number" id="stock" value="${prod?.stock||0}" class="border rounded-xl p-2 w-full"></div>
             <div class="mb-3"><label>💵 Costo del producto (USD)</label><input type="number" id="compraUsd" step="any" min="0" value="${prod?.costoRealUsd||''}" placeholder="Ej: 3.00" class="border rounded-xl p-2 w-full"></div>
-            <div class="mb-3"><label>💰 % de Ganancia</label><input type="range" id="gananciaRange" min="5" max="100" step="1" value="${ganIni}" class="w-full"><input type="number" id="gananciaInput" step="any" min="5" max="100" value="${ganIni}" class="border rounded-xl p-2 w-full"></div>
-            <div class="mb-3"><label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="descOn" ${descPct > 0 ? 'checked' : ''}> <span>🏷️ Aplicar descuento al producto</span></label><div id="descDiv" style="${descPct > 0 ? 'display:block' : 'display:none'}"><label>% de Descuento</label><input type="number" id="descuentoInput" step="any" min="0" max="99.99" value="${descPct || ''}" placeholder="Ej: 10" class="border rounded-xl p-2 w-full"></div></div>
+            <div id="costoNetoInfo" class="text-xs mb-2" style="color:#f59e0b;${descProvIni > 0 ? '' : 'display:none'}">📦 Costo neto prov: $<span id="costoNetoMostrar">${(prIni.costoNetoUsd || 0).toFixed(2)}</span> <span id="costoNetoAntes" style="text-decoration:line-through;opacity:0.6">${descProvIni > 0 ? '$' + (prIni.costoUsd || 0).toFixed(2) : ''}</span></div>
+            <div class="mb-3"><label>💰 % de Ganancia <span id="ganLockStatus" class="text-xs font-semibold"></span></label><div class="flex items-center gap-2 mb-1"><input type="range" id="gananciaRange" min="5" max="100" step="1" value="${ganIni}" class="w-full gan-range gan-bloqueada" disabled><input type="number" id="gananciaInput" step="any" min="5" max="100" value="${ganIni}" class="border rounded-xl p-2 w-24"></div><p class="text-[10px] opacity-60">🔒 Mantén presionada la barra 2s para desbloquear; se vuelve a bloquear sola al dejar de usarla.</p></div>
+            <div class="mb-3"><div class="flex items-center justify-between"><label class="font-bold text-sm">🏷️ Oferta del producto</label><label class="switch"><input type="checkbox" id="descOn" ${descPct > 0 ? 'checked' : ''}><span class="slider"></span></label></div><div id="descDiv" style="${descPct > 0 ? 'display:block' : 'display:none'}"><label>% de Descuento</label><input type="number" id="descuentoInput" step="any" min="0" max="99.99" value="${descPct || ''}" placeholder="Ej: 10" class="border rounded-xl p-2 w-full"></div></div>
             <div class="rounded-xl p-3 mb-3" style="background:rgba(128,128,128,0.08)">
                 <p class="font-bold text-sm mb-2" style="color:var(--accent)">💲 Precios calculados <span class="text-xs opacity-60">(tasa: 1 USD = ${fmtDolar(tasa)} Bs)</span></p>
-                <div class="grid grid-cols-2 gap-2 text-xs">
-                    <div><label class="opacity-70">Costo en Bs</label><input type="text" id="compraBs" value="${fmtPrecio(prIni.costoBs)}" class="border rounded p-1 w-full"></div>
-                    <div><label class="opacity-70">Precio normal USD</label><input type="number" id="ventaUsd" step="any" min="0" value="${prIni.normalUsd || ''}" class="border rounded p-1 w-full"></div>
-                    <div><label class="opacity-70">Precio normal Bs</label><input type="text" id="ventaBs" value="${fmtPrecio(prIni.normalBs)}" class="border rounded p-1 w-full"></div>
-                    <div><label class="opacity-70">Precio oferta USD</label><input type="number" id="descUsd" step="any" min="0" value="${descUsdIni || ''}" class="border rounded p-1 w-full"></div>
-                    <div><label class="opacity-70">Precio oferta Bs</label><input type="text" id="descBs" value="${fmtPrecio(descBsIni)}" class="border rounded p-1 w-full"></div>
-                    <div class="flex items-end"><button id="recalcBtn" class="btn-redondeado py-1 px-3 text-xs" style="border:1px solid var(--accent,#3b82f6)">↺ Recalcular</button></div>
+                <div class="text-xs space-y-2">
+                    <div class="mb-1"><label class="opacity-70">Costo en Bs</label><input type="text" id="compraBs" value="${fmtPrecio(prIni.costoBs)}" class="border rounded p-1 w-full"></div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div><label class="opacity-70">Venta en Bs</label><input type="text" id="ventaBs" value="${fmtPrecio(prIni.normalBs)}" class="border rounded p-1 w-full"></div>
+                        <div><label class="opacity-70">Venta en USD</label><input type="number" id="ventaUsd" step="any" min="0" value="${prIni.normalUsd || ''}" class="border rounded p-1 w-full"></div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div><label class="opacity-70">Oferta en Bs</label><input type="text" id="descBs" value="${fmtPrecio(descBsIni)}" class="border rounded p-1 w-full"></div>
+                        <div><label class="opacity-70">Oferta en USD</label><input type="number" id="descUsd" step="any" min="0" value="${descUsdIni || ''}" class="border rounded p-1 w-full"></div>
+                    </div>
+                    <div class="flex justify-end"><button id="recalcBtn" class="btn-redondeado py-1 px-3 text-xs" style="border:1px solid var(--accent,#3b82f6)">↺ Recalcular</button></div>
                 </div>
                 <p id="margenInfo" class="text-xs mt-2 opacity-80"></p>
                 <p class="text-[10px] opacity-60 mt-1">Se calculan solos con el costo y los %; puede ajustarlos a mano. "↺ Recalcular" los vuelve a la fórmula.</p>
@@ -1741,7 +2220,11 @@
         const gananciaInput = document.getElementById('gananciaInput'), gananciaRange = document.getElementById('gananciaRange');
         const descOn = document.getElementById('descOn'), descuentoInput = document.getElementById('descuentoInput');
         const descDiv = document.getElementById('descDiv'), recalcBtn = document.getElementById('recalcBtn');
+        const descProvOn = document.getElementById('descProvOn'), descProvInput = document.getElementById('descProvInput');
+        const descProvDiv = document.getElementById('descProvDiv'), costoNetoInfo = document.getElementById('costoNetoInfo');
+        const costoNetoMostrar = document.getElementById('costoNetoMostrar'), costoNetoAntes = document.getElementById('costoNetoAntes');
         let manual = { costo:false, venta:false, desc:false };
+        aplicarMascaraBs(compraBs); aplicarMascaraBs(ventaBs); aplicarMascaraBs(descBs);
         const tRedondeo = (v) => Math.round(v * 100) / 100;
         function recalcular(){
             const tasaV = D.config.dolarRate || 1;
@@ -1750,42 +2233,97 @@
             if(ganVal < 0) ganVal = 0;
             let descVal = descOn.checked ? (parseFloat(descuentoInput.value) || 0) : 0;
             if(descVal < 0) descVal = 0; if(descVal >= 100) descVal = 99.99;
-            if(!manual.costo) compraBs.value = costoUsdVal > 0 ? fmtPrecio(tRedondeo(costoUsdVal * tasaV)) : '';
-            const precioUsd = costoUsdVal > 0 ? tRedondeo(costoUsdVal * (1 + ganVal / 100)) : 0;
+            let descProvVal = descProvOn.checked ? (parseFloat(descProvInput.value) || 0) : 0;
+            if(descProvVal < 0) descProvVal = 0; if(descProvVal >= 100) descProvVal = 99.99;
+            const costoNetoUsd = costoUsdVal > 0 ? tRedondeo(costoUsdVal * (1 - descProvVal / 100)) : 0;
+            if(!manual.costo){ compraBs.value = costoNetoUsd > 0 ? fmtPrecio(tRedondeo(costoNetoUsd * tasaV)) : ''; sincronizarBs(compraBs); }
+            const precioUsd = costoNetoUsd > 0 ? tRedondeo(costoNetoUsd * (1 + ganVal / 100)) : 0;
             if(!manual.venta){
                 ventaUsd.value = precioUsd > 0 ? precioUsd.toFixed(2) : '';
                 ventaBs.value = precioUsd > 0 ? fmtPrecio(tRedondeo(precioUsd * tasaV)) : '';
+                sincronizarBs(ventaBs);
             }
             if(!manual.desc){
                 const dUsd = (precioUsd > 0 && descVal > 0) ? tRedondeo(precioUsd * (1 - descVal / 100)) : 0;
                 descUsd.value = dUsd > 0 ? dUsd.toFixed(2) : '';
                 descBs.value = dUsd > 0 ? fmtPrecio(tRedondeo(dUsd * tasaV)) : '';
+                sincronizarBs(descBs);
             }
             descDiv.style.display = descOn.checked ? 'block' : 'none';
-            const cUsd = parseFloat(compraUsd.value) || 0;
+            descProvDiv.style.display = descProvOn.checked ? 'block' : 'none';
+            if(costoNetoInfo) costoNetoInfo.style.display = descProvOn.checked && costoUsdVal > 0 ? '' : 'none';
+            if(costoNetoMostrar) costoNetoMostrar.textContent = costoNetoUsd.toFixed(2);
+            if(costoNetoAntes) costoNetoAntes.textContent = descProvOn.checked && descProvVal > 0 ? '$' + costoUsdVal.toFixed(2) : '';
             const vUsd = parseFloat(ventaUsd.value) || 0;
             const dUsd2 = parseFloat(descUsd.value) || 0;
-            let margenNormal = cUsd > 0 ? Math.round((vUsd - cUsd) / cUsd * 100) : 0;
-            let margenOferta = (cUsd > 0 && dUsd2 > 0) ? Math.round((dUsd2 - cUsd) / cUsd * 100) : 0;
+            const baseCalc = costoNetoUsd > 0 ? costoNetoUsd : costoUsdVal;
+            let margenNormal = baseCalc > 0 ? Math.round((vUsd - baseCalc) / baseCalc * 100) : 0;
+            let margenOferta = (baseCalc > 0 && dUsd2 > 0) ? Math.round((dUsd2 - baseCalc) / baseCalc * 100) : 0;
             const info = document.getElementById('margenInfo');
-            if(info) info.innerHTML = `Ganancia normal: <b>${margenNormal}%</b>${descOn.checked && dUsd2 > 0 ? ` | Ganancia con oferta: <b>${margenOferta}%</b>` : ''}`;
+            if(info) info.innerHTML = `Ganancia normal: <b>${margenNormal}%</b>${descOn.checked && dUsd2 > 0 ? ` | Ganancia con oferta: <b>${margenOferta}%</b>` : ''}${descProvOn.checked && descProvVal > 0 ? ` <span style="color:#f59e0b">| Costo neto: $${costoNetoUsd.toFixed(2)} (-${descProvVal}% prov.)</span>` : ''}`;
         }
-        compraUsd.oninput = () => { manual = { costo:false, venta:false, desc:false }; recalcular(); };
-        gananciaInput.oninput = () => { gananciaRange.value = gananciaInput.value; manual.venta = false; manual.desc = false; recalcular(); };
-        gananciaRange.oninput = () => { gananciaInput.value = gananciaRange.value; manual.venta = false; manual.desc = false; recalcular(); };
-        descuentoInput.oninput = () => { manual.desc = false; recalcular(); };
-        descOn.onchange = () => { manual.desc = false; if(descOn.checked && !descuentoInput.value) descuentoInput.value = 10; recalcular(); };
-        compraBs.oninput = () => { manual.costo = true; recalcular(); };
-        ventaBs.oninput = () => { manual.venta = true; const bs = parseBs(ventaBs.value); if(bs > 0) ventaUsd.value = (bs / (D.config.dolarRate || 1)).toFixed(2); recalcular(); };
-        ventaUsd.oninput = () => { manual.venta = true; const usd = parseFloat(ventaUsd.value); if(!isNaN(usd) && usd > 0) ventaBs.value = fmtPrecio(tRedondeo(usd * (D.config.dolarRate || 1))); recalcular(); };
-        descBs.oninput = () => { manual.desc = true; const bs = parseBs(descBs.value); if(bs > 0) descUsd.value = (bs / (D.config.dolarRate || 1)).toFixed(2); recalcular(); };
-        descUsd.oninput = () => { manual.desc = true; const usd = parseFloat(descUsd.value); if(!isNaN(usd) && usd > 0) descBs.value = fmtPrecio(tRedondeo(usd * (D.config.dolarRate || 1))); recalcular(); };
-        recalcBtn.onclick = () => { manual = { costo:false, venta:false, desc:false }; recalcular(); };
-        recalcular();
+        compraUsd.oninput = () => { manual = { costo:false, venta:false, desc:false }; try{recalcular();}catch(e){console.error('recalc compraUsd',e);} };
+        const ganLockStatus = document.getElementById('ganLockStatus');
+        let ganHoldTimer = null, ganIdleTimer = null;
+        const ganBloquear = () => {
+            gananciaRange.disabled = true;
+            gananciaRange.classList.add('gan-bloqueada');
+            if(ganLockStatus){ ganLockStatus.textContent = '🔒 Bloqueada'; }
+            clearTimeout(ganHoldTimer); ganHoldTimer = null;
+            clearTimeout(ganIdleTimer); ganIdleTimer = null;
+        };
+        const ganDesbloquear = () => {
+            gananciaRange.disabled = false;
+            gananciaRange.classList.remove('gan-bloqueada');
+            if(ganLockStatus){ ganLockStatus.textContent = '🔓 Ajustando...'; }
+        };
+        const ganReiniciarIdle = () => { clearTimeout(ganIdleTimer); ganIdleTimer = setTimeout(ganBloquear, 2000); };
+        ganBloquear();
+        gananciaRange.addEventListener('pointerdown', () => {
+            if(gananciaRange.disabled){ clearTimeout(ganHoldTimer); ganHoldTimer = setTimeout(() => { ganDesbloquear(); ganReiniciarIdle(); }, 2000); }
+        });
+        gananciaRange.addEventListener('pointerup', () => { clearTimeout(ganHoldTimer); ganHoldTimer = null; });
+        gananciaRange.addEventListener('pointercancel', () => { clearTimeout(ganHoldTimer); ganHoldTimer = null; });
+        gananciaRange.addEventListener('pointerleave', () => { clearTimeout(ganHoldTimer); ganHoldTimer = null; });
+        gananciaRange.addEventListener('input', () => { gananciaInput.value = gananciaRange.value; manual.venta = false; manual.desc = false; try{recalcular();}catch(e){console.error('recalc range',e);} ganReiniciarIdle(); });
+        gananciaInput.addEventListener('input', () => { gananciaRange.value = gananciaInput.value; manual.venta = false; manual.desc = false; try{recalcular();}catch(e){console.error('recalc ganancia',e);} });
+        descuentoInput.oninput = () => { manual.desc = false; try{recalcular();}catch(e){console.error('recalc descuento',e);} };
+        descOn.onchange = () => { manual.desc = false; if(descOn.checked && !descuentoInput.value) descuentoInput.value = 10; try{recalcular();}catch(e){console.error('recalc descOn',e);} };
+        descProvOn.onchange = () => { if(descProvOn.checked && !descProvInput.value) descProvInput.value = 10; try{recalcular();}catch(e){console.error('recalc descProv',e);} };
+        descProvInput.oninput = () => { try{recalcular();}catch(e){console.error('recalc descProvInput',e);} };
+        compraBs.oninput = () => { manual.costo = true; try{recalcular();}catch(e){console.error('recalc compraBs',e);} };
+        ventaBs.oninput = () => { manual.venta = true; const bs = parseBs(ventaBs.value); if(bs > 0) ventaUsd.value = (bs / (D.config.dolarRate || 1)).toFixed(2); try{recalcular();}catch(e){console.error('recalc ventaBs',e);} };
+        ventaUsd.oninput = () => { manual.venta = true; const usd = parseFloat(ventaUsd.value); if(!isNaN(usd) && usd > 0) { ventaBs.value = fmtPrecio(tRedondeo(usd * (D.config.dolarRate || 1))); sincronizarBs(ventaBs); } try{recalcular();}catch(e){console.error('recalc ventaUsd',e);} };
+        descBs.oninput = () => { manual.desc = true; const bs = parseBs(descBs.value); if(bs > 0) descUsd.value = (bs / (D.config.dolarRate || 1)).toFixed(2); try{recalcular();}catch(e){console.error('recalc descBs',e);} };
+        descUsd.oninput = () => { manual.desc = true; const usd = parseFloat(descUsd.value); if(!isNaN(usd) && usd > 0) { descBs.value = fmtPrecio(tRedondeo(usd * (D.config.dolarRate || 1))); sincronizarBs(descBs); } try{recalcular();}catch(e){console.error('recalc descUsd',e);} };
+        recalcBtn.onclick = () => { manual = { costo:false, venta:false, desc:false }; try{recalcular();}catch(e){console.error('recalc error',e);} };
+        const proveedorInput = document.getElementById('proveedor'), sugProvDiv = document.getElementById('sugProveedor');
+        if(proveedorInput && sugProvDiv) {
+            proveedorInput.addEventListener('input', () => {
+                const term = normalizeText(proveedorInput.value.trim());
+                if(term.length < 1) { sugProvDiv.style.display = 'none'; return; }
+                D.proveedores = D.proveedores || [];
+                const matches = D.proveedores.filter(p => normalizeText(p.nombre).includes(term));
+                if(matches.length === 0) { sugProvDiv.style.display = 'none'; return; }
+                sugProvDiv.innerHTML = matches.slice(0,5).map(p => `<div class="sugerencia-item" style="cursor:pointer;padding:6px 10px;border-bottom:1px solid rgba(128,128,128,0.1)" data-nombre="${escapeHtml(p.nombre)}">${escapeHtml(p.nombre)}${p.contacto ? ' · '+escapeHtml(p.contacto) : ''}${p.telefono ? ' · '+escapeHtml(p.telefono) : ''}</div>`).join('');
+                sugProvDiv.style.display = 'block';
+            });
+            proveedorInput.addEventListener('blur', () => { setTimeout(() => { sugProvDiv.style.display = 'none'; }, 200); });
+            sugProvDiv.addEventListener('mousedown', (e) => {
+                const item = e.target.closest('[data-nombre]');
+                if(item) { proveedorInput.value = item.dataset.nombre; sugProvDiv.style.display = 'none'; proveedorInput.dispatchEvent(new Event('input')); }
+            });
+        }
+        try{recalcular();}catch(e){console.error('recalc init error',e);}
         document.getElementById('guardarBtn').onclick = async () => {
+            try {
             const tasaV = D.config.dolarRate || 1;
             let costoRealUsd = parseFloat(compraUsd.value) || 0;
             let costoRealBs = parseBs(compraBs.value);
+            let descProveedor = descProvOn.checked ? (parseFloat(descProvInput.value) || 0) : 0;
+            if(descProveedor >= 100) descProveedor = 99.99; if(descProveedor < 0) descProveedor = 0;
+            let costoNetoUsd = tRedondeo(costoRealUsd * (1 - descProveedor / 100));
+            let costoNetoBs = tRedondeo(costoNetoUsd * tasaV);
             if(costoRealBs <= 0 && costoRealUsd > 0) costoRealBs = tRedondeo(costoRealUsd * tasaV);
             let precioVentaUsd = parseFloat(ventaUsd.value) || 0;
             let precioVentaBs = parseBs(ventaBs.value);
@@ -1799,13 +2337,23 @@
             if(precioDescuentoUsd <= 0 && porcentajeDescuento > 0 && precioVentaUsd > 0) precioDescuentoUsd = tRedondeo(precioVentaUsd * (1 - porcentajeDescuento / 100));
             if(precioDescuentoBs <= 0 && precioDescuentoUsd > 0) precioDescuentoBs = tRedondeo(precioDescuentoUsd * tasaV);
             precioVentaUsd = tRedondeo(precioVentaUsd); costoRealUsd = tRedondeo(costoRealUsd); precioDescuentoUsd = tRedondeo(precioDescuentoUsd);
-            if(!document.getElementById('nombre').value.trim()) { alert('El nombre del producto es obligatorio'); return; }
-            if(precioVentaBs <= 0) { alert('El precio de venta debe ser mayor a 0'); return; }
+            if(!document.getElementById('nombre').value.trim()) { await jamAlert('El nombre del producto es obligatorio', 'error'); return; }
+            if(precioVentaBs <= 0) { await jamAlert('El precio de venta debe ser mayor a 0', 'error'); return; }
             let nombre = capitalizeWords(document.getElementById('nombre').value.trim());
-            let nuevo = { id: esNuevo ? 'p'+Date.now() : prod.id, nombre, codigo: document.getElementById('codigo').value, categoria: document.getElementById('categoria').value, proveedor: document.getElementById('proveedor').value, stock: parseInt(document.getElementById('stock').value) || 0, precioVentaBs, precioVentaUsd, costoRealBs, costoRealUsd, porcentajeGanancia, porcentajeDescuento, precioDescuentoUsd, precioDescuentoBs, tasaRegistro: tasaV };
+            let nuevo = { id: esNuevo ? 'p'+Date.now() : prod.id, nombre, codigo: document.getElementById('codigo').value, categoria: document.getElementById('categoria').value, proveedor: document.getElementById('proveedor').value, stock: parseInt(document.getElementById('stock').value) || 0, precioVentaBs, precioVentaUsd, costoRealBs, costoRealUsd, descuentoProveedor: descProveedor, costoNetoUsd, costoNetoBs, porcentajeGanancia, porcentajeDescuento, precioDescuentoUsd, precioDescuentoBs, tasaRegistro: tasaV };
             await saveItem('productos', nuevo);
+            const provNombre = document.getElementById('proveedor').value.trim();
+            if(provNombre) {
+                D.proveedores = D.proveedores || [];
+                const yaExiste = D.proveedores.some(p => normalizeText(p.nombre) === normalizeText(provNombre));
+                if(!yaExiste) {
+                    const nuevoProv = { id: 'prov'+Date.now(), nombre: capitalizeWords(provNombre), telefono: '', email: '', contacto: '', direccion: '' };
+                    await saveItem('proveedores', nuevoProv);
+                }
+            }
             modal.remove();
             if(desdeBusqueda) renderHome(); else renderInventario();
+            } catch(err) { console.error('ERROR GUARDAR PRODUCTO:', err); await jamAlert('Error al guardar: ' + err.message, 'error'); }
         };
     }
     
@@ -1887,6 +2435,10 @@
             nuevo = true;
         }
         if(tasa > 0) registrarTasaDia(tasa, hoy, horaActual()).catch(() => {});
+        // Mantener el widget de la tasa al día (solo en el APK; en web no existe el bridge).
+        if (window.AndroidBridge && typeof AndroidBridge.guardarTasaWidget === 'function') {
+            try { AndroidBridge.guardarTasaWidget(String(tasa), D.config.lastUpdate || ''); } catch(e) {}
+        }
         return nuevo;
     }
     
@@ -2242,7 +2794,10 @@
     
     const formasPagoGlobal = { 'efectivo_bs':'EFECTIVO Bs','pago_movil':'PAGO MÓVIL','transferencia':'TRANSFERENCIA','tarjeta_debito':'TARJETA DÉBITO','dolares':'DÓLARES','pago_dividido':'PAGO DIVIDIDO' };
     function ventaCardReporte(v){
-        return `<div class="border rounded-xl p-3 mb-2 cursor-pointer hover:opacity-80" style="border-color:var(--accent)" onclick="window.mostrarTicketDesdeReporte('${v.id}')"><div class="flex justify-between items-start"><div><b>${escapeHtml(v.id)}</b></div><div class="text-xs opacity-60">${escapeHtml(v.fecha)}</div></div><div class="text-sm mt-1">👤 ${escapeHtml(v.cliente)}</div><div class="flex justify-between items-center mt-1"><span class="text-sm font-bold" style="color:var(--accent)">${fmtPrecio(v.total)} Bs</span><span class="text-xs">${formasPagoGlobal[v.tipoPago] || v.tipoPago}</span></div>${v.dolarRate ? `<div class="text-xs mt-1 opacity-60">💲 Tasa del día: 1 USD = ${fmtDolar(v.dolarRate)} Bs</div>` : ''}<div class="text-xs mt-1 opacity-60">${(v.items||[]).map(i=>`${escapeHtml(i.nombre)} x${i.cantidad}`).join(', ')}</div></div>`;
+        const _clRep = v.clienteId ? D.clientes.find(c => c.id === v.clienteId) : null;
+        const cedulaRep = _clRep && _clRep.cedula ? ` (${escapeHtml(_clRep.cedula)})` : '';
+        const totalUsdRep = v.dolarRate > 0 ? ` / $${fmtDolar(v.total / v.dolarRate)}` : '';
+        return `<div class="border rounded-xl p-3 mb-2 cursor-pointer hover:opacity-80" style="border-color:var(--accent)" onclick="window.mostrarTicketDesdeReporte('${v.id}')"><div class="flex justify-between items-start"><div><b>${escapeHtml(v.id)}</b></div><div class="text-xs opacity-60">${escapeHtml(v.fecha)}</div></div><div class="text-sm mt-1">👤 ${escapeHtml(v.cliente)}${cedulaRep}</div><div class="flex justify-between items-center mt-1"><span class="text-sm font-bold" style="color:var(--accent)">${fmtPrecio(v.total)} Bs${totalUsdRep}</span><span class="text-xs">${formasPagoGlobal[v.tipoPago] || v.tipoPago}</span></div>${v.dolarRate ? `<div class="text-xs mt-1 opacity-60">💲 Tasa del día: 1 USD = ${fmtDolar(v.dolarRate)} Bs</div>` : ''}<div class="text-xs mt-1 opacity-60">${(v.items||[]).map(i=>`${escapeHtml(i.nombre)} x${i.cantidad}${i.precioUsd ? ` ($${fmtDolar(i.precioUsd)})` : ''}`).join(', ')}</div></div>`;
     }
     let filtroCalendario = null;
     const mesNombre = m => ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'][m];
@@ -2834,8 +3389,7 @@
                 </div></div>
                 <div class="config-section"><button id="btnToggleSeguridad" class="btn-azul-redondeado btn-redondeado w-full mb-2 py-2">🔒 Seguridad (PIN)</button><div id="panelSeguridad" style="display:none;" class="mt-2 config-inner"><div class="mb-2"><label>PIN de acceso (4 dígitos, dejar vacío para deshabilitar)</label><input type="password" id="pinInput" value="${escapeHtml(D.config.pin)}" maxlength="4" pattern="[0-9]*" inputmode="numeric" class="border rounded-xl p-2 w-full text-center text-2xl tracking-widest" placeholder="****"></div><button id="guardarPinBtn" class="btn-azul-redondeado btn-redondeado w-full py-2">🔐 Guardar PIN</button><p class="text-xs text-center mt-2 opacity-60">${D.config.pin ? '✅ PIN activo. Se pedirá al abrir la app.' : 'ℹ️ Sin PIN. Cualquiera puede acceder.'}</p></div></div>
                 <div class="config-section"><button id="btnToggleColores" class="btn-azul-redondeado btn-redondeado w-full mb-2 py-2">🎨 Temas de color</button><div id="panelColores" style="display:none;" class="mt-2 config-inner"><div class="flex flex-wrap justify-center gap-2" id="paletaColores" style="max-width:290px;margin:0 auto"></div></div></div>
-                <div class="config-section"><button id="btnToggleBackup" class="btn-azul-redondeado btn-redondeado w-full mb-2 py-2">💾 Copia de seguridad</button><div id="panelBackup" style="display:none;" class="mt-2 config-inner"><div class="flex flex-col gap-3">${esAppNativa() ? `<div class="rounded-xl p-3" style="background:rgba(14,165,233,0.08);border:1px solid rgba(14,165,233,0.3)"><p class="text-sm font-semibold mb-1">📁 Carpeta de la aplicación</p><p id="carpetaEstado" class="text-xs opacity-70 mb-2">ℹ️ Elija una carpeta para guardar tickets y respaldos (se creará la subcarpeta JAMPOS).</p><button id="elegirCarpetaBtn" class="btn-redondeado py-2 px-4 w-full" style="background:#0ea5e9;color:#fff">📂 Elegir carpeta</button></div>` : `<p class="text-xs text-center opacity-60">💡 En la app Android podrás elegir una carpeta donde guardar los archivos.</p>`}<button id="exportJsonBtn" class="btn-redondeado py-2 px-4" style="background:#3b82f6;color:#fff">📥 Exportar todo (JSON)</button><button id="exportCsvBtn" class="btn-redondeado py-2 px-4" style="background:#10b981;color:#fff">📥 Exportar todo (CSV / Excel)</button><button id="importJsonBtn" class="btn-redondeado py-2 px-4" style="background:#8b5cf6;color:#fff">📤 Importar desde JSON</button><button id="importCsvBtn" class="btn-redondeado py-2 px-4" style="background:#f59e0b;color:#fff">📤 Importar desde CSV / Excel</button>${esAppNativa() ? `<button id="importCarpetaBtn" class="btn-redondeado py-2 px-4" style="background:#14b8a6;color:#fff">📂 Importar desde la carpeta JAMPOS</button>` : ''}<input type="file" id="importFileInput" accept=".json" style="display:none"><input type="file" id="importCsvFileInput" accept=".csv,.xlsx,.xls,.txt" style="display:none"><p class="text-xs text-center mt-2 opacity-60">Los archivos CSV se abren directamente en Excel</p></div></div></div>
-                <div class="config-section"><button id="btnToggleSync" class="btn-azul-redondeado btn-redondeado w-full mb-2 py-2">🔄 Sincronizar terminales</button><div id="panelSync" style="display:none;" class="mt-2 config-inner">${window.JAMSync && window.JAMSync.isConnected() ? `<div class="mb-3 p-3 rounded-xl" style="background:rgba(16,185,129,0.1);border:1px solid #10b98140"><div class="flex items-center gap-2"><span style="color:#10b981;font-size:1.2rem">&#9679;</span><div><div class="text-sm font-bold" style="color:#10b981">Conectado a ${window.JAMSync.getName()}</div><div class="text-xs opacity-70">Sync automatico cada 30s</div></div></div></div><div class="mb-2 p-2 rounded-lg" style="background:rgba(139,92,246,0.1);border:1px solid #8b5cf640"><div class="text-xs opacity-70 mb-1">URL de conexion</div><div class="text-sm font-mono font-bold" style="color:#8b5cf6">${window.JAMSync.getUrl()}</div></div><button id="syncNowBtn" class="btn-redondeado w-full py-3 mb-2" style="background:#3b82f6;color:#fff"><i class="fas fa-sync-alt mr-1"></i> Sincronizar ahora</button><button id="syncStopBtn" class="btn-redondeado w-full py-2" style="background:#ef4444;color:#fff">Desconectar</button>` : `<div class="mb-2"><label class="text-sm font-semibold">Nombre de este dispositivo</label><div class="flex gap-2 mt-1"><input type="text" id="syncNameInput" placeholder="Nombre de la tienda..." class="border rounded-xl p-2 flex-1" value="${window.JAMSync ? window.JAMSync.getName() : ''}"><button id="syncNowBtn" class="btn-redondeado px-3 py-2" style="background:#3b82f6;color:#fff" title="Sincronizar datos"><i class="fas fa-sync-alt"></i></button></div><p class="text-xs mt-1 opacity-60">Escribe el nombre → QR se genera solo</p></div><div id="syncUrlRow" style="display:none" class="mb-2 p-2 rounded-lg"><div class="text-xs opacity-70 mb-1">URL de conexion</div><div id="syncUrlText" class="text-sm font-mono font-bold" style="color:#8b5cf6"></div></div><div id="syncQRDiv" style="display:none" class="text-center my-3"><canvas id="syncQRCanvas" width="256" height="256" style="width:200px;height:200px;border:3px solid #333;border-radius:12px"></canvas><p class="text-xs mt-2 opacity-60">Escanear este codigo desde el otro dispositivo</p></div><div class="border-t border-gray-200 dark:border-gray-700 pt-3 mt-3"><button id="syncScanBtn" class="btn-redondeado w-full py-3" style="background:#10b981;color:#fff"><i class="fas fa-camera mr-1"></i> Escanear QR del principal</button><p class="text-xs text-center mt-1 opacity-60">Dispositivo secundario: escanea para enlazar</p></div>`}<p class="text-xs text-center opacity-60 mt-3">Ambos dispositivos en la misma WiFi<br>Escribe el nombre → genera QR → escanea desde el otro</p></div></div>
+                <div class="config-section"><button id="btnToggleBackup" class="btn-azul-redondeado btn-redondeado w-full mb-2 py-2">💾 Copia de seguridad</button><div id="panelBackup" style="display:none;" class="mt-2 config-inner"><div class="flex flex-col gap-3">${esAppNativa() ? `<div class="rounded-xl p-3" style="background:rgba(14,165,233,0.08);border:1px solid rgba(14,165,233,0.3)"><p class="text-sm font-semibold mb-1">📁 Carpeta de la aplicación</p><p id="carpetaEstado" class="text-xs opacity-70 mb-2">ℹ️ Elija una carpeta para guardar tickets y respaldos (se creará la subcarpeta JAMPOS).</p><button id="elegirCarpetaBtn" class="btn-redondeado py-2 px-4 w-full" style="background:#0ea5e9;color:#fff">📂 Elegir carpeta</button></div>` : `<p class="text-xs text-center opacity-60">💡 En la app Android podrás elegir una carpeta donde guardar los archivos.</p>`}<button id="exportJsonBtn" class="btn-redondeado py-2 px-4" style="background:#3b82f6;color:#fff">📥 Exportar todo (JSON)</button><button id="exportCsvBtn" class="btn-redondeado py-2 px-4" style="background:#10b981;color:#fff">📥 Exportar todo (CSV / Excel)</button><button id="importJsonBtn" class="btn-redondeado py-2 px-4" style="background:#8b5cf6;color:#fff">📤 Importar desde JSON</button><button id="importCsvBtn" class="btn-redondeado py-2 px-4" style="background:#f59e0b;color:#fff">📤 Importar desde CSV / Excel</button>${esAppNativa() ? `<button id="importCarpetaBtn" class="btn-redondeado py-2 px-4" style="background:#14b8a6;color:#fff">📂 Importar desde la carpeta JAMPOS</button><button id="restaurarBackupBtn" class="btn-redondeado py-2 px-4" style="background:#ef4444;color:#fff">🔄 Restaurar desde respaldo automático</button>` : ''}<input type="file" id="importFileInput" accept=".json" style="display:none"><input type="file" id="importCsvFileInput" accept=".csv,.xlsx,.xls,.txt" style="display:none"><p class="text-xs text-center mt-2 opacity-60">Los archivos CSV se abren directamente en Excel</p></div></div></div>
             </div>
         `;
         document.getElementById('appRoot').innerHTML = html;
@@ -2848,104 +3402,6 @@
         toggle('btnToggleSeguridad', 'panelSeguridad');
         toggle('btnToggleColores', 'panelColores');
         toggle('btnToggleBackup', 'panelBackup');
-        toggle('btnToggleSync', 'panelSync');
-        
-        var syncNameInput = document.getElementById('syncNameInput');
-        var syncScanBtn = document.getElementById('syncScanBtn');
-        var syncStopBtn = document.getElementById('syncStopBtn');
-        var syncNowBtn = document.getElementById('syncNowBtn');
-        
-        if (syncNowBtn) {
-            syncNowBtn.addEventListener('click', function () {
-                if (!window.JAMSync) { mostrarNotificacion('Modulo sync no disponible', 'error'); return; }
-                syncNowBtn.disabled = true;
-                syncNowBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Sincronizando...';
-                window.JAMSync.bidirectionalSync().then(function (result) {
-                    syncNowBtn.disabled = false;
-                    syncNowBtn.innerHTML = '<i class="fas fa-sync-alt mr-1"></i> Sincronizar ahora';
-                    if (result && result.ok) {
-                        if (result.added > 0 || result.updated > 0) {
-                            mostrarNotificacion('Sync completada: ' + result.added + ' nuevos, ' + result.updated + ' actualizados', 'success');
-                        } else {
-                            mostrarNotificacion('Bases de datos al dia', 'info');
-                        }
-                    } else if (result && result.msg) {
-                        mostrarNotificacion('Sync: ' + result.msg, 'warning');
-                    }
-                }).catch(function (e) {
-                    syncNowBtn.disabled = false;
-                    syncNowBtn.innerHTML = '<i class="fas fa-sync-alt mr-1"></i> Sincronizar ahora';
-                    mostrarNotificacion('Error sync: ' + e.message, 'error');
-                });
-            });
-        }
-        
-        if (syncNameInput) {
-            var syncDebounce = null;
-            syncNameInput.addEventListener('input', function () {
-                clearTimeout(syncDebounce);
-                var name = syncNameInput.value.trim();
-                if (name.length < 2) {
-                    var qrDiv = document.getElementById('syncQRDiv');
-                    if (qrDiv) qrDiv.style.display = 'none';
-                    return;
-                }
-                syncDebounce = setTimeout(function () {
-                    if (!window.JAMSync) return;
-                    window.JAMSync.setupPrincipal(name).then(function (result) {
-                        var urlRow = document.getElementById('syncUrlRow');
-                        var urlText = document.getElementById('syncUrlText');
-                        if (urlRow) urlRow.style.display = 'block';
-                        if (urlText) urlText.textContent = result.url;
-                        var qrDiv = document.getElementById('syncQRDiv');
-                        if (qrDiv) qrDiv.style.display = 'block';
-                        window.JAMSync.showQR('syncQRCanvas', result.payload);
-                    }).catch(function (e) {
-                        mostrarNotificacion('Error config sync: ' + e.message, 'error');
-                    });
-                }, 300);
-            });
-            if (syncNameInput.value.trim().length >= 2 && window.JAMSync && window.JAMSync.getUrl()) {
-                var urlRow = document.getElementById('syncUrlRow');
-                var urlText = document.getElementById('syncUrlText');
-                if (urlRow) urlRow.style.display = 'block';
-                if (urlText) urlText.textContent = window.JAMSync.getUrl();
-                var qrDiv = document.getElementById('syncQRDiv');
-                if (qrDiv) qrDiv.style.display = 'block';
-                window.JAMSync.showQR('syncQRCanvas', JSON.stringify({u:window.JAMSync.getUrl(),n:window.JAMSync.getName(),k:localStorage.getItem('jam_sync_key')||''}));
-            }
-        }
-        
-        if (syncScanBtn) {
-            syncScanBtn.addEventListener('click', function () {
-                if (!window.JAMSync) return;
-                window.JAMSync.scanAndConnect().then(function (info) {
-                    mostrarNotificacion('Conectado a ' + info.name + ' - Sincronizando...', 'success');
-                    return window.JAMSync.bidirectionalSync();
-                }).then(function () {
-                    window.JAMSync.startSync();
-                    renderConfig();
-                }).catch(function (e) {
-                    mostrarNotificacion('Error: ' + e.message, 'error');
-                });
-            });
-        }
-        
-        if (syncStopBtn) {
-            syncStopBtn.addEventListener('click', function () {
-                if (!window.JAMSync) return;
-                window.JAMSync.stopSync();
-                localStorage.removeItem('jam_sync_url');
-                localStorage.removeItem('jam_sync_name');
-                localStorage.removeItem('jam_sync_key');
-                mostrarNotificacion('Desconectado', 'info');
-                renderConfig();
-            });
-        }
-        
-        if (window.JAMSync && window.JAMSync.isConnected()) {
-            window.JAMSync.startSync();
-        }
         
         const modoManualCheck = document.getElementById('modoManualCheck');
         const tasaManualDiv = document.getElementById('tasaManualDiv');
@@ -3077,6 +3533,13 @@
         };
         const importCarpetaBtn = document.getElementById('importCarpetaBtn');
         if (importCarpetaBtn) importCarpetaBtn.onclick = importarDesdeCarpeta;
+        const restaurarBackupBtn = document.getElementById('restaurarBackupBtn');
+        if (restaurarBackupBtn) restaurarBackupBtn.onclick = async () => {
+            if (!esAppNativa()) return;
+            if (!carpetaNativa || !carpetaNativa.uri) { mostrarNotificacion('⚠️ Primero elija una carpeta', 'info'); return; }
+            const n = await restaurarDesdeArchivos();
+            if (n === 0) mostrarNotificacion('ℹ️ No se encontraron respaldos para restaurar', 'info');
+        };
         actualizarUICarpeta();
     }
     
@@ -3155,14 +3618,15 @@
     const APP_NOMBRE = 'JAM POS';
     const APP_TAGLINE = 'Tienda Profesional';
     const MODULOS_GUIA = [
-        { icon: 'fa-shopping-cart', nombre: 'Ventas', uso: 'Registra ventas buscando por nombre o código de barras, elige el tipo de pago, aplica descuentos y genera el ticket de la venta.' },
-        { icon: 'fa-boxes', nombre: 'Inventario', uso: 'Administra tus productos: precios en Bs y USD, stock mínimo, categorías, escaneo de código de barras e imágenes.' },
-        { icon: 'fa-users', nombre: 'Clientes', uso: 'Lleva tu cartera de clientes con cédula, teléfono, saldo pendiente y historial de compras.' },
+        { icon: 'fa-shopping-cart', nombre: 'Ventas', uso: 'Registra ventas buscando por nombre o código de barras, escáner de cámara, tipo de pago, descuentos y ticket. Incluye modo Kiosco para punto de venta rápido.' },
+        { icon: 'fa-boxes', nombre: 'Inventario', uso: 'Administra tus productos: precios en Bs y USD con conversión automática, stock mínimo, categorías, escaneo de código de barras, imágenes y selección en lote.' },
+        { icon: 'fa-users', nombre: 'Clientes', uso: 'Lleva tu cartera de clientes con cédula, teléfono, saldo pendiente, historial de compras y búsqueda inteligente.' },
         { icon: 'fa-truck', nombre: 'Proveedores', uso: 'Registra tus proveedores, tiempos de entrega y datos de contacto para tus compras.' },
         { icon: 'fa-coins', nombre: 'Gastos', uso: 'Registra los gastos del negocio y clasifícalos por categoría para controlar tus costos.' },
         { icon: 'fa-user-tie', nombre: 'Empleados', uso: 'Gestiona tu personal: cédula, cargo, salario en Bs y fecha de contratación.' },
-        { icon: 'fa-chart-line', nombre: 'Reportes', uso: 'Consulta tus estadísticas: total de ventas, ticket promedio, gráficos y calendario de ventas.' },
-        { icon: 'fa-palette', nombre: 'Config', uso: 'Personaliza el tema y colores, configura la empresa, la tasa de cambio, impresión y la copia de seguridad.' }
+        { icon: 'fa-chart-line', nombre: 'Reportes', uso: 'Consulta estadísticas: ventas, ticket promedio, gráficos diarios, calendario de ventas y utilidad.' },
+        { icon: 'fa-calculator', nombre: 'Calculadora', uso: 'Convertidor USD ⇄ Bs integrado. Calcula precios, conversiones y prepagos al instante.' },
+        { icon: 'fa-palette', nombre: 'Config', uso: 'Tema y colores, empresa, tasa de cambio, impresión, copia de seguridad, PIN, sync entre dispositivos y dual persistencia.' }
     ];
 
     function inyectarBotonAyudaModulo() {
@@ -3200,6 +3664,14 @@
         const modulosHtml = MODULOS_GUIA.map(m =>
             `<div class="guia-item"><i class="fas ${m.icon}"></i><div><strong>${m.nombre}</strong><small>${m.uso}</small></div></div>`
         ).join('');
+        const esNativa = typeof esAppNativa === 'function' && esAppNativa();
+        const featuresHtml = `
+            <div class="guia-item"><i class="fas fa-database"></i><div><strong>Dual Persistencia</strong><small>Tus datos se guardan en IndexedDB + archivos JSON como respaldo. Si la base de datos se borra, se restaura automáticamente.</small></div></div>
+            <div class="guia-item"><i class="fas fa-lock"></i><div><strong>3 modos de candado</strong><small>Visible (prueba 30 días), Silencioso (sin aviso), Libre (sin candado). Configurable por variante.</small></div></div>
+            <div class="guia-item"><i class="fas fa-tv"></i><div><strong>Modo Kiosco</strong><small>Pantalla simplificada para punto de venta rápido. Mantén presionado "Ventas" 5 segundos para activarlo. Incluye calculadora integrada.</small></div></div>
+            <div class="guia-item"><i class="fas fa-calculator"></i><div><strong>Calculadora USD ⇄ Bs</strong><small>Convertidor integrado en el home y en el kiosco. Formato de miles venezolano: 1.234.567,89</small></div></div>
+            ${esNativa ? `<div class="guia-item"><i class="fas fa-folder-open"></i><div><strong>Carpeta de archivos</strong><small>Guarda tickets, respaldos y datos en la carpeta que elijas en tu dispositivo.</small></div></div>` : ''}
+        `;
         const fondo = document.createElement('div');
         fondo.className = 'guia-fondo';
         fondo.innerHTML = `
@@ -3210,6 +3682,10 @@
                 <div class="guia-fila"><span>Versión</span><span>${APP_VERSION}</span></div>
                 <div class="guia-fila"><span>Tipo de cambio</span><span>${D.config.mostrarDolar ? 'Tasa BCV (Bs/USD)' : 'Desactivado'}</span></div>
                 <div class="guia-fila"><span>Empresa</span><span>${D.config.empresa?.nombre || '—'}</span></div>
+                <div class="guia-seccion">
+                    <h4>Características principales</h4>
+                    <div class="guia-lista">${featuresHtml}</div>
+                </div>
                 <div class="guia-seccion">
                     <h4>Cómo usar los módulos</h4>
                     <div class="guia-lista">${modulosHtml}</div>
@@ -3224,43 +3700,58 @@
     }
 
     const GUIA_HOME = [
-        { sel: null, titulo: 'Bienvenido a JAM POS', texto: 'Tu tienda profesional: gestiona ventas, inventario, clientes y más, todo desde este dispositivo.' },
-        { sel: '#searchGlobalInput', titulo: 'Búsqueda rápida', texto: 'Escribe aquí para buscar productos, clientes y proveedores desde cualquier parte.' },
-        { sel: '.card-bcv', titulo: 'Tipo de cambio', texto: 'Muestra la tasa oficial del dólar (BCV). Toca el icono de intercambio para usar el convertidor USD ⇄ Bs.' },
-        { sel: '.home-grid', titulo: 'Tus módulos', texto: 'Cada botón abre un módulo: Ventas, Inventario, Clientes, Proveedores, Gastos, Empleados, Reportes y Configuración.' },
-        { sel: '.btn-ayuda-home', titulo: 'Guía de la app', texto: 'Este botón abre la guía completa con la versión, los datos de la empresa y cómo usar cada módulo.' },
+        { sel: null, titulo: 'Bienvenido a JAM POS', texto: 'Tu tienda profesional: gestiona ventas, inventario, clientes y más. Tus datos se sincronizan entre dispositivos automáticamente.' },
+        { sel: '#searchGlobalInput', titulo: 'Búsqueda rápida', texto: 'Escribe aquí para buscar productos, clientes y proveedores desde cualquier parte. La búsqueda inteligente filtra por nombre, código o cédula.' },
+        { sel: '.card-bcv', titulo: 'Tipo de cambio', texto: 'Muestra la tasa oficial del dólar (BCV). Toca el icono para usar el convertidor USD ⇄ Bs con formato venezolano (1.234.567,89).' },
+        { sel: '.home-grid', titulo: 'Tus módulos', texto: 'Cada botón abre un módulo: Ventas, Inventario, Clientes, Proveedores, Gastos, Empleados, Reportes, Calculadora y Configuración.' },
+        { sel: '.led-converter', titulo: 'Calculadora USD ⇄ Bs', texto: 'Convertidor rápido integrado. Toca para calcular conversiones al instante sin salir del home.' },
+        { sel: null, titulo: 'Modo Kiosco', texto: 'Mantén presionado el botón "Ventas" 5 segundos para activar el modo Kiosco: pantalla simplificada para punto de venta rápido con calculadora integrada.' },
+        { sel: '.btn-ayuda-home', titulo: 'Guía de la app', texto: 'Este botón abre la guía completa con todas las características, módulos y cómo usar cada uno.' },
         { sel: null, titulo: '¡Listo!', texto: 'Ya conoces lo esencial. Explora cada módulo cuando quieras, y vuelve a la guía cuando lo necesites.' }
     ];
     const GUIA_VENTAS = [
-        { sel: '#clienteInput', titulo: '1. El cliente', texto: 'Escribe el nombre o la cédula del cliente y toca la sugerencia para seleccionarlo. Usa el botón "+" para crear uno nuevo al instante.' },
-        { sel: '#buscarProducto', titulo: '2. Buscar productos', texto: 'Escribe el nombre o el código de barras. Toca un resultado para agregarlo al carrito; con Enter y un código se agrega directo.' },
+        { sel: null, titulo: 'Ventas — Modo completo', texto: 'Esta es la pantalla principal de ventas. Aquí registras cada venta con cliente, productos, pago y ticket.' },
+        { sel: '#clienteInput', titulo: '1. El cliente', texto: 'Escribe el nombre o la cédula del cliente y toca la sugerencia. Usa "+" para crear uno nuevo al instante. La búsqueda inteligente encuentra por nombre, cédula o teléfono.' },
+        { sel: '#buscarProducto', titulo: '2. Buscar productos', texto: 'Escribe el nombre o código de barras. Toca un resultado para agregarlo al carrito. Con Enter y un código se agrega directo.' },
         { sel: '#btnScanVentas', titulo: '3. Escáner con cámara', texto: 'Toca la cámara para escanear un código de barras y agregar el producto automáticamente.' },
-        { sel: '#carritoLista', titulo: '4. Carrito', texto: 'Aquí ves lo agregado: cambia cantidades, quita productos y mira el subtotal, IVA y total en tiempo real.' },
-        { sel: '#tipoPago', titulo: '5. Tipo de pago', texto: 'Elige cómo paga el cliente: efectivo en Bs, dólares, tarjeta, transferencia, pago móvil o pago dividido (varios métodos en una venta).' },
-        { sel: '#finalizarVenta', titulo: '6. Finalizar venta', texto: 'Al finalizar se genera el TICKET virtual: puedes guardarlo como imagen, imprimirlo o reenviarlo. Con efectivo en Bs puedes calcular el cambio.' },
+        { sel: '#carritoLista', titulo: '4. Carrito', texto: 'Aquí ves lo agregado: cambia cantidades, quita productos y mira el subtotal, IVA y total en tiempo real con precios en Bs y USD.' },
+        { sel: '#tipoPago', titulo: '5. Tipo de pago', texto: 'Elige cómo paga: efectivo Bs, dólares, tarjeta, transferencia, pago móvil o pago dividido (varios métodos en una venta).' },
+        { sel: '#finalizarVenta', titulo: '6. Finalizar venta', texto: 'Al finalizar se genera el TICKET: imagen, impresión y reenvío. Con efectivo en Bs puedes calcular el cambio.' },
+        { sel: null, titulo: 'Modo Kiosco', texto: 'Para acceso rápido: mantén presionado "Ventas" 5 segundos. El kiosco muestra solo lo esencial con calculadora integrada y candado de seguridad.' },
         { sel: null, titulo: '¡Listo!', texto: 'Con eso dominas Ventas. Haz tu primera venta cuando quieras; el ticket te da imagen e impresión.' }
     ];
     const GUIA_INVENTARIO = [
-        { sel: '#searchInv', titulo: '1. Buscar en inventario', texto: 'Escribe el nombre o el código de barras para filtrar tus productos al instante. Con Enter y un código se agrega o busca directo.' },
+        { sel: '#searchInv', titulo: '1. Buscar en inventario', texto: 'Escribe el nombre o código de barras para filtrar al instante. Con Enter y un código se agrega o busca directo.' },
         { sel: '#btnScanInv', titulo: '2. Escáner', texto: 'Toca la cámara para escanear un código de barras y encontrar el producto al instante.' },
-        { sel: '#nuevoProducto', titulo: '3. Nuevo producto', texto: 'Abre el formulario completo: nombre, código de barras, categoría, proveedor, stock, y precios de compra y venta.' },
-        { sel: null, titulo: '4. Conversión Bs ⇄ USD', texto: 'En el formulario de producto los precios se convierten SOLOS: escribe un precio en Bs y el campo en USD se rellena con la tasa del día (y viceversa). Compra y venta se convierten por separado.' },
-        { sel: '.product-card', titulo: '5. Tus productos', texto: 'Cada tarjeta muestra precios en Bs y USD, stock y categoría. Toca ✏️ Editar, 📋 Copiar o 🗑️ Eliminar según necesites.' },
+        { sel: '#nuevoProducto', titulo: '3. Nuevo producto', texto: 'Formulario completo: nombre, código, categoría, proveedor, stock, imágenes y precios de compra y venta.' },
+        { sel: null, titulo: '4. Conversión automática', texto: 'En el formulario, los precios se convierten SOLOS: escribe en Bs y se rellena USD (y viceversa). Compra y venta se convierten por separado.' },
+        { sel: '.product-card', titulo: '5. Tus productos', texto: 'Cada tarjeta muestra precios en Bs y USD, stock y categoría. Toca ✏️ Editar, 📋 Copiar o 🗑️ Eliminar.' },
         { sel: '#selectAllCheckbox', titulo: '6. Selección en lote', texto: 'Marca varios productos y pulsa "✏️ Editar selección" para cambiar precios, categoría, proveedor o stock de todos a la vez.' },
-        { sel: null, titulo: '¡Listo!', texto: 'Ya sabes manejar inventario y sus conversiones. ¡Agrega tu primer producto!' }
+        { sel: null, titulo: '¡Listo!', texto: 'Ya sabes manejar inventario con conversión automática. ¡Agrega tu primer producto!' }
     ];
     const GUIA_REPORTES = [
         { sel: '.chart-container', titulo: '1. Gráfico diario', texto: 'Toca cualquier barra del gráfico para ver las ventas, ganancia y utilidad de ese día.' },
         { sel: '#chartVentas', titulo: '2. Gráfico', texto: 'Gráfica de tus ventas en el tiempo para detectar tendencias de un vistazo.' },
-        { sel: '#buscarVentas', titulo: '3. Buscar ventas', texto: 'Escribe para filtrar por fecha, artículo, cliente o número de venta. También puedes usar el calendario de la derecha.' },
+        { sel: '#buscarVentas', titulo: '3. Buscar ventas', texto: 'Escribe para filtrar por fecha, artículo, cliente o número de venta. También puedes usar el calendario.' },
         { sel: '#btnCalendarioVentas', titulo: '4. Calendario', texto: 'Abre un calendario para ver las ventas de un día o de un mes específicos.' },
         { sel: '#listaVentasReporte', titulo: '5. Detalle de venta', texto: 'Toca cualquier venta para ver su ticket completo: cliente, productos, total y forma de pago.' },
         { sel: null, titulo: '¡Listo!', texto: 'Con Reportes controlas tu negocio: ganancias, gastos, ventas por día y más.' }
     ];
+    const GUIA_CONFIG = [
+        { sel: null, titulo: 'Configuración', texto: 'Aquí personalizas todo: empresa, tema, tasa, seguridad, backup y sincronización.' },
+        { sel: '#btnToggleEmpresa', titulo: '1. Datos de la empresa', texto: 'Configura nombre, dirección, teléfono, RIF y logo. Aparece en los tickets impresos.' },
+        { sel: '#btnToggleTasa', titulo: '2. Tasa de cambio', texto: 'Configura la tasa BCV manual o automática. Se usa para conversiones Bs ⇄ USD en toda la app.' },
+        { sel: '#btnToggleOpciones', titulo: '3. Opciones', texto: 'Modo oscuro automático, IVA, prevenir cierre accidental y más ajustes de comportamiento.' },
+        { sel: '#btnToggleSeguridad', titulo: '4. Seguridad (PIN)', texto: 'Protege la app con un PIN de 4 dígitos. Se pide al abrir la app.' },
+        { sel: '#btnToggleColores', titulo: '5. Temas de color', texto: 'Elige el color de acento de la app entre una paleta de colores predefinidos.' },
+        { sel: '#btnToggleBackup', titulo: '6. Copia de seguridad', texto: 'Dual persistencia: tus datos se guardan en IDB + archivos JSON. Exporta/importa JSON, CSV y restaura desde respaldo automático.' },
+        { sel: null, titulo: '¡Listo!', texto: 'Con Config personalizas la app a tu negocio. Los datos se sincronizan y respaldan automáticamente.' }
+    ];
     const GUIA_MODULOS = {
         ventas: { clave: 'jam_guia_ventas_visto', pasos: GUIA_VENTAS },
         inventario: { clave: 'jam_guia_inventario_visto', pasos: GUIA_INVENTARIO },
-        reportes: { clave: 'jam_guia_reportes_visto', pasos: GUIA_REPORTES }
+        reportes: { clave: 'jam_guia_reportes_visto', pasos: GUIA_REPORTES },
+        config: { clave: 'jam_guia_config_visto', pasos: GUIA_CONFIG }
     };
 
     function iniciarTutorial(pasos, claveVisto) {
@@ -3338,6 +3829,12 @@
 // ==================== VERSIÓN DE PRUEBA (CANDADO) ====================
     // ==================== SISTEMA DE PRUEBA 30 DÍAS ====================
     const JAM_EMAIL_VENTA = 'jamaplicativo@gmail.com';
+    // Modo del candado de prueba:
+    //   'visible'    -> cuenta atrás con banner + popup (versión de prueba gráfica)
+    //   'silencioso' -> cuenta 30 días desde la primera activación SIN mostrar nada;
+    //                   al vencer muestra únicamente la pantalla de bloqueo
+    //   'libre'      -> sin candado ni conteo (no se escribe ninguna marca)
+    const JAM_MODO_CANDADO = 'libre';
     window._pruebaInfo = null;
 
     function mostrarBloqueoPrueba() {
@@ -3416,11 +3913,15 @@
     }
 
     function sincronizarPrueba(info) {
-        if(info.bloqueada) { window._pruebaInfo = null; mostrarBloqueoPrueba(); }
-        else { mostrarBannerPrueba(info); mostrarContadorPrueba(info); }
+        if(JAM_MODO_CANDADO === 'libre') return;
+        if(info.bloqueada) { window._pruebaInfo = null; mostrarBloqueoPrueba(); return; }
+        if(JAM_MODO_CANDADO === 'silencioso') return;
+        mostrarBannerPrueba(info);
+        mostrarContadorPrueba(info);
     }
 
     function verificarPruebaInicio() {
+        if(JAM_MODO_CANDADO === 'libre') { window._pruebaInfo = null; return false; }
         var TRIAL_DAYS = 30;
         var TRIAL_KEY = 'jam_trial_data';
 
@@ -3461,7 +3962,7 @@
         }
         sincronizarPrueba(info);
         if(info.bloqueada) { mostrarBloqueoPrueba(); return true; }
-        window._pruebaInfo = info;
+        window._pruebaInfo = (JAM_MODO_CANDADO === 'visible') ? info : null;
         return false;
     }
 // ==================== INICIALIZACIÓN ====================
@@ -3494,11 +3995,6 @@
         }, { passive: true });
     })();
     loadAllData().then(() => {
-        if(window.JAMSync && window.JAMSync.tryAutoReconnect){
-            window.JAMSync.tryAutoReconnect().then(function(ok){
-                if(ok) console.log('[APP] Sync reconectado automaticamente');
-            });
-        }
         if(verificarPruebaInicio()) return;
         if(kioscoVentas) {
             localStorage.setItem('jam_last_module', 'ventas');
@@ -3538,9 +4034,50 @@
         }, 300);
     });
 
-    // Pantalla única de Ventas: al regresar de segundo plano siempre vuelve al módulo.
+    // Al regresar de segundo plano: refrescar el módulo actual.
+    // Fix: pantalla en blanco tras dejar la app mucho tiempo en background.
     document.addEventListener('visibilitychange', () => {
-        if(!kioscoVentas) return;
-        if(document.hidden) guardarSesionVenta();
-        else if(currentModule !== 'ventas') { currentModule = 'ventas'; renderVentas(); }
+        if(document.hidden) {
+            if(kioscoVentas) guardarSesionVenta();
+            return;
+        }
+        // Si hay kiosco y no estamos en ventas, forzar vuelta a ventas
+        if(kioscoVentas && currentModule !== 'ventas') {
+            currentModule = 'ventas';
+            renderVentas();
+            return;
+        }
+        // Modo normal: re-renderizar el módulo actual
+        refrescarModuloActual();
     });
+
+    // Re-renderiza el módulo actual sin cambiar de módulo
+    function refrescarModuloActual() {
+        if(!currentModule) return;
+        if(currentModule === 'home') renderHome();
+        else if(currentModule === 'ventas') renderVentas();
+        else if(currentModule === 'inventario') renderInventario();
+        else if(currentModule === 'clientes') renderCrud('clientes', 'Clientes', ['cedula','nombre','telefono','direccion','email']);
+        else if(currentModule === 'proveedores') renderCrud('proveedores', 'Proveedores', ['rif','nombre','telefono','contacto','direccion']);
+        else if(currentModule === 'gastos') renderCrud('gastos', 'Gastos', ['concepto','montoBs','categoria','fecha']);
+        else if(currentModule === 'empleados') renderCrud('empleados', 'Empleados', ['cedula','nombre','cargo','salarioBs','fechaContrato']);
+        else if(currentModule === 'reportes') renderReportes();
+        else if(currentModule === 'config') renderConfig();
+    }
+    window.jamRefrescarModuloActual = refrescarModuloActual;
+
+    // Llamado desde Android onResume() cuando la Activity se restaura
+    window.jamOnResume = function() {
+        if(!document.body || !document.body.children.length) return;
+        // Verificar que el DOM esté intacto
+        const appEl = document.getElementById('app') || document.body;
+        if(!appEl || appEl.children.length === 0) {
+            // DOM destruido, recargar todo desde cero
+            loadAllData().then(() => {
+                renderHome();
+                actualizarTasa(false);
+            });
+            return;
+        }
+        refrescarModuloActual();
+    };
