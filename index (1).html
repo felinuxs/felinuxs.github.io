@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Presentación de JAM POS — herramienta para gestionar ventas, inventario y operaciones de un negocio.">
+<title>JAM POS — Presentación</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.65;color:#172033;background:#f5f7fb}
+a{text-decoration:none}
+.hero{min-height:78vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:70px 20px;background:linear-gradient(135deg,#172033,#344767);color:#fff}
+.hero-content{max-width:900px}
+.badge{display:inline-block;padding:8px 16px;border:1px solid rgba(255,255,255,.3);border-radius:999px;margin-bottom:22px;font-size:.9rem}
+h1{font-size:clamp(2.7rem,8vw,5.5rem);line-height:1.02;margin-bottom:22px}
+.hero p{max-width:760px;margin:0 auto 32px;font-size:1.2rem;opacity:.92}
+.button{display:inline-block;padding:15px 27px;border-radius:14px;background:#fff;color:#172033;font-weight:800;box-shadow:0 10px 30px rgba(0,0,0,.16);transition:.2s}
+.button:hover{transform:translateY(-2px)}
+section{max-width:1120px;margin:auto;padding:76px 20px}
+.section-title{text-align:center;margin-bottom:42px}
+.section-title h2{font-size:clamp(1.9rem,4vw,2.6rem);line-height:1.2;margin-bottom:10px}
+.section-title p{color:#667085}
+.intro{max-width:850px;margin:auto;text-align:center;font-size:1.12rem}
+.feature-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.card{background:#fff;padding:26px;border-radius:22px;box-shadow:0 8px 30px rgba(20,30,50,.08);border:1px solid #edf0f5}
+.card h3{font-size:1.2rem;margin-bottom:8px}
+.card p{color:#596579}
+.home-preview{background:#fff;border-radius:28px;padding:18px;box-shadow:0 15px 50px rgba(20,30,50,.12);max-width:520px;margin:auto}
+.home-preview img{display:block;width:100%;height:auto;border-radius:20px}
+.bcv{background:#172033;color:#fff;border-radius:28px;padding:38px;text-align:center;max-width:950px;margin:auto}
+.bcv .rate{font-size:clamp(3rem,9vw,5.5rem);font-weight:900;line-height:1.05;margin:16px 0}
+.bcv p{opacity:.9;max-width:720px;margin:10px auto}
+.module-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+.module{background:#fff;padding:24px;border-radius:22px;border:1px solid #e8edf5;display:flex;gap:18px;align-items:flex-start}
+.icon{font-size:2rem;line-height:1}
+.module h3{margin-bottom:5px}
+.module p{color:#596579}
+.flow{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.step{background:#fff;border-radius:20px;padding:22px;text-align:center;border:1px solid #e8edf5}
+.step strong{display:block;font-size:1.1rem;margin-bottom:6px}
+.note{margin-top:22px;padding:16px 18px;border-radius:16px;background:#fff7ed;border:1px solid #fed7aa;color:#7c2d12}
+.cta{text-align:center;background:#172033;color:#fff;border-radius:28px;margin-bottom:60px}
+.cta .section-title p{color:#d6dbe4}
+footer{padding:32px 20px;text-align:center;color:#667085;background:#172033;color:#cbd3df}
+footer strong{color:#fff}
+@media(max-width:800px){.feature-grid,.module-grid{grid-template-columns:1fr}.flow{grid-template-columns:1fr 1fr}}
+@media(max-width:520px){section{padding:55px 16px}.flow{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- =========================================================
+     PRESENTACIÓN DE JAM POS
+     Esta página está enfocada en LAS CUALIDADES Y FUNCIONES
+     DEL APLICATIVO, no en explicar cómo fue programado.
+     ========================================================= -->
+
+<header class="hero">
+  <div class="hero-content">
+    <span class="badge">JAM POS · Tienda Profesional</span>
+    <h1>Todo tu negocio, organizado en un solo lugar.</h1>
+    <p>
+      Una herramienta pensada para facilitar las ventas, controlar el inventario,
+      administrar clientes y proveedores, registrar gastos y empleados, y consultar
+      los resultados del negocio.
+    </p>
+
+    <!-- =====================================================
+         BOTÓN PRINCIPAL
+         AQUÍ PON LA DIRECCIÓN DE TU PWA.
+         Ejemplo:
+         href="https://felinuxs.github.io/tu-aplicacion/"
+         ===================================================== -->
+    <a class="button"
+       href="https://aplicacionjam.github.io/"
+       target="_blank" rel="noopener noreferrer">
+       🚀 Entrar a la aplicación
+    </a>
+  </div>
+</header>
+
+<section>
+  <div class="section-title">
+    <h2>Una pantalla principal pensada para trabajar</h2>
+    <p>Información importante y acceso directo a las funciones del negocio.</p>
+  </div>
+
+  <div class="home-preview">
+    <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5MDAiIGhlaWdodD0iMTQ1MCIgdmlld0JveD0iMCAwIDkwMCAxNDUwIj4KPHJlY3Qgd2lkdGg9IjkwMCIgaGVpZ2h0PSIxNDUwIiByeD0iNDIiIGZpbGw9IiNmNWY3ZmIiLz4KPHJlY3QgeD0iMjQiIHk9IjI0IiB3aWR0aD0iODUyIiBoZWlnaHQ9IjE0MDIiIHJ4PSIzNCIgZmlsbD0iI2ZmZiIgc3Ryb2tlPSIjZTVlN2ViIiBzdHJva2Utd2lkdGg9IjMiLz4KPHRleHQgeD0iNzAiIHk9IjkyIiBmb250LWZhbWlseT0iQXJpYWwsc2Fucy1zZXJpZiIgZm9udC1zaXplPSIzNCIgZm9udC13ZWlnaHQ9IjgwMCIgZmlsbD0iIzE3MjAzMyI+SkFNIFBPUzwvdGV4dD4KPHRleHQgeD0iNzAiIHk9IjEyOCIgZm9udC1mYW1pbHk9IkFyaWFsLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTkiIGZpbGw9IiM2NjcwODUiPlRpZW5kYSBQcm9mZXNpb25hbDwvdGV4dD4KPHJlY3QgeD0iNjAiIHk9IjE2NiIgd2lkdGg9Ijc4MCIgaGVpZ2h0PSI3MCIgcng9IjIyIiBmaWxsPSIjZmZmIiBzdHJva2U9IiMzYjgyZjYiIHN0cm9rZS13aWR0aD0iNCIvPgo8dGV4dCB4PSI5MiIgeT0iMjEwIiBmb250LWZhbWlseT0iQXJpYWwsc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyMiIgZmlsbD0iIzhiOTVhNyI+8J+UjiAgQnVzY2FyIHByb2R1Y3RvcywgY2xpZW50ZXMuLi48L3RleHQ+CjxyZWN0IHg9IjYwIiB5PSIyNjYiIHdpZHRoPSI3ODAiIGhlaWdodD0iMjMwIiByeD0iMzAiIGZpbGw9IiNmZmYiIHN0cm9rZT0iIzNiODJmNiIgc3Ryb2tlLXdpZHRoPSI1Ii8+Cjx0ZXh0IHg9IjQ1MCIgeT0iMzEzIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iQXJpYWwsc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZm9udC13ZWlnaHQ9IjgwMCIgZmlsbD0iIzE3MjAzMyI+VElQTyBERSBDQU1CSU8gKFVTRCDihpIgVkVTKTwvdGV4dD4KPHRleHQgeD0iNDUwIiB5PSIzOTUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCxzYW5zLXNlcmlmIiBmb250LXNpemU9IjY4IiBmb250LXdlaWdodD0iOTAwIiBmaWxsPSIjM2I4MmY2Ij42Ny44NTwvdGV4dD4KPHRleHQgeD0iNDUwIiB5PSI0MzIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCxzYW5zLXNlcmlmIiBmb250LXNpemU9IjMwIiBmb250LXdlaWdodD0iODAwIiBmaWxsPSIjM2I4MmY2Ij5Ccy9VU0Q8L3RleHQ+Cjx0ZXh0IHg9IjQ1MCIgeT0iNDY2IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iQXJpYWwsc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNSIgZmlsbD0iIzY2NzA4NSI+QWN0dWFsaXphZG86IGhveTwvdGV4dD4KPGNpcmNsZSBjeD0iNzkyIiBjeT0iMzAzIiByPSIyMiIgZmlsbD0iIzNiODJmNiIvPgo8dGV4dCB4PSI3OTIiIHk9IjMxMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTkiIGZpbGw9IiNmZmYiPuKGlDwvdGV4dD4KPGcgZm9udC1mYW1pbHk9IkFyaWFsLHNhbnMtc2VyaWYiIGZvbnQtd2VpZ2h0PSI4MDAiIGZvbnQtc2l6ZT0iMjIiPgo8cmVjdCB4PSI2MCIgeT0iNTMwIiB3aWR0aD0iMzc1IiBoZWlnaHQ9IjkwIiByeD0iMjUiIGZpbGw9IiMzYjgyZjYiLz48dGV4dCB4PSIyNDciIHk9IjU4NiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iI2ZmZiI+8J+bkiAgVmVudGFzPC90ZXh0Pgo8cmVjdCB4PSI0NjUiIHk9IjUzMCIgd2lkdGg9IjM3NSIgaGVpZ2h0PSI5MCIgcng9IjI1IiBmaWxsPSIjM2I4MmY2Ii8+PHRleHQgeD0iNjUyIiB5PSI1ODYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiPvCfk6YgIEludmVudGFyaW88L3RleHQ+CjxyZWN0IHg9IjYwIiB5PSI2NDAiIHdpZHRoPSIzNzUiIGhlaWdodD0iOTAiIHJ4PSIyNSIgZmlsbD0iIzNiODJmNiIvPjx0ZXh0IHg9IjI0NyIgeT0iNjk2IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjZmZmIj7wn5GlICBDbGllbnRlczwvdGV4dD4KPHJlY3QgeD0iNDY1IiB5PSI2NDAiIHdpZHRoPSIzNzUiIGhlaWdodD0iOTAiIHJ4PSIyNSIgZmlsbD0iIzNiODJmNiIvPjx0ZXh0IHg9IjY1MiIgeT0iNjk2IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjZmZmIj7wn5qaICBQcm92ZWVkb3JlczwvdGV4dD4KPHJlY3QgeD0iNjAiIHk9Ijc1MCIgd2lkdGg9IjM3NSIgaGVpZ2h0PSI5MCIgcng9IjI1IiBmaWxsPSIjM2I4MmY2Ii8+PHRleHQgeD0iMjQ3IiB5PSI4MDYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiPvCfkrAgIEdhc3RvczwvdGV4dD4KPHJlY3QgeD0iNDY1IiB5PSI3NTAiIHdpZHRoPSIzNzUiIGhlaWdodD0iOTAiIHJ4PSIyNSIgZmlsbD0iIzNiODJmNiIvPjx0ZXh0IHg9IjY1MiIgeT0iODA2IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjZmZmIj7wn5GUICBFbXBsZWFkb3M8L3RleHQ+CjxyZWN0IHg9IjYwIiB5PSI4NjAiIHdpZHRoPSIzNzUiIGhlaWdodD0iOTAiIHJ4PSIyNSIgZmlsbD0iIzNiODJmNiIvPjx0ZXh0IHg9IjI0NyIgeT0iOTE2IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjZmZmIj7wn5OKICBSZXBvcnRlczwvdGV4dD4KPHJlY3QgeD0iNDY1IiB5PSI4NjAiIHdpZHRoPSIzNzUiIGhlaWdodD0iOTAiIHJ4PSIyNSIgZmlsbD0iIzNiODJmNiIvPjx0ZXh0IHg9IjY1MiIgeT0iOTE2IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjZmZmIj7wn46oICBDb25maWc8L3RleHQ+CjwvZz4KPHJlY3QgeD0iNjAiIHk9IjEwMDAiIHdpZHRoPSI3ODAiIGhlaWdodD0iMTcwIiByeD0iMjgiIGZpbGw9IiNmOGZhZmMiIHN0cm9rZT0iI2RiZTNlZiIgc3Ryb2tlLXdpZHRoPSIyIi8+Cjx0ZXh0IHg9IjkwIiB5PSIxMDQ1IiBmb250LWZhbWlseT0iQXJpYWwsc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyMiIgZm9udC13ZWlnaHQ9IjgwMCIgZmlsbD0iIzE3MjAzMyI+Q29udmVyc2nDs24gcsOhcGlkYSBCcyDihpQgVVNEPC90ZXh0Pgo8dGV4dCB4PSI5MCIgeT0iMTA4NSIgZm9udC1mYW1pbHk9IkFyaWFsLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM2NjcwODUiPkxhIHBhbnRhbGxhIHByaW5jaXBhbCBwZXJtaXRlIGNvbnN1bHRhciBsYSB0YXNhPC90ZXh0Pgo8dGV4dCB4PSI5MCIgeT0iMTExNSIgZm9udC1mYW1pbHk9IkFyaWFsLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM2NjcwODUiPnkgY29udmVydGlyIHZhbG9yZXMgdXNhbmRvIGxhIHRhc2EgZGlzcG9uaWJsZS48L3RleHQ+Cjx0ZXh0IHg9IjkwIiB5PSIxMTYwIiBmb250LWZhbWlseT0iQXJpYWwsc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzY2NzA4NSI+VmlzdGEgcmVwcmVzZW50YXRpdmEgYmFzYWRhIGVuIGxhIGVzdHJ1Y3R1cmEgZGVsIGFwbGljYXRpdm8uPC90ZXh0Pgo8dGV4dCB4PSI0NTAiIHk9IjEzNzAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCxzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjOThhMmIzIj5KQU0gUE9TIMK3IFBhbnRhbGxhIHByaW5jaXBhbDwvdGV4dD4KPC9zdmc+" alt="Vista representativa de la pantalla principal de JAM POS">
+  </div>
+
+  <div class="note">
+    <strong>Importante:</strong> la imagen anterior es una vista representativa creada
+    a partir de la estructura real del HTML proporcionado. No sustituye una captura
+    fotográfica del aplicativo.
+  </div>
+</section>
+
+<section>
+  <div class="section-title">
+    <h2>La información que necesitas, de un vistazo</h2>
+    <p>La pantalla principal reúne las herramientas esenciales.</p>
+  </div>
+
+  <div class="feature-grid">
+    <article class="card">
+      <h3>🔎 Búsqueda global</h3>
+      <p>Busca productos y clientes directamente desde la pantalla principal.</p>
+    </article>
+    <article class="card">
+      <h3>💱 Tipo de cambio</h3>
+      <p>Consulta el valor USD → VES mostrado por la aplicación y su última actualización.</p>
+    </article>
+    <article class="card">
+      <h3>🔄 Conversor</h3>
+      <p>Convierte rápidamente entre bolívares y dólares utilizando la tasa disponible.</p>
+    </article>
+    <article class="card">
+      <h3>⚡ Acceso directo</h3>
+      <p>Los módulos principales están disponibles desde botones grandes y fáciles de identificar.</p>
+    </article>
+    <article class="card">
+      <h3>🎨 Personalización</h3>
+      <p>La configuración permite personalizar datos de la empresa y la apariencia.</p>
+    </article>
+    <article class="card">
+      <h3>📱 Experiencia práctica</h3>
+      <p>Una interfaz diseñada para utilizarse cómodamente desde dispositivos compatibles.</p>
+    </article>
+  </div>
+</section>
+
+<section>
+  <div class="bcv">
+    <div class="section-title">
+      <h2 style="color:#fff">El tipo de cambio, siempre visible</h2>
+      <p>
+        La aplicación muestra el tipo de cambio USD → VES en la pantalla principal,
+        registra cuándo fue actualizado y permite utilizarlo para las conversiones
+        y para relacionar precios en Bs y USD.
+      </p>
+    </div>
+    <div class="rate">USD → VES</div>
+    <p>
+      El HTML proporcionado implementa una actualización automática mediante
+      ExchangeRate-API.com y también contempla un modo manual.
+    </p>
+    <p style="font-size:.9rem">
+      <!-- NOTA DE EDICIÓN:
+           El archivo fuente proporcionado NO identifica esta tasa como una tasa
+           oficial del BCV. Por eso esta presentación no la denomina "tasa BCV".
+           Si posteriormente configuras la aplicación para obtener la tasa oficial
+           del BCV, puedes cambiar este texto.
+      -->
+    </p>
+  </div>
+</section>
+
+<section>
+  <div class="section-title">
+    <h2>Todos tus módulos, claramente organizados</h2>
+    <p>Cada área tiene una función concreta dentro de la gestión del negocio.</p>
+  </div>
+
+  <div class="module-grid">
+    <article class="module">
+      <div class="icon">🛒</div>
+      <div><h3>Ventas</h3><p>Gestiona productos en el carrito, cliente, cantidades, subtotal, IVA cuando está activo, total, pago y cambio. También contempla diferentes formas de pago.</p></div>
+    </article>
+    <article class="module">
+      <div class="icon">📦</div>
+      <div><h3>Inventario</h3><p>Busca productos y administra nombre, código, categoría, proveedor, stock, costo real y precios de venta en Bs y USD.</p></div>
+    </article>
+    <article class="module">
+      <div class="icon">👥</div>
+      <div><h3>Clientes</h3><p>Registra y consulta información del cliente, incluyendo identificación, teléfono, dirección y correo electrónico.</p></div>
+    </article>
+    <article class="module">
+      <div class="icon">🚚</div>
+      <div><h3>Proveedores</h3><p>Organiza la información de los proveedores y permite buscar, agregar, editar y eliminar registros.</p></div>
+    </article>
+    <article class="module">
+      <div class="icon">💰</div>
+      <div><h3>Gastos</h3><p>Registra conceptos, montos, categorías y fechas para mantener los gastos del negocio organizados.</p></div>
+    </article>
+    <article class="module">
+      <div class="icon">👔</div>
+      <div><h3>Empleados</h3><p>Gestiona información como identificación, nombre, cargo, salario y fecha de contratación.</p></div>
+    </article>
+    <article class="module">
+      <div class="icon">📊</div>
+      <div><h3>Reportes</h3><p>Consulta ventas totales, ganancia bruta, gastos totales, utilidad neta y el detalle de las últimas ventas.</p></div>
+    </article>
+    <article class="module">
+      <div class="icon">⚙️</div>
+      <div><h3>Configuración</h3><p>Personaliza los datos de la empresa, la tasa de cambio, el IVA, la apariencia y otras opciones del sistema.</p></div>
+    </article>
+  </div>
+</section>
+
+<section>
+  <div class="section-title">
+    <h2>Una venta, de principio a fin</h2>
+    <p>La aplicación reúne las acciones necesarias en un flujo sencillo.</p>
+  </div>
+
+  <div class="flow">
+    <div class="step"><strong>1 · Buscar</strong><span>Localiza productos o clientes.</span></div>
+    <div class="step"><strong>2 · Seleccionar</strong><span>Agrega productos al carrito.</span></div>
+    <div class="step"><strong>3 · Cobrar</strong><span>Calcula total, pago y cambio.</span></div>
+    <div class="step"><strong>4 · Ticket</strong><span>Genera y comparte el comprobante.</span></div>
+  </div>
+</section>
+
+<section>
+  <div class="section-title">
+    <h2>Más que una caja registradora</h2>
+    <p>La aplicación conecta las operaciones diarias del negocio.</p>
+  </div>
+  <div class="intro">
+    <p>
+      Puedes mantener productos, clientes, proveedores, gastos y empleados organizados;
+      consultar resultados; trabajar con precios en bolívares y dólares; y personalizar
+      la información de tu empresa. El objetivo es reducir pasos y tener la información
+      importante accesible desde un mismo lugar.
+    </p>
+  </div>
+</section>
+
+<section class="cta">
+  <div class="section-title">
+    <h2 style="color:#fff">¿Quieres conocer y usar nuestra aplicación?</h2>
+    <p>Entra directamente a JAM POS y descubre sus herramientas.</p>
+
+    <!-- =====================================================
+         AQUÍ PON LA DIRECCIÓN DE TU PWA.
+         Este es el segundo botón que lleva directamente
+         a la aplicación.
+         ===================================================== -->
+    <a class="button"
+       href="https://aplicacionjam.github.io/"
+       target="_blank" rel="noopener noreferrer">
+       🚀 Abrir la aplicación
+    </a>
+  </div>
+</section>
+
+<footer>
+  <p><strong>JAM POS · Tienda Profesional</strong></p>
+  <p>Una herramienta para organizar y facilitar la gestión de tu negocio.</p>
+</footer>
+
+</body>
+</html>
