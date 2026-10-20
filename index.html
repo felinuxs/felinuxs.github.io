@@ -1,295 +1,496 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>JAM POS · Tienda Profesional</title>
-  <style>
-    *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',sans-serif}
-    body{background:#f8fafc;color:#0f172a;line-height:1.5;padding:1.5rem}
-    .container{max-width:1200px;margin:0 auto}
-    .header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:1.5rem;margin-bottom:2.5rem;padding-bottom:1.5rem;border-bottom:1px solid #e2e8f0}
-    .logo-area h1{font-size:2rem;font-weight:700;letter-spacing:-0.02em;background:linear-gradient(135deg,#1e293b,#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-    .logo-area .sub{font-size:0.95rem;color:#64748b;margin-top:0.2rem}
-    .header-actions{display:flex;flex-wrap:wrap;gap:0.75rem}
-    .btn{display:inline-flex;align-items:center;gap:0.5rem;padding:0.7rem 1.4rem;border-radius:60px;font-weight:600;font-size:0.95rem;text-decoration:none;transition:all 0.2s ease;border:1px solid transparent;cursor:pointer;font-family:inherit}
-    .btn-primary{background:#3b82f6;color:white;box-shadow:0 4px 12px rgba(59,130,246,0.3)}
-    .btn-primary:hover{background:#2563eb;transform:translateY(-2px);box-shadow:0 8px 20px rgba(59,130,246,0.4)}
-    .btn-outline{background:white;color:#1e293b;border-color:#cbd5e1}
-    .btn-outline:hover{background:#f1f5f9;border-color:#94a3b8}
-    .btn-ghost{background:transparent;color:#3b82f6;border-color:transparent}
-    .btn-ghost:hover{background:#eff6ff}
-    .hero{text-align:center;margin-bottom:4rem}
-    .hero h2{font-size:2.8rem;font-weight:800;letter-spacing:-0.03em;line-height:1.2;margin-bottom:1rem;color:#0f172a}
-    .hero p{font-size:1.2rem;color:#475569;max-width:700px;margin:0 auto 2rem}
-    .tasa-card{background:linear-gradient(135deg,#0f172a,#1e293b);color:white;border-radius:24px;padding:2rem;margin-bottom:3rem;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:1.5rem;box-shadow:0 20px 40px -12px rgba(0,0,0,0.3)}
-    .tasa-info h3{font-size:1rem;text-transform:uppercase;letter-spacing:0.05em;color:#94a3b8;margin-bottom:0.5rem}
-    .tasa-valor{font-size:2.8rem;font-weight:800;line-height:1.1;display:flex;align-items:baseline;gap:0.5rem;flex-wrap:wrap}
-    .tasa-valor span{font-size:1.2rem;font-weight:500;color:#94a3b8}
-    .tasa-meta{text-align:right;font-size:0.95rem;color:#cbd5e1}
-    .tasa-meta .badge{display:inline-block;background:#22c55e20;color:#4ade80;padding:0.25rem 0.75rem;border-radius:40px;font-size:0.8rem;font-weight:600;margin-top:0.4rem}
-    .section-title{font-size:1.8rem;font-weight:700;letter-spacing:-0.02em;margin-bottom:2rem;color:#0f172a}
-    .modules-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1.5rem;margin-bottom:4rem}
-    .module-card{background:white;border-radius:20px;padding:1.8rem;border:1px solid #e2e8f0;transition:all 0.2s ease;box-shadow:0 2px 8px rgba(0,0,0,0.02)}
-    .module-card:hover{border-color:#3b82f6;box-shadow:0 12px 28px -8px rgba(59,130,246,0.25);transform:translateY(-4px)}
-    .module-icon{font-size:2.2rem;margin-bottom:0.8rem}
-    .module-card h3{font-size:1.3rem;font-weight:700;margin-bottom:0.5rem;color:#0f172a}
-    .module-card p{font-size:0.95rem;color:#475569;line-height:1.5}
-    .flow-steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1.5rem;margin-bottom:4rem}
-    .step{background:white;border-radius:20px;padding:1.5rem;border:1px solid #e2e8f0;text-align:center}
-    .step-number{width:40px;height:40px;background:#3b82f6;color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;margin:0 auto 0.8rem}
-    .step h4{font-size:1.1rem;font-weight:700;margin-bottom:0.3rem}
-    .step p{font-size:0.9rem;color:#64748b}
-    .social-section{background:white;border-radius:28px;padding:2.5rem;border:1px solid #e2e8f0;margin-bottom:3rem;box-shadow:0 10px 30px -10px rgba(0,0,0,0.05)}
-    .social-section h3{font-size:1.8rem;font-weight:700;margin-bottom:1rem;color:#0f172a}
-    .social-section > p{color:#475569;margin-bottom:2rem;font-size:1.05rem}
-    .social-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.2rem}
-    .social-card{display:flex;align-items:center;gap:1rem;padding:1.2rem 1.5rem;border-radius:16px;background:#f8fafc;border:1px solid #e2e8f0;text-decoration:none;color:#0f172a;transition:all 0.2s ease}
-    .social-card:hover{background:white;border-color:#3b82f6;box-shadow:0 8px 20px -8px rgba(59,130,246,0.3);transform:translateY(-2px)}
-    .social-icon{font-size:1.8rem;width:48px;height:48px;display:flex;align-items:center;justify-content:center;background:white;border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,0.04);flex-shrink:0}
-    .social-info h4{font-size:1rem;font-weight:700;margin-bottom:0.15rem}
-    .social-info span{font-size:0.85rem;color:#64748b}
-    .cta-final{text-align:center;background:linear-gradient(135deg,#1e293b,#0f172a);border-radius:28px;padding:3rem 2rem;color:white}
-    .cta-final h3{font-size:2rem;font-weight:700;margin-bottom:1rem}
-    .cta-final p{color:#94a3b8;margin-bottom:2rem;max-width:500px;margin-left:auto;margin-right:auto}
-    .cta-final .btn-primary{background:#3b82f6;font-size:1.1rem;padding:0.9rem 2rem}
-    .footer{text-align:center;padding:2.5rem 0 1rem;color:#64748b;font-size:0.9rem;border-top:1px solid #e2e8f0;margin-top:3rem}
-    .footer a{color:#3b82f6;text-decoration:none;font-weight:500}
-    .footer a:hover{text-decoration:underline}
-    @media (max-width:640px){body{padding:1rem}.hero h2{font-size:2rem}.tasa-card{flex-direction:column;text-align:center}.tasa-meta{text-align:center}.tasa-valor{justify-content:center}.header{flex-direction:column;align-items:flex-start}.social-section{padding:1.8rem}}
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FELINUXS — Núcleo de contención para agentes de IA</title>
+<style>
+  :root{
+    --bg:#0b1020; --card:#161f3d; --line:#26325c;
+    --fg:#e8ecf8; --dim:#9aa7c7; --ok:#31d08a; --bad:#ff5d6c; --warn:#ffc857;
+    --acc:#5b9dff; --acc2:#a273ff;
+    --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:'Inter',system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;height:100%}
+  body{background:var(--bg);color:var(--fg);font-family:var(--sans);line-height:1.5;overflow:hidden}
+  code{font-family:var(--mono);font-size:.95em;color:#cfe0ff}
+  b{color:#fff}
+  /* ---------- deck ---------- */
+  .deck{position:relative;height:100vh;width:100vw}
+  .slide{
+    position:absolute;inset:0;display:none;overflow:hidden;
+    padding:clamp(20px,3.5vw,48px) clamp(20px,5vw,90px) 90px;
+    background:radial-gradient(1100px 420px at 88% -10%,rgba(91,157,255,.10),transparent),
+               radial-gradient(900px 400px at 6% 108%,rgba(162,115,255,.10),transparent),var(--bg);
+  }
+  .slide.active{display:block;animation:in .35s ease both}
+  @keyframes in{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  .slide.cover{display:none;place-content:center;text-align:center}
+  .slide.cover.active{display:grid}
+  .inner{max-width:1180px;margin:0 auto;height:100%}
+  /* ---------- tipografía ---------- */
+  .kicker{font-family:var(--mono);font-size:clamp(11px,1.2vw,13px);letter-spacing:.16em;
+    text-transform:uppercase;color:var(--acc);margin-bottom:10px}
+  h1{font-size:clamp(30px,5.4vw,62px);margin:0 0 12px;letter-spacing:-.025em;line-height:1.05}
+  h1 .g{background:linear-gradient(90deg,var(--acc),var(--acc2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  h2{font-size:clamp(22px,3.2vw,36px);margin:0 0 6px;letter-spacing:-.02em}
+  .sub{color:var(--dim);font-size:clamp(15px,1.7vw,20px);max-width:900px}
+  .oneliner{margin-top:26px;font-size:clamp(16px,2.2vw,24px);font-weight:600}
+  .oneliner em{color:var(--warn);font-style:normal;font-family:var(--mono);font-size:.9em}
+  /* ---------- bloques ---------- */
+  .grid{display:grid;gap:14px}
+  .c2{grid-template-columns:repeat(2,1fr)} .c3{grid-template-columns:repeat(3,1fr)} .c4{grid-template-columns:repeat(4,1fr)}
+  @media(max-width:900px){.c3,.c4{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:640px){.c2,.c3,.c4{grid-template-columns:1fr}}
+  .card{background:linear-gradient(180deg,var(--card),#131b36);border:1px solid var(--line);
+    border-radius:14px;padding:16px 18px}
+  .card h3{margin:0 0 6px;font-size:clamp(15px,1.5vw,18px)}
+  .card p{margin:0;color:var(--dim);font-size:clamp(12.5px,1.25vw,14.5px)}
+  .verb{border-top:3px solid var(--acc)} .verb.v2{border-top-color:var(--acc2)}
+  .verb.v3{border-top-color:var(--ok)} .verb.v4{border-top-color:var(--warn)}
+  .verb .tag{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:.1em}
+  pre{background:#0a1026;border:1px solid var(--line);border-radius:12px;padding:14px 16px;overflow:auto;
+    font-family:var(--mono);font-size:clamp(11px,1.05vw,13px);line-height:1.65;margin:0}
+  pre .c{color:#6f7fa8} pre .g{color:var(--ok)} pre .r{color:var(--bad)} pre .y{color:var(--warn)} pre .b{color:var(--acc)}
+  table{width:100%;border-collapse:collapse;font-size:clamp(12.5px,1.25vw,14.5px)}
+  th,td{text-align:left;padding:9px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--acc);font-size:11.5px;text-transform:uppercase;letter-spacing:.08em}
+  .pill{display:inline-block;font-family:var(--mono);font-size:11.5px;border-radius:999px;padding:2px 9px;border:1px solid var(--line)}
+  .pill.ok{color:var(--ok);border-color:rgba(49,208,138,.4);background:rgba(49,208,138,.08)}
+  .pill.bad{color:var(--bad);border-color:rgba(255,93,108,.4);background:rgba(255,93,108,.08)}
+  .pill.warn{color:var(--warn);border-color:rgba(255,200,87,.4);background:rgba(255,200,87,.08)}
+  .note{border-left:3px solid var(--warn);background:rgba(255,200,87,.06);padding:11px 14px;
+    border-radius:0 10px 10px 0;color:#f0e3bf;font-size:clamp(12.5px,1.25vw,14px)}
+  .note b{color:var(--warn)}
+  /* ---------- flujo ---------- */
+  .flow{display:flex;flex-direction:column;align-items:center;gap:0;margin-top:6px}
+  .fnode{width:min(620px,100%);background:#101838;border:1px solid var(--line);border-radius:12px;padding:11px 15px}
+  .fnode .t{font-weight:700;font-size:clamp(13px,1.4vw,15px)}
+  .fnode .t .k{font-family:var(--mono);font-size:11.5px;color:var(--dim);font-weight:400}
+  .fnode .d{color:var(--dim);font-size:clamp(11.5px,1.15vw,13.5px);margin-top:2px}
+  .farrow{width:2px;height:20px;background:linear-gradient(180deg,var(--acc),var(--acc2));position:relative}
+  .farrow::after{content:"";position:absolute;bottom:-1px;left:50%;transform:translateX(-50%);
+    border-left:6px solid transparent;border-right:6px solid transparent;border-top:8px solid var(--acc2)}
+  /* ---------- jaula dentro/fuera ---------- */
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:8px}
+  @media(max-width:820px){.split{grid-template-columns:1fr}}
+  .panel{border:1px solid var(--line);border-radius:16px;padding:16px;background:#0e1530}
+  .panel.out{border-color:rgba(255,93,108,.35);background:linear-gradient(180deg,#1a1020,#120d1c)}
+  .panel.in{border-color:rgba(49,208,138,.35);background:linear-gradient(180deg,#0e2420,#0c1d1a)}
+  .panel h3{display:flex;align-items:center;gap:9px;margin:0 0 12px;font-size:clamp(15px,1.6vw,19px)}
+  .panel h3 .dot{width:11px;height:11px;border-radius:50%}
+  .out .dot{background:var(--bad);box-shadow:0 0 12px var(--bad)}
+  .in .dot{background:var(--ok);box-shadow:0 0 12px var(--ok)}
+  .bar{display:flex;justify-content:space-between;gap:12px;align-items:center;
+    font-size:clamp(12px,1.2vw,14px);padding:8px 11px;border-radius:9px;background:#0a1026;margin-bottom:8px;border:1px solid var(--line)}
+  .bar .what{color:var(--fg)}
+  .bar .val{font-family:var(--mono);font-size:.92em}
+  .val.no{color:var(--bad)} .val.yes{color:var(--ok)} .val.mid{color:var(--warn)}
+  .jaula-hero{display:grid;place-items:center;text-align:center}
+  .ring{width:min(300px,62vw);aspect-ratio:1;border-radius:50%;border:2px dashed rgba(49,208,138,.5);
+    display:grid;place-items:center;position:relative;
+    background:radial-gradient(circle,rgba(49,208,138,.10),transparent 70%)}
+  .ring .core{font-weight:700;font-size:clamp(15px,1.8vw,20px)}
+  .ring .lbl{position:absolute;font-family:var(--mono);font-size:11px;color:var(--ok);
+    background:#0b1020;border:1px solid var(--line);border-radius:999px;padding:3px 9px}
+  /* ---------- árbol de ficheros ---------- */
+  .tree{font-family:var(--mono);font-size:clamp(11.5px,1.15vw,13.5px);line-height:1.85;background:#0a1026;
+    border:1px solid var(--line);border-radius:14px;padding:16px 18px;overflow:auto}
+  .tree .d{color:var(--acc);font-weight:600}
+  .tree .f{color:var(--fg)}
+  .tree .cm{color:#6f7fa8}
+  .tree .star{color:var(--warn)}
+  /* ---------- chrome ---------- */
+  .bar-top{position:fixed;top:0;left:0;right:0;height:3px;background:rgba(38,50,92,.5);z-index:40}
+  .bar-top .fill{height:100%;width:0;background:linear-gradient(90deg,var(--acc),var(--acc2));transition:width .3s}
+  .footer{position:fixed;bottom:0;left:0;right:0;height:56px;display:flex;align-items:center;
+    justify-content:space-between;padding:0 clamp(16px,4vw,40px);color:var(--dim);font-size:12.5px;z-index:30;
+    background:linear-gradient(180deg,transparent,rgba(11,16,32,.92));backdrop-filter:blur(6px)}
+  .footer .brand{font-weight:700;color:var(--fg)}
+  .footer .brand span{color:var(--acc)}
+  .nav{display:flex;gap:8px;align-items:center}
+  .btn{cursor:pointer;background:#141d3c;color:var(--fg);border:1px solid var(--line);border-radius:9px;
+    padding:7px 13px;font-family:var(--mono);font-size:12.5px;user-select:none}
+  .btn:hover{border-color:var(--acc);color:#fff}
+  .btn:disabled{opacity:.35;cursor:not-allowed}
+  .counter{font-family:var(--mono);font-size:12.5px;min-width:64px;text-align:center}
+  .hint{position:fixed;top:12px;right:16px;z-index:35;font-family:var(--mono);font-size:11.5px;color:var(--dim);
+    background:rgba(11,16,32,.8);border:1px solid var(--line);border-radius:9px;padding:6px 11px}
+  kbd{font-family:var(--mono);font-size:11.5px;background:#0d1430;border:1px solid var(--line);
+    border-radius:6px;padding:1px 6px;color:#cfe0ff}
+  .thumb{height:100%;display:flex;flex-direction:column}
+  .thumb .grow{flex:1;min-height:0}
+</style>
 </head>
 <body>
-  <div class="container">
-    <header class="header">
-      <div class="logo-area">
-        <h1>JAM POS</h1>
-        <div class="sub">Tienda Profesional · By @felinuxs</div>
-      </div>
-      <div class="header-actions">
-        <button type="button" class="btn btn-outline" onclick="abrirGuia()">📘 Guía de uso</button>
-        <a href="https://jamapp-beige.vercel.app/" class="btn btn-primary" target="_blank" rel="noopener">🚀 Entrar a la aplicación</a>
-      </div>
-    </header>
+<div class="bar-top"><div class="fill" id="barfill"></div></div>
+<div class="hint"><kbd>←</kbd> <kbd>→</kbd> navegar · <kbd>F</kbd> pantalla completa</div>
 
-    <section class="hero">
-      <h2>Todo tu negocio, organizado en un solo lugar.</h2>
-      <p>Una herramienta pensada para facilitar las ventas, controlar el inventario, administrar clientes y proveedores, registrar gastos y empleados, y consultar los resultados del negocio.</p>
-      <a href="https://jamapp-beige.vercel.app/" class="btn btn-primary" target="_blank" rel="noopener" style="font-size:1.05rem;padding:0.9rem 2rem;">🚀 Abrir JAM POS</a>
-    </section>
+<div class="deck" id="deck">
 
-    <div class="tasa-card">
-      <div class="tasa-info">
-        <h3>Tipo de cambio (USD → VES)</h3>
-        <div class="tasa-valor">846,51 <span>Bs</span></div>
-        <div class="badge">Fuente: BCV</div>
-      </div>
-      <div class="tasa-meta">
-        <div>Actualizado: 17/09/2026</div>
-        <div style="margin-top:0.5rem;font-size:0.85rem;color:#94a3b8;">JAM POS v1.1 · Versión de prueba — día 1 de 7</div>
+  <!-- ═══════════ 0 · PORTADA ═══════════ -->
+  <section class="slide cover active">
+    <div>
+      <div class="kicker">FELINUXS · v9.0.0 · Linux</div>
+      <h1>Núcleo de <span class="g">contención</span><br>para agentes de IA</h1>
+      <p class="sub" style="margin:0 auto">Cuando un agente ejecuta algo, ese algo corre <b>encerrado</b> y <b>no puede tocar tu máquina</b>. Y todo queda <b>registrado</b>.</p>
+      <p class="oneliner">Cuatro cerrojos alrededor de cada ejecución:<br><em>VERIFICAR · AUTORIZAR · CONTENER · EVIDENCIAR</em></p>
+      <p style="margin-top:34px;color:var(--dim);font-size:13px;font-family:var(--mono)">
+        <span style="color:var(--ok)">124</span> · <span style="color:var(--ok)">6</span> · <span style="color:var(--ok)">25</span> pruebas en verde</p>
+    </div>
+  </section>
+
+  <!-- ═══════════ 1 · PROBLEMA ═══════════ -->
+  <section class="slide">
+    <div class="inner thumb">
+      <div class="kicker">01 · El problema</div>
+      <h2>Un agente ejecuta código. Sin control, puede…</h2>
+      <p class="sub">Y lo peor: normalmente <b>no queda rastro</b> de qué se ejecutó ni con qué permiso.</p>
+      <div class="grow" style="display:grid;place-content:center">
+        <div class="grid c4">
+          <div class="card"><h3>👀 Leer</h3><p>Tus ficheros, tus claves, tu <code>/home</code>, tus secretos.</p></div>
+          <div class="card"><h3>✍️ Escribir</h3><p>Modificar o borrar cosas del sistema.</p></div>
+          <div class="card"><h3>🌐 Salir</h3><p>Abrir conexiones a internet por su cuenta.</p></div>
+          <div class="card"><h3>💥 Colgar</h3><p>Consumir toda la memoria o quedarse en bucle infinito.</p></div>
+        </div>
       </div>
     </div>
+  </section>
 
-    <h2 class="section-title">Todos tus módulos, claramente organizados</h2>
-    <div class="modules-grid">
-      <div class="module-card"><div class="module-icon">🛒</div><h3>Ventas</h3><p>Gestiona productos en el carrito, cliente, cantidades, subtotal, IVA cuando está activo, total, pago y cambio.</p></div>
-      <div class="module-card"><div class="module-icon">📦</div><h3>Inventario</h3><p>Busca productos y administra nombre, código, categoría, proveedor, stock, costo real y precios de venta en Bs y USD.</p></div>
-      <div class="module-card"><div class="module-icon">👥</div><h3>Clientes</h3><p>Registra y consulta información del cliente, incluyendo identificación, teléfono, dirección y correo electrónico.</p></div>
-      <div class="module-card"><div class="module-icon">🚚</div><h3>Proveedores</h3><p>Organiza la información de los proveedores y permite buscar, agregar, editar y eliminar registros.</p></div>
-      <div class="module-card"><div class="module-icon">💰</div><h3>Gastos</h3><p>Registra conceptos, montos, categorías y fechas para mantener los gastos del negocio organizados.</p></div>
-      <div class="module-card"><div class="module-icon">👔</div><h3>Empleados</h3><p>Gestiona información como identificación, nombre, cargo, salario y fecha de contratación.</p></div>
-      <div class="module-card"><div class="module-icon">📊</div><h3>Reportes</h3><p>Consulta ventas totales, ganancia bruta, gastos totales, utilidad neta y el detalle de las últimas ventas.</p></div>
-      <div class="module-card"><div class="module-icon">⚙️</div><h3>Configuración</h3><p>Personaliza los datos de la empresa, la tasa de cambio, el IVA, la apariencia y otras opciones del sistema.</p></div>
-    </div>
-
-    <h2 class="section-title">Una venta, de principio a fin</h2>
-    <div class="flow-steps">
-      <div class="step"><div class="step-number">1</div><h4>Buscar</h4><p>Localiza productos o clientes.</p></div>
-      <div class="step"><div class="step-number">2</div><h4>Seleccionar</h4><p>Agrega productos al carrito.</p></div>
-      <div class="step"><div class="step-number">3</div><h4>Cobrar</h4><p>Calcula total, pago y cambio.</p></div>
-      <div class="step"><div class="step-number">4</div><h4>Ticket</h4><p>Genera y comparte el comprobante.</p></div>
-    </div>
-
-    <section class="social-section" id="redes">
-      <h3>📱 Redes sociales y contacto</h3>
-      <p>Sigue a JAM POS y a su desarrollador <strong>@felinuxs</strong> en todas las plataformas. También puedes escribir directamente al correo oficial para soporte o consultas.</p>
-      <div class="social-grid">
-        <a href="https://jamapp-beige.vercel.app/" class="social-card" target="_blank" rel="noopener"><div class="social-icon">🚀</div><div class="social-info"><h4>Aplicación JAM POS</h4><span>jamapp-beige.vercel.app</span></div></a>
-        <a href="mailto:felinuxs@gmail.com" class="social-card"><div class="social-icon">✉️</div><div class="social-info"><h4>Correo electrónico</h4><span>felinuxs@gmail.com</span></div></a>
-        <a href="https://twitter.com/felinuxs" class="social-card" target="_blank" rel="noopener"><div class="social-icon">🐦</div><div class="social-info"><h4>Twitter / X</h4><span>@felinuxs</span></div></a>
-        <a href="https://instagram.com/felinuxs" class="social-card" target="_blank" rel="noopener"><div class="social-icon">📸</div><div class="social-info"><h4>Instagram</h4><span>@felinuxs</span></div></a>
-        <a href="https://t.me/felinuxs" class="social-card" target="_blank" rel="noopener"><div class="social-icon">✈️</div><div class="social-info"><h4>Telegram</h4><span>@felinuxs</span></div></a>
-        <a href="https://facebook.com/felinuxs" class="social-card" target="_blank" rel="noopener"><div class="social-icon">📘</div><div class="social-info"><h4>Facebook</h4><span>@felinuxs</span></div></a>
-        <a href="https://wa.me/584248668338" class="social-card" target="_blank" rel="noopener"><div class="social-icon">💬</div><div class="social-info"><h4>WhatsApp</h4><span>@felinuxs</span></div></a>
-        <a href="https://youtube.com/@felinuxs" class="social-card" target="_blank" rel="noopener"><div class="social-icon">▶️</div><div class="social-info"><h4>YouTube</h4><span>@felinuxs</span></div></a>
-        <a href="https://tiktok.com/@felinuxs" class="social-card" target="_blank" rel="noopener"><div class="social-icon">🎵</div><div class="social-info"><h4>TikTok</h4><span>@felinuxs</span></div></a>
-      </div>
-    </section>
-
-    <h2 class="section-title">Más que una caja registradora</h2>
-    <div style="background:white;border-radius:24px;padding:2rem;border:1px solid #e2e8f0;margin-bottom:3rem;">
-      <p style="font-size:1.1rem;color:#334155;max-width:800px;margin:0 auto;text-align:center;">La aplicación conecta las operaciones diarias del negocio. Puedes mantener productos, clientes, proveedores, gastos y empleados organizados; consultar resultados; trabajar con precios en bolívares y dólares; y personalizar la información de tu empresa.</p>
-    </div>
-
-    <div class="cta-final">
-      <h3>¿Quieres conocer y usar nuestra aplicación?</h3>
-      <p>Entra directamente a JAM POS y descubre sus herramientas.</p>
-      <a href="https://jam-30dias.vercel.app/" class="btn btn-primary" target="_blank" rel="noopener" style="font-size:1.1rem;padding:1rem 2.5rem;">🚀 Abrir la aplicación</a>
-      <div style="margin-top:1.2rem;">
-        <button type="button" class="btn btn-ghost" onclick="abrirGuia()" style="color:#93c5fd;">📘 Ver guía interactiva de uso</button>
+  <!-- ═══════════ 2 · IDEA ═══════════ -->
+  <section class="slide">
+    <div class="inner thumb">
+      <div class="kicker">02 · La idea</div>
+      <h2>Cuatro cerrojos. Cada uno responde una pregunta.</h2>
+      <div class="grow" style="display:grid;place-content:center;gap:18px">
+        <div class="grid c4">
+          <div class="card verb"><div class="tag">01</div><h3>VERIFICAR</h3><p>¿Es lo que esperaba? Huella <code>sha256</code>. Si cambió → bloquea.</p></div>
+          <div class="card verb v2"><div class="tag">02</div><h3>AUTORIZAR</h3><p>¿Tiene permiso? Listas. <b>Red denegada por defecto</b>.</p></div>
+          <div class="card verb v3"><div class="tag">03</div><h3>CONTENER</h3><p>¿Dónde corre? En una <b>jaula</b>: sin red, <code>/home</code> invisible.</p></div>
+          <div class="card verb v4"><div class="tag">04</div><h3>EVIDENCIAR</h3><p>¿Qué pasó? Registro <b>encadenado por hash</b>.</p></div>
+        </div>
+        <div class="note"><b>Modelo honesto:</b> no prometemos <i>prevención perfecta</i>, sino <b>contención a prueba de fallos</b>: <b>aunque el agente lo consiga, no puede comprometer el host</b>.</div>
       </div>
     </div>
+  </section>
 
-    <footer class="footer">
-      <p>JAM POS v1.1 · By @felinuxs · <a href="https://jamapp-beige.vercel.app/" target="_blank" rel="noopener">jamapp-beige.vercel.app</a></p>
-      <p style="margin-top:0.5rem;">📧 <a href="mailto:felinuxs@gmail.com">felinuxs@gmail.com</a> · 💬 <a href="https://wa.me/584248668338" target="_blank" rel="noopener">wa.me/584248668338</a></p>
-      <p style="margin-top:0.5rem;font-size:0.85rem;">Versión de prueba — 7 días restantes · Tasa BCV: 846,51 Bs/USD</p>
-    </footer>
+  <!-- ═══════════ 3 · VIAJE DEL COMANDO ═══════════ -->
+  <section class="slide">
+    <div class="inner thumb">
+      <div class="kicker">03 · El viaje de un comando</div>
+      <h2>De la terminal a la jaula y al registro</h2>
+      <div class="grow" style="display:grid;place-content:center">
+        <div class="flow">
+          <div class="fnode"><div class="t">Escribes el comando <span class="k">— terminal</span></div>
+            <div class="d"><code>node dist/cli.js contain -- node -e 'console.log("hola")'</code></div></div>
+          <div class="farrow"></div>
+          <div class="fnode" style="border-color:rgba(91,157,255,.55)"><div class="t">VERIFICAR <span class="k">— core/trust.ts</span></div>
+            <div class="d">Huella sha256 vs almacén. Primera vez → fija. Cambió → <b>BLOQUEA</b>.</div></div>
+          <div class="farrow"></div>
+          <div class="fnode" style="border-color:rgba(162,115,255,.55)"><div class="t">AUTORIZAR <span class="k">— core/policy.ts</span></div>
+            <div class="d">Permitido/prohibido + red deny-by-default. Si dice «no» → <b>no se ejecuta nada</b>.</div></div>
+          <div class="farrow"></div>
+          <div class="fnode" style="border-color:rgba(49,208,138,.6)"><div class="t" style="color:var(--ok)">CONTENER <span class="k">— core/jail.ts (bwrap)</span></div>
+            <div class="d">Se fabrica una <b>jaula</b> del SO y el comando corre <b>dentro</b>.</div></div>
+          <div class="farrow"></div>
+          <div class="fnode" style="border-color:rgba(255,200,87,.55)"><div class="t">EVIDENCIAR <span class="k">— core/evidence.ts</span></div>
+            <div class="d">Registro JSONL <b>encadenado</b> (<code>prev → hash</code>). Append-only.</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 4 · JAULA DENTRO/FUERA ═══════════ -->
+  <section class="slide">
+    <div class="inner thumb">
+      <div class="kicker">04 · La jaula, por dentro y por fuera</div>
+      <h2>El mismo comando, dos realidades</h2>
+      <div class="grow" style="display:grid;place-content:center">
+        <div class="split">
+          <div class="panel out">
+            <h3><span class="dot"></span> FUERA — el host (tu máquina)</h3>
+            <div class="bar"><span class="what">Ficheros personales</span><span class="val yes">visibles</span></div>
+            <div class="bar"><span class="what">Red / internet</span><span class="val yes">disponible</span></div>
+            <div class="bar"><span class="what">Sistema (<code>/usr</code>)</span><span class="val yes">escribible</span></div>
+            <div class="bar"><span class="what">Nombre del equipo</span><span class="val yes">real</span></div>
+            <div class="bar"><span class="what">Poderes (capabilities)</span><span class="val mid">según usuario</span></div>
+            <p style="color:var(--dim);font-size:12.5px;margin:2px 0 0">Aquí vive lo que quieres proteger.</p>
+          </div>
+          <div class="panel in">
+            <h3><span class="dot"></span> DENTRO — la jaula (<code>bwrap</code>)</h3>
+            <div class="bar"><span class="what">Datos de <code>/home</code></span><span class="val no">VACÍO</span></div>
+            <div class="bar"><span class="what">Red / internet</span><span class="val no">SIN RED (ENETUNREACH)</span></div>
+            <div class="bar"><span class="what">Sistema (<code>/usr</code>)</span><span class="val mid">solo-lectura</span></div>
+            <div class="bar"><span class="what">Hostname</span><span class="val">felinuxs-sandbox</span></div>
+            <div class="bar"><span class="what">Capabilities</span><span class="val no">NINGUNA (cap-drop ALL)</span></div>
+            <p style="color:var(--ok);font-size:12.5px;margin:2px 0 0">Aquí corre el código del agente. Aunque quiera, no toca lo de la izquierda.</p>
+          </div>
+        </div>
+        <p class="note" style="margin-top:14px"><b>Sin jaula no se ejecuta.</b> Si <code>bwrap</code> falta, <code>contain</code> devuelve <code>126</code> y no lanza nada. Sin «ejecuto sin jaula y disimulo».</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 5 · EJEMPLO PRÁCTICO ═══════════ -->
+  <section class="slide">
+    <div class="inner thumb">
+      <div class="kicker">05 · Ejemplo práctico — resultados reales de esta sesión</div>
+      <h2>Ejecutándolo de verdad</h2>
+      <div class="grow" style="display:grid;place-content:center">
+        <div class="grid c2">
+          <div class="card"><h3>1 · Corre de verdad, dentro</h3>
+            <pre><span class="c">$ node dist/cli.js contain -- node -e 'console.log("hola desde la jaula")'</span>
+<span class="g">hola desde la jaula</span>
+[contain] decisión=allowed backend=bwrap contenido=true exit=0
+          · evidencia#1 hash=<span class="b">a7a4197ff0eb</span></pre></div>
+          <div class="card"><h3>2 · Sin red por defecto</h3>
+            <pre><span class="c">$ contain -- node -e 'net.connect(80,"1.1.1.1")…'</span>
+<span class="r">SIN_RED:ENETUNREACH</span></pre></div>
+          <div class="card"><h3>3 · Denegado por política</h3>
+            <pre><span class="c">$ node dist/cli.js contain --deny rm -- rm -rf /</span>
+[contain] decisión=<span class="r">denied</span> backend=inproc contenido=false
+[contain] <span class="r">DENEGADO</span>: comando denegado por política: rm
+<span class="c">$ echo $?</span> <span class="y">126</span></pre></div>
+          <div class="card"><h3>4 · Se cuelga → lo mata</h3>
+            <pre><span class="c">$ contain --timeout 1000 -- node -e 'while(true){}'</span>
+[contain] decisión=allowed backend=bwrap <span class="y">(TIMEOUT)</span>
+<span class="c">$ echo $?</span> <span class="y">124</span></pre></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 6 · INTERIOR JAULA + EVIDENCIA ═══════════ -->
+  <section class="slide">
+    <div class="inner thumb">
+      <div class="kicker">05b · Mirando dentro + la evidencia</div>
+      <h2>Qué ve el código desde dentro y qué queda registrado</h2>
+      <div class="grow" style="display:grid;place-content:center">
+        <div class="grid c2">
+          <div class="card"><h3>Interior real de la jaula</h3>
+            <pre><span class="c">$ contain -- sh -c 'hostname; id -u; ls -la /home'</span>
+host=<span class="g">felinuxs-sandbox</span>
+1000
+<span class="c">total 0</span>            <span class="c">← /home VACÍO</span>
+drwxr-xr-x 2 1000 1000 .
+drwxr-xr-x 15 1000 1000 ..</pre>
+            <p style="margin-top:8px">Mismo <code>ls</code> fuera de la jaula mostraría tus carpetas reales.</p></div>
+          <div class="card"><h3>Auditoría de la evidencia</h3>
+            <pre><span class="c">$ node dist/cli.js evidence demo-ev.jsonl</span>
+[evidence] registros : 2
+[evidence] cadena    : <span class="g">ÍNTEGRA (GENESIS → 0c93ab20342b)</span>
+[evidence] decisiones: allowed=1 denied=1
+[evidence] backends  : bwrap=1 inproc=1</pre>
+            <pre style="margin-top:10px"><span class="c"># tras editar un registro…</span>
+[evidence] cadena    : <span class="r">ROTA en seq=1</span>  <span class="c">(exit 1)</span></pre></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 7 · UN REGISTRO ═══════════ -->
+  <section class="slide">
+    <div class="inner thumb">
+      <div class="kicker">05c · Anatomía de un registro</div>
+      <h2>El eslabón que hace la cadena</h2>
+      <div class="grow" style="display:grid;place-content:center">
+        <div class="grid c2" style="align-items:start">
+          <pre>{
+  <span class="b">"seq"</span>: 1,
+  <span class="b">"ts"</span>: "2026-10-20T00:08:28.116Z",
+  <span class="b">"id"</span>: "contain",
+  <span class="b">"decision"</span>: "allowed",
+  <span class="b">"backend"</span>: "bwrap",
+  <span class="b">"steps"</span>: {
+    "verify":   { "status": "off" },
+    "authorize":{ "allowNet": false, "memMb": 128 },
+    "contain":  { "ok": true, "exitCode": 0 }
+  },
+  <span class="b">"prev"</span>: "<span class="y">GENESIS</span>",
+  <span class="b">"hash"</span>: "<span class="g">e1b9e7a50d1d…</span>"
+}</pre>
+          <div style="display:grid;gap:12px">
+            <div class="card"><h3><code>prev</code> + <code>hash</code></h3><p>Cada registro guarda el hash del anterior. Eso forma una <b>cadena</b>: cambiar uno rompe todos los siguientes.</p></div>
+            <div class="card"><h3><code>steps</code> por verbo</h3><p>Queda constancia de <b>cada cerrojo</b>: si se verificó, si se autorizó (y con qué límites) y si se contuvo.</p></div>
+            <div class="card"><h3>Append-only</h3><p>Entre ejecuciones la cadena <b>continúa</b> (<code>seq 1→2…</code>); nunca se reinicia.</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 8 · PRUEBAS ═══════════ -->
+  <section class="slide">
+    <div class="inner thumb">
+      <div class="kicker">06 · La prueba de que es real</div>
+      <h2>El núcleo se prueba a sí mismo</h2>
+      <div class="grow" style="display:grid;place-content:center;gap:16px">
+        <div class="grid c2" style="align-items:start">
+          <div class="card" style="padding:0;overflow:hidden">
+            <table>
+              <tr><th>Caso</th><th>Intenta</th><th>Resultado</th></tr>
+              <tr><td><span class="pill ok">C1</span></td><td>Ejecutar <code>node</code> en la jaula</td><td>Corre, devuelve <code>42</code> ✅</td></tr>
+              <tr><td><span class="pill ok">C2</span></td><td>Escribir en el host</td><td>Fichero ausente ✅</td></tr>
+              <tr><td><span class="pill ok">C3</span></td><td>Ver <code>/home</code></td><td>No lo ve ✅</td></tr>
+              <tr><td><span class="pill ok">C4</span></td><td>Abrir red</td><td>Falla ✅</td></tr>
+              <tr><td><span class="pill ok">C5</span></td><td><code>while(true){}</code></td><td>Timeout ✅</td></tr>
+              <tr><td><span class="pill ok">C7</span></td><td><code>rm -rf /</code></td><td>Ni se ejecuta ✅</td></tr>
+            </table>
+          </div>
+          <div style="display:grid;gap:12px">
+            <div class="card"><h3>Batería completa — todo verde</h3>
+              <pre>1/4 selftest   → <span class="g">124 OK · 0 FALLAS</span>
+2/4 pentest    → 8 bloqueados · <span class="y">2 VULNERABLES</span>
+3/4 contención → <span class="g">6 contenidos · 0 ESCAPES</span>
+4/4 núcleo     → <span class="g">25 OK · 0 FALLAS</span></pre></div>
+            <div class="card"><h3>Reprodúcelo tú</h3>
+              <pre>node dist/cli.js coretest        <span class="c"># 25 OK</span>
+node dist/cli.js contain -- &lt;cmd&gt;
+node dist/cli.js evidence ev.jsonl</pre></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 9 · ARQUITECTURA ═══════════ -->
+  <section class="slide">
+    <div class="inner thumb">
+      <div class="kicker">07 · Arquitectura de carpetas</div>
+      <h2>Dónde vive cada pieza</h2>
+      <div class="grow" style="display:grid;place-content:center">
+        <div class="grid c2" style="align-items:start">
+          <div class="tree">
+<span class="d">felinuxs/</span>
+├─ <span class="d">src/</span>
+│  ├─ <span class="d">core/</span>            <span class="star">★ EL NÚCLEO (sin MCP)</span>
+│  │  ├─ <span class="f">trust.ts</span>      <span class="cm">VERIFICAR</span>
+│  │  ├─ <span class="f">policy.ts</span>     <span class="cm">AUTORIZAR</span>
+│  │  ├─ <span class="f">jail.ts</span>       <span class="cm">CONTENER (bwrap)</span>
+│  │  ├─ <span class="f">evidence.ts</span>   <span class="cm">EVIDENCIAR (hash-chain)</span>
+│  │  ├─ <span class="f">containment.ts</span> <span class="cm">fachada V·A·C·E</span>
+│  │  ├─ <span class="f">contain-cli.ts</span> <span class="cm">puerta "contain"</span>
+│  │  ├─ <span class="f">evidence-cli.ts</span><span class="cm">puerta "evidence"</span>
+│  │  └─ <span class="f">selftest.ts</span>   <span class="cm">25 casos</span>
+│  ├─ <span class="d">mcp/</span>             <span class="cm">puerta MCP (una más)</span>
+│  │  ├─ <span class="f">host.ts</span>       <span class="cm">hospeda servidores → los contiene</span>
+│  │  ├─ <span class="f">upstream.ts</span>   <span class="cm">cliente de 1 servidor (en jaula)</span>
+│  │  ├─ <span class="f">protocol.ts</span>   <span class="cm">tipos + config (incl. "jail")</span>
+│  │  └─ <span class="f">discovery.ts</span>  <span class="cm">descubrimiento local</span>
+│  ├─ <span class="d">kernel/</span>          <span class="cm">tools, blockchain, P2P (opcional)</span>
+│  ├─ <span class="d">fixtures/</span>        <span class="cm">servidores de prueba (echo, probe)</span>
+│  ├─ <span class="f">cli.ts</span>           <span class="cm">punto de entrada</span>
+│  └─ <span class="f">selftest.ts</span>      <span class="cm">batería end-to-end (124)</span>
+├─ <span class="d">docs/</span>             <span class="cm">blueprint, límites, ESTA presentación</span>
+├─ <span class="d">pentest/</span>         <span class="cm">ataques reproducibles</span>
+├─ <span class="d">pruebas/</span>         <span class="cm">logs fechados de cada pasada</span>
+├─ <span class="f">BITACORA.md</span>       <span class="cm">paso a paso del proceso</span>
+└─ <span class="f">probar.sh</span>        <span class="cm">batería completa (4 suites)</span>
+          </div>
+          <div style="display:grid;gap:12px">
+            <div class="card"><h3>El núcleo es lo que vende</h3><p><code>src/core/</code> funciona <b>sin MCP</b>: es una función central del motor, no una capacidad suelta de un protocolo.</p></div>
+            <div class="card"><h3>MCP es solo una puerta</h3><p><code>src/mcp/</code> habla MCP, pero los servidores de terceros se lanzan <b>dentro de la jaula</b> del núcleo.</p></div>
+            <div class="card"><h3>El kernel es opcional</h3><p><code>src/kernel/</code> (tools, blockchain, P2P) se conserva, pero el producto es el <b>núcleo + host</b>.</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 10 · HONESTO ═══════════ -->
+  <section class="slide">
+    <div class="inner thumb">
+      <div class="kicker">08 · Lo honesto (lo que NO es)</div>
+      <h2>Esta diapositiva existe para no vender humo</h2>
+      <div class="grow" style="display:grid;place-content:center">
+        <div class="grid c2">
+          <div class="card"><h3>🟡 Debilidad conocida (A3/A4)</h3><p>El <b>verificador por regex</b> se puede evadir. <b>No</b> se «arregla» con más regex: se deja de depender de él. El ataque <b>queda confinado por la jaula</b>.</p></div>
+          <div class="card"><h3>🔒 Alcance</h3><p>Contención del <b>espacio de usuario</b> (namespaces de Linux). <b>No</b> cubre vulnerabilidades del <b>kernel</b> ni canales laterales.</p></div>
+          <div class="card"><h3>🧩 No lo inventamos</h3><p><code>bwrap</code>, namespaces, jaulas, seccomp… ya existían. El aporte es la <b>arquitectura integrada</b> con MCP como <b>una puerta más</b>.</p></div>
+          <div class="card"><h3>📊 Nivel de garantía</h3><p><b>Evidencia inicial demostrada por pruebas</b>, <b>no</b> un certificado de producción. <i>Fail-safe</i>, no prevención perfecta.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 11 · CIERRE ═══════════ -->
+  <section class="slide cover">
+    <div>
+      <div class="kicker">FELINUXS</div>
+      <h1>Verificar · Autorizar · <span class="g">Contener</span> · Evidenciar</h1>
+      <p class="sub" style="margin:0 auto">Una sola idea, cuatro cerrojos, dos puertas (MCP y CLI), y la verdad por delante.</p>
+      <p class="oneliner" style="color:var(--ok);font-family:var(--mono);font-size:clamp(14px,1.8vw,20px)">
+        124 · 6 · 25 pruebas en verde</p>
+      <p style="margin-top:30px;color:var(--dim);font-size:13px">
+        <code>node dist/cli.js contain -- &lt;cmd&gt;</code> · <code>node dist/cli.js coretest</code> · <code>node dist/cli.js evidence ev.jsonl</code></p>
+    </div>
+  </section>
+
+</div>
+
+<div class="footer">
+  <div class="brand">FELINUXS<span> ·</span> núcleo de contención</div>
+  <div class="nav">
+    <button class="btn" id="prev">◀ Anterior</button>
+    <span class="counter" id="counter">1 / 1</span>
+    <button class="btn" id="next">Siguiente ▶</button>
   </div>
+  <div style="display:none">espacio</div>
+</div>
 
-  <script>
-    // ============================================
-    // GENERADOR DE LA GUÍA EN NUEVA PESTAÑA
-    // ============================================
-    function abrirGuia() {
-      // 1) Abrir pestaña nueva
-      var win = window.open('', '_blank');
-      if (!win) {
-        alert('Tu navegador bloqueó la pestaña. Permite las ventanas emergentes para ver la guía.');
-        return;
-      }
+<script>
+  (function(){
+    var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+    var i = 0;
+    var counter = document.getElementById('counter');
+    var fill = document.getElementById('barfill');
+    var prevBtn = document.getElementById('prev');
+    var nextBtn = document.getElementById('next');
 
-      // 2) CSS de la guía
-      var css = ''
-        + '*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif}'
-        + 'body{background:#f8fafc;color:#0f172a;line-height:1.5;padding:1.5rem}'
-        + '.container{max-width:1000px;margin:0 auto}'
-        + '.header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:2rem;padding-bottom:1.2rem;border-bottom:1px solid #e2e8f0}'
-        + '.header h1{font-size:1.6rem;font-weight:800;background:linear-gradient(135deg,#1e293b,#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}'
-        + '.header .sub{font-size:.9rem;color:#64748b;margin-top:.15rem}'
-        + '.btn{display:inline-flex;align-items:center;gap:.4rem;padding:.6rem 1.2rem;border-radius:60px;font-weight:600;font-size:.9rem;text-decoration:none;transition:all .2s ease;border:1px solid transparent;cursor:pointer;font-family:inherit}'
-        + '.btn-primary{background:#3b82f6;color:white;box-shadow:0 4px 12px rgba(59,130,246,.3)}'
-        + '.btn-primary:hover{background:#2563eb;transform:translateY(-2px)}'
-        + '.guia-header{text-align:center;margin-bottom:2.5rem}'
-        + '.guia-header h2{font-size:2rem;font-weight:800;letter-spacing:-.03em;margin-bottom:.6rem}'
-        + '.guia-header p{color:#475569;font-size:1.05rem;max-width:700px;margin:0 auto}'
-        + '.section-title{font-size:1.3rem;font-weight:700;margin:2rem 0 1rem;color:#0f172a}'
-        + '.pasos{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;margin-bottom:2rem}'
-        + '.paso{background:white;border:1px solid #e2e8f0;border-radius:16px;padding:1rem;text-align:center}'
-        + '.paso .num{width:32px;height:32px;background:#3b82f6;color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;margin:0 auto .5rem;font-size:.9rem}'
-        + '.paso h4{font-size:.85rem;font-weight:700}'
-        + '.acordeon{background:white;border:1px solid #e2e8f0;border-radius:18px;margin-bottom:.9rem;overflow:hidden;transition:all .2s ease}'
-        + '.acordeon.abierto{border-color:#3b82f6;box-shadow:0 10px 30px -12px rgba(59,130,246,.35)}'
-        + '.acordeon-header{display:flex;align-items:center;justify-content:space-between;padding:1.1rem 1.4rem;cursor:pointer;gap:1rem;background:transparent;border:none;width:100%;text-align:left;font-family:inherit;font-size:1rem;color:#0f172a}'
-        + '.acordeon-header:hover{background:#f8fafc}'
-        + '.acordeon-titulo{display:flex;align-items:center;gap:.8rem;font-weight:700;font-size:1.05rem}'
-        + '.acordeon-titulo .ico{font-size:1.5rem}'
-        + '.acordeon-flecha{font-size:1.1rem;transition:transform .3s ease;color:#64748b}'
-        + '.acordeon.abierto .acordeon-flecha{transform:rotate(180deg);color:#3b82f6}'
-        + '.acordeon-body{max-height:0;overflow:hidden;transition:max-height .35s ease;background:#f8fafc}'
-        + '.acordeon.abierto .acordeon-body{max-height:1600px}'
-        + '.acordeon-contenido{padding:1.4rem;border-top:1px solid #e2e8f0}'
-        + '.acordeon-contenido h5{font-size:.95rem;font-weight:700;margin:.8rem 0 .4rem;color:#0f172a}'
-        + '.acordeon-contenido h5:first-child{margin-top:0}'
-        + '.acordeon-contenido p,.acordeon-contenido li{color:#475569;font-size:.92rem;line-height:1.6}'
-        + '.acordeon-contenido ul,.acordeon-contenido ol{padding-left:1.3rem;margin-bottom:.8rem}'
-        + '.acordeon-contenido li{margin-bottom:.3rem}'
-        + '.bonus{display:inline-block;background:#dbeafe;color:#1d4ed8;font-size:.7rem;font-weight:700;padding:.2rem .6rem;border-radius:40px;margin-bottom:.6rem;letter-spacing:.04em}'
-        + '.btn-app{display:inline-flex;align-items:center;gap:.4rem;margin-top:.8rem;background:#3b82f6;color:white;padding:.5rem 1rem;border-radius:60px;text-decoration:none;font-size:.85rem;font-weight:600;transition:all .2s ease}'
-        + '.btn-app:hover{background:#2563eb;transform:translateY(-1px)}'
-        + '.checklist{background:white;border:1px solid #e2e8f0;border-radius:20px;padding:1.8rem;margin:2rem 0}'
-        + '.checklist h3{font-size:1.3rem;font-weight:700;margin-bottom:1rem}'
-        + '.checklist-item{display:flex;align-items:flex-start;gap:.8rem;padding:.6rem 0;border-bottom:1px solid #f1f5f9;cursor:pointer}'
-        + '.checklist-item:last-child{border-bottom:none}'
-        + '.checklist-item input[type="checkbox"]{width:18px;height:18px;accent-color:#3b82f6;cursor:pointer;flex-shrink:0;margin-top:3px}'
-        + '.checklist-item span{color:#334155;font-size:.95rem}'
-        + '.checklist-item input:checked+span{text-decoration:line-through;color:#94a3b8}'
-        + '.footer{text-align:center;padding:2rem 0 1rem;color:#64748b;font-size:.85rem;border-top:1px solid #e2e8f0;margin-top:2rem}'
-        + '.footer a{color:#3b82f6;text-decoration:none}'
-        + '.footer a:hover{text-decoration:underline}'
-        + '@media(max-width:640px){.guia-header h2{font-size:1.7rem}body{padding:1rem}}';
-
-      // 3) Contenido HTML de la guía
-      var body = ''
-        + '<div class="container">'
-        +   '<header class="header">'
-        +     '<div><h1>📘 Guía interactiva · JAM POS</h1><div class="sub">Aprende a usar el aplicativo paso a paso</div></div>'
-        +     '<a href="https://jam-30dias.vercel.app/" target="_blank" rel="noopener" class="btn btn-primary">🚀 Abrir la aplicación</a>'
-        +   '</header>'
-        +   '<div class="guia-header">'
-        +     '<h2>Descubre todo lo que JAM POS puede hacer por tu negocio</h2>'
-        +     '<p>Haz clic en cada sección para expandirla. Encontrarás cómo se usa cada módulo, sus bondades y accesos directos al aplicativo.</p>'
-        +   '</div>'
-        +   '<h3 class="section-title">🚀 Primeros pasos</h3>'
-        +   '<div class="pasos">'
-        +     '<div class="paso"><div class="num">1</div><h4>Abre la aplicación</h4></div>'
-        +     '<div class="paso"><div class="num">2</div><h4>Configura tu empresa</h4></div>'
-        +     '<div class="paso"><div class="num">3</div><h4>Carga tu inventario</h4></div>'
-        +     '<div class="paso"><div class="num">4</div><h4>Empieza a vender</h4></div>'
-        +     '<div class="paso"><div class="num">5</div><h4>Revisa tus reportes</h4></div>'
-        +   '</div>'
-        +   '<h3 class="section-title">🧩 Módulos del sistema</h3>'
-        +   armarAcordeon('🛒','Ventas','Registra una venta completa: carrito, cliente, cantidades, subtotal, IVA, total, pago y cambio.','<ol><li>Busca el producto o el cliente.</li><li>Agrega productos al carrito.</li><li>Ajusta cantidades (el subtotal se calcula solo).</li><li>Si el IVA está activo, se suma automáticamente.</li><li>Selecciona la forma de pago.</li><li>Ingresa el monto pagado → la app calcula el cambio.</li><li>Genera y comparte el ticket.</li></ol>')
-        +   armarAcordeon('📦','Inventario','Controla todos tus productos con precios en Bs y USD, stock y costo real.','<ol><li>Entra a Inventario.</li><li>Busca por nombre o código.</li><li>Agrega, edita o elimina productos.</li><li>Define: nombre, código, categoría, proveedor, stock, costo real y precios en Bs y USD.</li></ol>')
-        +   armarAcordeon('👥','Clientes','Ten tu cartera de clientes organizada y con búsqueda rápida.','<ol><li>Entra a Clientes.</li><li>Agrega un cliente nuevo.</li><li>Completa: identificación, nombre, teléfono, dirección y correo.</li><li>Busca, edita o elimina cuando lo necesites.</li></ol>')
-        +   armarAcordeon('🚚','Proveedores','Gestiona a quién le compras y relaciónalo con tus productos.','<ol><li>Entra a Proveedores.</li><li>Agrega el proveedor con sus datos.</li><li>Busca, edita o elimina registros.</li><li>Asígnalos a productos del inventario.</li></ol>')
-        +   armarAcordeon('💰','Gastos','Lleva el control de todo lo que sale del negocio.','<ol><li>Entra a Gastos.</li><li>Registra: concepto, monto, categoría y fecha.</li><li>Consulta el historial cuando quieras.</li></ol>')
-        +   armarAcordeon('👔','Empleados','Administra a tu personal desde un solo lugar.','<ol><li>Entra a Empleados.</li><li>Registra: identificación, nombre, cargo, salario y fecha de contratación.</li><li>Edita o elimina cuando haga falta.</li></ol>')
-        +   armarAcordeon('📊','Reportes','Consulta el rendimiento de tu negocio de un vistazo.','<ul><li>Ventas totales.</li><li>Ganancia bruta.</li><li>Gastos totales.</li><li>Utilidad neta.</li><li>Detalle de las últimas ventas.</li></ul>')
-        +   armarAcordeon('⚙️','Configuración','Adapta la app a tu negocio: empresa, tasa, IVA y apariencia.','<ul><li>Datos de la empresa.</li><li>Tasa de cambio (automática o manual).</li><li>IVA (activar/desactivar).</li><li>Apariencia y otras opciones.</li></ul>')
-        +   '<div class="checklist">'
-        +     '<h3>✅ Checklist para empezar</h3>'
-        +     '<label class="checklist-item"><input type="checkbox"><span>Abrir la aplicación JAM POS.</span></label>'
-        +     '<label class="checklist-item"><input type="checkbox"><span>Configurar los datos de mi empresa.</span></label>'
-        +     '<label class="checklist-item"><input type="checkbox"><span>Verificar que la tasa de cambio esté correcta.</span></label>'
-        +     '<label class="checklist-item"><input type="checkbox"><span>Cargar productos en el inventario.</span></label>'
-        +     '<label class="checklist-item"><input type="checkbox"><span>Registrar clientes frecuentes.</span></label>'
-        +     '<label class="checklist-item"><input type="checkbox"><span>Asociar proveedores a productos.</span></label>'
-        +     '<label class="checklist-item"><input type="checkbox"><span>Hacer una venta de prueba.</span></label>'
-        +     '<label class="checklist-item"><input type="checkbox"><span>Revisar los reportes del día.</span></label>'
-        +   '</div>'
-        +   '<div class="footer">'
-        +     '<p>JAM POS v1.1 · By @felinuxs · <a href="https://jamapp-beige.vercel.app/" target="_blank" rel="noopener">jamapp-beige.vercel.app</a></p>'
-        +     '<p style="margin-top:.4rem;">📧 <a href="mailto:felinuxs@gmail.com">felinuxs@gmail.com</a> · 💬 <a href="https://wa.me/584248668338" target="_blank" rel="noopener">wa.me/584248668338</a></p>'
-        +   '</div>'
-        + '</div>';
-
-      // 4) Función auxiliar para armar cada acordeón
-      function armarAcordeon(ico, titulo, descripcion, lista) {
-        return ''
-          + '<div class="acordeon">'
-          +   '<button class="acordeon-header" type="button">'
-          +     '<span class="acordeon-titulo"><span class="ico">' + ico + '</span> ' + titulo + '</span>'
-          +     '<span class="acordeon-flecha">▼</span>'
-          +   '</button>'
-          +   '<div class="acordeon-body"><div class="acordeon-contenido">'
-          +     '<span class="bonus">Bondad</span>'
-          +     '<p>' + descripcion + '</p>'
-          +     '<h5>Cómo se usa:</h5>'
-          +     lista
-          +     '<a href="https://jamapp-beige.vercel.app/" target="_blank" rel="noopener" class="btn-app">🚀 Ir a ' + titulo + '</a>'
-          +   '</div></div>'
-          + '</div>';
-      }
-
-      // 5) Escribir la guía en la pestaña nueva
-      win.document.open();
-      win.document.write('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">'
-        + '<meta name="viewport" content="width=device-width, initial-scale=1.0">'
-        + '<title>Guía de uso · JAM POS</title>'
-        + '<style>' + css + '</style></head><body>' + body + '</body></html>');
-      win.document.close();
-
-      // 6) Activar los acordeones dentro de la nueva pestaña
-      setTimeout(function () {
-        var botones = win.document.querySelectorAll('.acordeon-header');
-        for (var i = 0; i < botones.length; i++) {
-          botones[i].addEventListener('click', function () {
-            this.parentNode.classList.toggle('abierto');
-          });
-        }
-      }, 100);
+    function render(){
+      slides.forEach(function(s, k){ s.classList.toggle('active', k === i); });
+      counter.textContent = (i + 1) + ' / ' + slides.length;
+      fill.style.width = ((i) / (slides.length - 1) * 100) + '%';
+      prevBtn.disabled = (i === 0);
+      nextBtn.disabled = (i === slides.length - 1);
+      try { location.hash = 'd' + (i + 1); } catch (e) { /* file:// a veces lo bloquea */ }
     }
-  </script>
+    function go(d){ var n = i + d; if (n < 0 || n >= slides.length) return; i = n; render(); }
+    function first(){ i = 0; render(); }
+    function last(){ i = slides.length - 1; render(); }
+
+    prevBtn.addEventListener('click', function(){ go(-1); });
+    nextBtn.addEventListener('click', function(){ go(1); });
+
+    document.addEventListener('keydown', function(e){
+      var k = e.key;
+      if (k === 'ArrowRight' || k === 'PageDown' || k === ' ' || k === 'Enter') { e.preventDefault(); go(1); }
+      else if (k === 'ArrowLeft' || k === 'PageUp' || k === 'Backspace') { e.preventDefault(); go(-1); }
+      else if (k === 'Home') { e.preventDefault(); first(); }
+      else if (k === 'End') { e.preventDefault(); last(); }
+      else if (k === 'f' || k === 'F') {
+        e.preventDefault();
+        if (!document.fullscreenElement) { if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen(); }
+        else if (document.exitFullscreen) { document.exitFullscreen(); }
+      }
+    });
+
+    var x0 = null;
+    document.addEventListener('touchstart', function(e){ x0 = e.touches[0].clientX; }, {passive:true});
+    document.addEventListener('touchend', function(e){
+      if (x0 === null) return;
+      var dx = e.changedTouches[0].clientX - x0;
+      if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1);
+      x0 = null;
+    }, {passive:true});
+
+    // arranque desde #dN si existe
+    var m = /^#d(\d+)$/.exec(location.hash || '');
+    if (m) { i = Math.max(0, Math.min(slides.length - 1, parseInt(m[1], 10) - 1)); }
+    render();
+  })();
+</script>
 </body>
 </html>
