@@ -248,7 +248,7 @@
           <div class="panel in">
             <h3><span class="dot"></span> DENTRO — la frontera</h3>
             <div class="bar"><span class="what">Datos de <code>/home</code></span><span class="val no">VACÍO</span></div>
-            <div class="bar"><span class="what">Red / internet</span><span class="val no">SIN RED (ENETUNREACH)</span></div>
+            <div class="bar"><span class="what">Red / internet</span><span class="val no">AISLADA (sin salida)</span></div>
             <div class="bar"><span class="what">Sistema</span><span class="val mid">solo-lectura</span></div>
             <div class="bar"><span class="what">Hostname</span><span class="val">nombre de sandbox</span></div>
             <div class="bar"><span class="what">Capabilities</span><span class="val no">NINGUNA</span></div>
@@ -270,10 +270,10 @@
           <div class="card"><h3>1 · Corre de verdad, dentro</h3>
             <pre><span class="c">$ contain --  &lt;comando&gt;</span>
 <span class="g">(el comando se ejecuta y responde)</span>
-[contain] decisión=allowed backend=bwrap contenido=true exit=0</pre></div>
+[contain] decisión=allowed backend=sandbox contenido=true exit=0</pre></div>
           <div class="card"><h3>2 · Sin red por defecto</h3>
             <pre><span class="c">$ contain --  &lt;algo que abre red&gt;</span>
-<span class="r">SIN_RED:ENETUNREACH</span></pre></div>
+<span class="r">SIN_RED: sin salida a la red</span></pre></div>
           <div class="card"><h3>3 · Denegado por política</h3>
             <pre><span class="c">$ contain --deny rm -- rm -rf /</span>
 [contain] decisión=<span class="r">denied</span>
@@ -361,7 +361,7 @@ pentest       → amenazas conocidas <span class="y">documentadas</span></pre></
             <tr><td>Kernel de aplicación</td><td><span class="pill bad">no</span></td><td><span class="pill bad">no</span></td><td><span class="pill ok">muy fuerte</span></td><td><span class="pill bad">no</span></td></tr>
             <tr><td>Micro-VMs</td><td><span class="pill bad">no</span></td><td><span class="pill bad">no</span></td><td><span class="pill ok">nivel VM</span></td><td><span class="pill bad">no</span></td></tr>
             <tr><td>Sandbox en la nube</td><td><span class="pill bad">no</span></td><td><span class="pill warn">SDK</span></td><td><span class="pill ok">nube</span></td><td><span class="pill warn">plataforma</span></td></tr>
-            <tr style="background:rgba(91,157,255,.07)"><td><b>FELINUXS</b></td><td><span class="pill ok">huella</span></td><td><span class="pill ok">por ejecución</span></td><td><span class="pill warn">frontera SO</span></td><td><span class="pill ok">hash-chain</span></td></tr>
+            <tr style="background:rgba(91,157,255,.07)"><td><b>FELINUXS</b></td><td><span class="pill ok">huella</span></td><td><span class="pill ok">por ejecución</span></td><td><span class="pill warn">frontera SO</span></td><td><span class="pill ok">cadena de hash</span></td></tr>
           </table>
         </div>
         <div class="grid c2" style="align-items:start">
